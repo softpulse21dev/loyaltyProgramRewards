@@ -2,3 +2,102 @@
   padding: 0;
   margin: 0;
 }
+.annotatedSection-border .Polaris-Layout__AnnotatedSection:not(:first-of-type) {
+  border-top: 0.1rem solid #dfe3e8;
+}
+.onoffswitch-login {
+  margin-right: 5px;
+  position: relative;
+  width: 44px;
+  display: inline-block;
+  vertical-align: middle;
+}
+.onoffswitch {
+  margin: 0 5px;
+  position: relative;
+  width: 44px;
+  display: inline-block;
+  vertical-align: middle;
+}
+.onoffswitch-checkbox {
+  display: none;
+}
+.onoffswitch-label {
+  padding: 0 !important;
+  color: inherit !important;
+}
+.onoffswitch-label {
+  display: block;
+  overflow: hidden;
+  cursor: pointer;
+  border-radius: 20px;
+}
+.onoffswitch-checkbox:checked + .onoffswitch-label .onoffswitch-inner {
+  margin-left: 0;
+}
+.onoffswitch-inner {
+  display: block;
+  width: 250%;
+  margin-left: -135%;
+  transition: margin 0.3s ease-in 0s;
+}
+.onoffswitch-checkbox:checked + .onoffswitch-label .onoffswitch-switch {
+  right: 0px;
+}
+.onoffswitch-switch {
+  display: block;
+  width: 10px;
+  height: 10px;
+  margin: auto 5px;
+  background: #ffffff;
+  position: absolute;
+  top: 0px;
+  bottom: 0;
+  right: 24px;
+  border-radius: 20px;
+  transition: all 0.3s ease-in 0s;
+  box-sizing: initial;
+}
+.onoffswitch-inner:before {
+  text-align: left;
+  content: "On";
+  padding-left: 10px;
+  background-color: #268a47;
+  color: #ffffff;
+}
+.onoffswitch-inner:before,
+.onoffswitch-inner:after {
+  display: block;
+  float: left;
+  width: 50%;
+  height: 20px;
+  padding-left: 7px;
+  padding-right: 9px;
+  line-height: 20px;
+  font-size: 11px;
+  color: white;
+  font-family: Trebuchet, Arial, sans-serif;
+  font-weight: bold;
+  box-sizing: border-box;
+}
+.onoffswitch-inner:after {
+  content: "Off";
+  padding-right: 15px;
+  background-color: #343535;
+  color: #ffffff;
+  text-align: right;
+}
+.onoffswitch-inner:before,
+.onoffswitch-inner:after {
+  display: block;
+  float: left;
+  width: 50%;
+  height: 26px;
+  padding-left: 10px;
+  line-height: 26px;
+  font-size: 12px;
+  color: white;
+  font-family: Trebuchet, Arial, sans-serif;
+  font-weight: bold;
+  box-sizing: border-box;
+}
