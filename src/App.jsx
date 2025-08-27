@@ -10,7 +10,6 @@ function App() {
   return (
     <>
       <BrowserRouter>
-
         <PolarisProvider>
           <>
             <NavMenu>
@@ -24,7 +23,6 @@ function App() {
               <Link to={`/settings${window.location.search}`}>settings</Link>
             </NavMenu>
           </>
-
           <Routes pages={pages} />
         </PolarisProvider>
       </BrowserRouter>

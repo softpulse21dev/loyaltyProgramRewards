@@ -1,6 +1,8 @@
 import {
     Routes as ReactRouterRoutes,
     Route,
+    Navigate,
+    useLocation,
 } from "react-router-dom";
 
 /**
@@ -8,19 +10,30 @@ import {
  */
 export default function Routes({ pages }) {
     const routes = useRoutes(pages);
+    const location = useLocation();
 
     const routeComponents = routes.map(({ path, component: Component }) => (
         <Route key={path} path={path} element={<Component />} />
     ));
 
-    // Find a NotFound page if one exists (like /pages/[...catchAll].jsx)
+    // Find a NotFound page if one exists
     const NotFound =
         routes.find(({ path }) => path === "/:catchAll")?.component ||
-        (() => <div>Page not found</div>);
+        (() => (
+            <Navigate to={`/dashboard${location.search}`} replace />
+        ));
 
     return (
         <ReactRouterRoutes>
+            {/* Redirect `/` to `/dashboard` with query params */}
+            <Route
+                path="/"
+                element={<Navigate to={`/dashboard${location.search}`} replace />}
+            />
+
             {routeComponents}
+
+            {/* Catch-all fallback */}
             <Route path="*" element={<NotFound />} />
         </ReactRouterRoutes>
     );

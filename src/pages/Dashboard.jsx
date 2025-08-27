@@ -176,7 +176,7 @@ const Dashboard = () => {
                                 >
                                     <Text as="h1" variant="headingMd">Get started with Loyalty program & Rewards</Text>
                                 </Button>
-                                <Text as="h1" variant="headingMd">Get started with Loyalty program & Rewards</Text>
+                                <Text as="h1" variant="headingMd"></Text>
                             </div>
                             <Collapsible
                                 open={open}
