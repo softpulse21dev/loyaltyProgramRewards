@@ -3,10 +3,34 @@ import { ClipboardIcon, DeleteIcon, EditIcon, InfoIcon, PinIcon, PlusIcon, Rewar
 import React, { useCallback, useState } from 'react'
 import { useNavigate } from 'react-router-dom';
 import { BronzeIcon } from '../assets/svg/svg';
+import TierModal from '../components/TierModal';
+import PointsModal from '../components/PointsModal';
 
 const CustomerView = () => {
     const navigate = useNavigate();
-    const [selected, setSelected] = useState('all');
+    const [selected, setSelected] = useState(0);
+    const [tierModalOpen, setTierModalOpen] = useState(false);
+    const [pointsModalOpen, setPointsModalOpen] = useState(false);
+    const [customerTier, setCustomerTier] = useState("Bronze");
+    const [customerPoints, setCustomerPoints] = useState(0);
+
+    const handlePointsSave = (newPoints) => {
+        setCustomerPoints(newPoints); // update customer points when modal saves
+        setPointsModalOpen(false);  // close modal
+    };
+
+    const handleTierSave = (newTier) => {
+        setCustomerTier(newTier); // update customer tier when modal saves
+        setTierModalOpen(false);  // close modal
+    };
+
+    const Tiers = [
+        { id: 'bronze', content: 'Bronze' },
+        { id: 'silver', content: 'Silver' },
+        { id: 'gold', content: 'Gold' },
+        { id: 'platinum', content: 'Platinum' },
+    ];
+
     const handleTabChange = useCallback(
         (selected) => setSelected(selected),
         [],
@@ -313,7 +337,7 @@ const CustomerView = () => {
 
                             <Grid.Cell columnSpan={{ xs: 6, sm: 2, md: 2, lg: 4, xl: 4 }}>
                                 <BlockStack gap={400}>
-
+                                    {/* DETAILS */}
                                     <Card>
                                         <BlockStack>
                                             <Box style={{ margin: '0px 0px 16px 0px' }}>
@@ -325,6 +349,7 @@ const CustomerView = () => {
                                         </BlockStack>
                                     </Card>
 
+                                    {/* VIP TIER */}
                                     <Card>
                                         <BlockStack>
                                             <Text variant='headingMd' as="span">VIP Tier</Text>
@@ -332,19 +357,39 @@ const CustomerView = () => {
                                                 <Box>
                                                     <Icon source={BronzeIcon} />
                                                 </Box>
-                                                <Text variant='headingLg' fontWeight='bold'> Bronze</Text>
+                                                <Text variant='headingLg' fontWeight='bold'>
+                                                    {Tiers.find(t => t.id === customerTier)?.content}
+                                                </Text>
                                             </Box>
-                                            <Button variant='primary' tone='success' size='medium' icon={EditIcon}>Change Tier</Button>
+                                            <Button variant='primary' tone='success' size='medium' onClick={() => setTierModalOpen(true)} icon={EditIcon}>Change Tier</Button>
                                         </BlockStack>
                                     </Card>
 
-                                    <Card>
+                                    {/* POINTS */}
+                                    {/* <Card>
                                         <BlockStack>
                                             <Text variant='headingMd' as="span">Points</Text>
                                             <Box style={{ margin: '15px 0px 10px 0px' }}>
                                                 <Text variant='headingLg' fontWeight='bold'>4456 points</Text>
                                             </Box>
                                             <Button variant='secondary' size='medium' icon={EditIcon}>Adjust Points</Button>
+                                        </BlockStack>
+                                    </Card> */}
+
+                                    <Card>
+                                        <BlockStack>
+                                            <Text variant='headingMd' as="span">Points</Text>
+                                            <Box style={{ margin: '15px 0px 10px 0px' }}>
+                                                <Text variant='headingLg' fontWeight='bold'>{customerPoints} points</Text>
+                                            </Box>
+                                            <Button
+                                                variant='secondary'
+                                                size='medium'
+                                                icon={EditIcon}
+                                                onClick={() => setPointsModalOpen(true)}
+                                            >
+                                                Adjust Points
+                                            </Button>
                                         </BlockStack>
                                     </Card>
 
@@ -353,6 +398,21 @@ const CustomerView = () => {
                         </Grid>
                     </Layout.Section>
                 </Layout>
+
+                <TierModal
+                    open={tierModalOpen}
+                    onClose={() => setTierModalOpen(false)}
+                    tiers={Tiers}
+                    customerTier={customerTier}
+                    onSave={handleTierSave}
+                />
+
+                <PointsModal
+                    open={pointsModalOpen}
+                    onClose={() => setPointsModalOpen(false)}
+                    customerPoints={customerPoints}
+                    onSave={handlePointsSave}
+                />
             </Page>
         </div >
     )
