@@ -1,10 +1,13 @@
 import { useState } from "react";
 import { Page, Tabs, } from "@shopify/polaris";
+
+import VipTier from "../components/LoyaltyPrograms/VipTier";
 import Loyalty from "../components/LoyaltyPrograms/Loyalty";
 import Referral from "../components/LoyaltyPrograms/Referral";
 import StoreCredit from "../components/LoyaltyPrograms/StoreCredit";
 
-export default function LoyaltyProgram() {
+
+const LoyaltyProgram = () => {
     const [selectedTab, setSelectedTab] = useState(0);
 
     const tabs = [
@@ -22,6 +25,11 @@ export default function LoyaltyProgram() {
             id: "store-credit-tab",
             content: "Store Credit",
             panelID: "store-credit-content",
+        },
+        {
+            id: "vip-tier-tab",
+            content: "VIP Tier",
+            panelID: "vip-tier-content",
         },
     ];
 
@@ -41,7 +49,12 @@ export default function LoyaltyProgram() {
                 {selectedTab === 2 && (
                     <StoreCredit />
                 )}
+                {selectedTab === 3 && (
+                    <VipTier />
+                )}
             </Tabs>
         </Page >
     );
 }
+
+export default LoyaltyProgram;

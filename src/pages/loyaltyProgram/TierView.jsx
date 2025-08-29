@@ -1,12 +1,14 @@
-import { Box, Button, Card, Layout, Text } from '@shopify/polaris'
+import { Box, Button, Card, Layout, Page, Text } from '@shopify/polaris'
 import React from 'react'
+import { useNavigate } from 'react-router-dom';
 
-const StoreCredit = () => {
+const TierView = () => {
+    const navigate = useNavigate();
     return (
-        <div>
+        <Page backAction={{ content: 'Back', onAction: () => navigate('/loyaltyProgram') }} title="VIP Tier">
             <Layout.AnnotatedSection
-                title={'Loyalty program status'}
-                description={'Activate/Deactivate your points program'}
+                title={'VIP Tier Status'}
+                description={'Activate/Deactivate your VIP Tier program'}
             >
                 <Card>
                     <Box style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
@@ -15,8 +17,8 @@ const StoreCredit = () => {
                     </Box>
                 </Card>
             </Layout.AnnotatedSection>
-        </div>
+        </Page>
     )
 }
 
-export default StoreCredit
+export default TierView

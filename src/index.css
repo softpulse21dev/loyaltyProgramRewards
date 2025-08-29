@@ -101,3 +101,7 @@
   font-weight: bold;
   box-sizing: border-box;
 }
+.icon-size .Polaris-Icon {
+  height: 2rem;
+  width: 2rem;
+}

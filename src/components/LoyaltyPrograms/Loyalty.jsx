@@ -10,10 +10,9 @@ import {
     Modal,
     InlineStack,
     Icon,
-    Select,
     TextField,
 } from "@shopify/polaris";
-import { ConfettiIcon, EyeCheckMarkIcon, LogoInstagramIcon, LogoTiktokIcon, OrderIcon } from "@shopify/polaris-icons";
+import { ConfettiIcon, DeliveryIcon, DiscountCodeIcon, EditIcon, EyeCheckMarkIcon, GiftCardIcon, LogoInstagramIcon, LogoTiktokIcon, OrderIcon } from "@shopify/polaris-icons";
 import { useCallback, useState } from "react";
 
 const iconsMap = {
@@ -22,9 +21,11 @@ const iconsMap = {
     LogoTiktokIcon,
     OrderIcon,
     ConfettiIcon,
+    GiftCardIcon,
+    DiscountCodeIcon,
+    DeliveryIcon
 };
-
-export default function Loyalty() {
+const Loyalty = () => {
 
     const [modalActive, setModalActive] = useState(false);
 
@@ -40,18 +41,22 @@ export default function Loyalty() {
 
     const waysToEarn = [
         { id: 1, title: "Celebrate Loyalty Anniversary", upgrade: true },
-        { id: 2, title: "Post a product review", upgrade: true },
-        { id: 3, title: "Visit a URL", upgrade: true },
-        { id: 4, title: "Complete a Referral", upgrade: true },
-        { id: 5, title: "Like page on Facebook", upgrade: false },
-        { id: 6, title: "Share link on Facebook", upgrade: false },
-        { id: 7, title: "Follow on X", upgrade: false },
-        { id: 8, title: "Share link on X", upgrade: false },
-        { id: 9, title: "Custom Action", upgrade: true },
+        { id: 2, title: "Visit a URL", upgrade: true },
+        { id: 3, title: "Complete a Referral", upgrade: true },
+        { id: 4, title: "Share link on Facebook", upgrade: false },
+        { id: 5, title: "Custom Action", upgrade: true },
     ];
 
+    const redeemPoints = [
+        { id: "redeem1", title: "Rs. 5 of coupon", points: "100 points", icon: "DiscountCodeIcon" },
+        { id: "redeem2", title: "Rs. 10 of coupon", points: "200 points", icon: "DiscountCodeIcon" },
+        { id: "redeem4", title: "Free Shipping coupon", points: "1000 points", icon: "DeliveryIcon" },
+        { id: "redeem3", title: "50% of coupon", points: "500 points", icon: "DiscountCodeIcon" },
+        { id: "redeem4", title: "Free Product", points: "2000 points", icon: "GiftCardIcon" },
+    ]
+
     return (
-        <div className="annotatedSection-border">
+        <div className="annotatedSection-border icon-size">
             <Layout.AnnotatedSection
                 title={'Loyalty program status'}
                 description={'Activate/Deactivate your points program'}
@@ -83,24 +88,21 @@ export default function Loyalty() {
                     <ResourceList
                         resourceName={{ singular: "earning", plural: "earnings" }}
                         items={earningOptions}
-                        // showHeader
                         renderItem={(item) => {
                             const { id, title, points, icon } = item;
                             const IconSource = iconsMap[icon];
                             return (
                                 <ResourceItem id={id}>
-                                    <InlineStack align="space-between" blockAlign="center">
-                                        <Box>
+                                    <Box style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+                                        <Box style={{ display: "flex", alignItems: "center", gap: "15px" }}>
                                             <Icon source={IconSource} />
+                                            <Box>
+                                                <Text variant="bodyMd">{title}</Text>
+                                                <Text variant="bodyMd">{points}</Text>
+                                            </Box>
                                         </Box>
-                                        <Box>
-                                            <Text variant="bodyMd" fontWeight="bold">{title}</Text>
-                                            <div>{points}</div>
-                                        </Box>
-                                        <Box>
+                                        <Box style={{ display: "flex", alignItems: "center", gap: "15px" }}>
                                             <Button variant="plain">Edit</Button>
-                                        </Box>
-                                        <Box>
                                             <div className="onoffswitch">
                                                 <input
                                                     type="checkbox"
@@ -116,7 +118,7 @@ export default function Loyalty() {
                                                 </label>
                                             </div>
                                         </Box>
-                                    </InlineStack>
+                                    </Box>
                                 </ResourceItem>
                             );
                         }}
@@ -136,26 +138,51 @@ export default function Loyalty() {
                     </>
                 }
             >
-                <Card title="Redeeming rule">
+                <Card padding={0}>
+                    <Box style={{ padding: '16px 16px 20px 16px' }}>
+                        <Text variant="headingMd" as="h6">Customers can redeem these rewards using their points</Text>
+                    </Box>
                     <ResourceList
                         resourceName={{ singular: "rule", plural: "rules" }}
-                        items={[
-                            { id: "redeem1", title: "Redeem on cart ranges", status: "Inactive", details: "100% points" },
-                        ]}
-                        renderItem={(item) => (
-                            <ResourceItem id={item.id}>
-                                <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-                                    <Text>{item.title}</Text>
-                                    <Badge status={item.status === "Active" ? "success" : "attention"}>{item.status}</Badge>
-                                    <Text>{item.details}</Text>
-                                    <Button plain>Edit</Button>
-                                </div>
-                            </ResourceItem>
-                        )}
+                        items={redeemPoints}
+                        renderItem={(item) => {
+                            const { id, title, points, icon } = item;
+                            const IconSource = iconsMap[icon];
+                            return (
+                                <ResourceItem id={id}>
+                                    <Box style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+                                        <Box style={{ display: "flex", alignItems: "center", gap: "15px" }}>
+                                            <Icon source={IconSource} />
+                                            <Box>
+                                                <Text variant="bodyMd">{title}</Text>
+                                                <Text variant="bodyMd">{points}</Text>
+                                            </Box>
+                                        </Box>
+                                        <Box style={{ display: "flex", alignItems: "center", gap: "15px" }}>
+                                            <Button variant="plain">Edit</Button>
+                                            <div className="onoffswitch">
+                                                <input
+                                                    type="checkbox"
+                                                    name=""
+                                                    className="onoffswitch-checkbox test_mode"
+                                                    id={`testMode-${id}`}
+                                                    checked=""
+                                                    onChange={() => ''}
+                                                />
+                                                <label className="onoffswitch-label" htmlFor={`testMode-${id}`}>
+                                                    <span className="onoffswitch-inner onoffswitch-inner-testmode"></span>
+                                                    <span className="onoffswitch-switch"></span>
+                                                </label>
+                                            </div>
+                                        </Box>
+                                    </Box>
+                                </ResourceItem>
+                            );
+                        }}
                     />
                 </Card>
             </Layout.AnnotatedSection>
-            <Layout.AnnotatedSection
+            {/* <Layout.AnnotatedSection
                 title={'Points Expiry'}
                 description={'Increase engagement by setting customers points balances to expire after a certain amount of time'}
             >
@@ -165,7 +192,7 @@ export default function Loyalty() {
                         <Button primary>Activate</Button>
                     </Box>
                 </Card>
-            </Layout.AnnotatedSection>
+            </Layout.AnnotatedSection> */}
             <Layout.AnnotatedSection
                 title={'Birthday Eligibility Period'}
                 description={'Set how far in advance customers must provide their birthdate to be eligible for birthday rewards'}
@@ -176,7 +203,7 @@ export default function Loyalty() {
                         label="Date of Birth Updated Wait Period"
                         suffix="Days"
                         value={30}
-                        onChange={() => {" "}}
+                        onChange={() => { " " }}
                         min={1}
                         max={30}
                     />
@@ -192,16 +219,12 @@ export default function Loyalty() {
                     <ResourceList
                         items={waysToEarn}
                         renderItem={(item) => {
-                            const { id, title, upgrade } = item;
+                            const { id, title } = item;
                             return (
                                 <ResourceItem id={id}>
                                     <InlineStack align="space-between" blockAlign="center">
                                         <Text>{title}</Text>
-                                        {upgrade ? (
-                                            <Button size="slim" disabled>Upgrade to Unlock</Button>
-                                        ) : (
-                                            <Button size="slim">Select</Button>
-                                        )}
+                                        <Button size="slim">ADD</Button>
                                     </InlineStack>
                                 </ResourceItem>
                             );
@@ -212,3 +235,5 @@ export default function Loyalty() {
         </div>
     );
 }
+
+export default Loyalty;
