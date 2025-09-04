@@ -70,7 +70,7 @@ const LoyaltySocialView = () => {
                                         <Badge tone="success">Active</Badge>
                                     </Box>
                                     <Box>
-                                        <div className="onoffswitch">
+                                        {/* <div className="onoffswitch">
                                             <input
                                                 type="checkbox"
                                                 name=""
@@ -82,6 +82,20 @@ const LoyaltySocialView = () => {
                                             <label className="onoffswitch-label" htmlFor={`testMode-${''}`}>
                                                 <span className="onoffswitch-inner onoffswitch-inner-testmode"></span>
                                                 <span className="onoffswitch-switch"></span>
+                                            </label>
+                                        </div> */}
+
+                                        <div className="toggle-container" style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                                            <label className="switch">
+                                                <input
+                                                    type="checkbox"
+                                                    // checked={item.active}
+                                                    // id={`switch-${rule_id}`}
+                                                    // onChange={(e) =>
+                                                    //     handleRuleStatusChange(item.rule_id, e.target.checked)
+                                                    // }
+                                                />
+                                                <span className="slider"></span>
                                             </label>
                                         </div>
                                     </Box>

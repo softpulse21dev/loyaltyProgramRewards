@@ -5,19 +5,16 @@ import {
     ResourceList,
     ResourceItem,
     Text,
-    Badge,
     Box,
     Modal,
     InlineStack,
     Icon,
     TextField,
-    SkeletonBodyText,
-    Spinner,
 } from "@shopify/polaris";
-import { ConfettiIcon, DeliveryIcon, DiscountCodeIcon, EditIcon, EyeCheckMarkIcon, GiftCardIcon, LogoInstagramIcon, LogoTiktokIcon, LogoXIcon, OrderIcon, RewardIcon } from "@shopify/polaris-icons";
+import { RewardIcon } from "@shopify/polaris-icons";
 import { useCallback, useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { iconsMap } from "../../utils";
+import { fetchData, iconsMap, NavigateMap } from "../../utils";
 
 const Loyalty = () => {
     const navigate = useNavigate();
@@ -28,134 +25,78 @@ const Loyalty = () => {
     const [socialOptions, setSocialOptions] = useState([]);
     const [status, setStatus] = useState(null);
     const [loading, setLoading] = useState(false);
-    const shop = "kg-store-demo.myshopify.com";
-
 
     const fetchSettings = async () => {
-        try {
-            // setLoading(true);
-            const formData = new FormData();
-            formData.append("shop", shop);
-
-            const res = await fetch(
-                "https://demo.shopiapps.in/loyalty/api/get-merchant-settings?Y6vg3RZzOZz7a9W",
-                {
-                    method: "POST",
-                    body: formData,
-                }
-            );
-
-            const data = await res.json();
-            if (data.status && data.data) {
-                setStatus(data.data.status); // true/false
-            }
-        } catch (error) {
-            console.error("Fetch settings error:", error);
-        } finally {
-            // setLoading(false);
+        const response = await fetchData("/get-merchant-settings?Y6vg3RZzOZz7a9W", new FormData());
+        if (response.status && response.data) {
+            setStatus(response.data.status);
         }
     };
 
-
-
     const handleToggleStatus = async () => {
-        try {
-            setLoading(true);
+        setLoading(true);
+        const formData = new FormData();
+        formData.append("status", !status ? "true" : "false");
 
-            const formData = new FormData();
-            formData.append("shop", shop);
-            formData.append("status", !status ? "true" : "false"); // toggle
-
-            const res = await fetch(
-                "https://demo.shopiapps.in/loyalty/api/update-merchant-settings?Y6vg3RZzOZz7a9W",
-                {
-                    method: "POST",
-                    body: formData,
-                }
-            );
-
-            const data = await res.json();
-            if (data.status) {
-                setStatus((prev) => !prev); // toggle UI
-            }
-        } catch (error) {
-            console.error("Update status error:", error);
-        } finally {
-            setLoading(false);
+        const response = await fetchData("/update-merchant-settings?Y6vg3RZzOZz7a9W", formData);
+        setLoading(false);
+        if (response.status) {
+            setStatus((prev) => !prev);
         }
     };
 
     const waysToEarnAPI = async () => {
-        try {
-            const formdata = new FormData();
-            formdata.append("shop", "kg-store-demo.myshopify.com");
-            formdata.append("setting_id", "ztEfTSMcDejdHNDnDiM5xBPdJdEuyCEkwhxdaL==");
+        const formData = new FormData();
+        formData.append("setting_id", "ztEfTSMcDejdHNDnDiM5xBPdJdEuyCEkwhxdaL==");
 
-            const response = await fetch(
-                "https://demo.shopiapps.in/loyalty/api/get-master-rules?Y6vg3RZzOZz7a9W",
-                {
-                    method: "POST",
-                    body: formdata,
-                    redirect: "follow",
-                }
-            );
+        const result = await fetchData("/get-master-rules?Y6vg3RZzOZz7a9W", formData);
+        console.log('result', result);
+        if (result.status !== false) {
+            const earning = result.active_rules?.other_rules?.map(rule => ({
+                ...rule,
+                active: rule.status === "active"
+            })) || [];
 
-            const result = await response.json();
-            console.log("result ways to earn api:", result);
+            const social = result.active_rules?.social_rules?.map(rule => ({
+                ...rule,
+                active: rule.status === "active"
+            })) || [];
+
             setWaysToEarn(result.available_rules);
-            setEarningOptions(result.active_rules?.other_rules);
-            setSocialOptions(result.active_rules?.social_rules);
-        } catch (error) {
-            console.error("error:", error);
+            setEarningOptions(earning);
+            setSocialOptions(social);
         }
-    }
-    //     try {
-    //         var formdata = new FormData();
-    //         formdata.append("shop", "kg-store-demo.myshopify.com");
-    //         formdata.append("status", status ? "true" : "false"); // ensure string
-
-    //         const response = await fetch(
-    //             "https://demo.shopiapps.in/loyalty/api/update-merchant-settings?Y6vg3RZzOZz7a9W",
-    //             {
-    //                 method: "POST",
-    //                 body: formdata,
-    //                 redirect: "follow",
-    //             }
-    //         );
-
-    //         const result = await response.json();
-    //         console.log("✅ update result:", result);
-    //     } catch (error) {
-    //         console.error("❌ error updating:", error);
-    //     }
-    // };
+    };
 
     useEffect(() => {
         fetchSettings();
         waysToEarnAPI();
     }, []);
 
-    const NavigateMap = {
-        signup: "/loyaltyProgram/loyaltySignupView",
-        social_share: "/loyaltyProgram/loyaltySocialView",
-        social_follow: "/loyaltyProgram/loyaltySocialView",
-        order: "/loyaltyProgram/orderPoints",
-        loyalty_anniversary: "/loyaltyProgram/loyaltySignupView",
-        review: "/loyaltyProgram/loyaltyStoreCreditView",
-        url_visit: "/loyaltyProgram/loyaltySocialView",
-        referral: "/loyaltyProgram/loyaltyReferralView",
-        custom_action: "/loyaltyProgram/loyaltySocialView",
-        birthday: "/loyaltyProgram/loyaltySignupView",
-        add_wallet: "/loyaltyProgram/loyaltySignupView",
-    }
+    const handleRuleStatusChange = async (ruleId, isActive) => {
+        const formData = new FormData();
+        formData.append("status", isActive ? "active" : "inactive");
+        formData.append("setting_id", "ztEfTSMcDejdHNDnDiM5xBPdJdEuyCEkwhxdaL==");
+        formData.append("rule_id", ruleId);
 
-    // const earningOptions = [
-    //     { id: 1, title: "Follow on Instagram", points: "20 Points", icon: "LogoInstagramIcon" },
-    //     { id: 2, title: "Sign up", points: "100 Points", icon: "EyeCheckMarkIcon" },
-    //     { id: 3, title: "Follow on TikTok", points: "20 Points", icon: "LogoTiktokIcon" },
-    //     { id: 4, title: "Place an order", points: "1 Point for every Rs. 1 spent", icon: "OrderIcon" },
-    //     { id: 5, title: "Celebrate a birthday", points: "250 Points", icon: "ConfettiIcon" },
-    // ];
+        const response = await fetchData(
+            "/update-merchant-earning-rules-status?Y6vg3RZzOZz7a9W",
+            formData
+        );
+
+        if (response.status) {
+            setEarningOptions((prev) =>
+                prev.map((rule) =>
+                    rule.rule_id === ruleId ? { ...rule, active: isActive } : rule
+                )
+            );
+            setSocialOptions((prev) =>
+                prev.map((rule) =>
+                    rule.rule_id === ruleId ? { ...rule, active: isActive } : rule
+                )
+            );
+        }
+    };
 
     const redeemPoints = [
         { id: "redeem1", title: "Rs. 5 of coupon", points: "100 points", icon: "DiscountCodeIcon" },
@@ -215,7 +156,7 @@ const Loyalty = () => {
                         headerContent={<Text variant="headingMd" as="h6">Online Store</Text>}
                         showHeader={true}
                         renderItem={(item) => {
-                            const { id, title, points, icon } = item;
+                            const { id, title, points, icon, rule_id } = item;
                             const IconSource = iconsMap[icon];
                             return (
                                 <ResourceItem id={id}>
@@ -228,21 +169,26 @@ const Loyalty = () => {
                                             </Box>
                                         </Box>
                                         <Box style={{ display: "flex", alignItems: "center", gap: "15px" }}>
-                                            <Button onClick={() => navigate('/loyaltyProgram/loyaltySocialView')} variant="plain">Edit</Button>
-                                            <div className="onoffswitch">
-                                                <input
-                                                    type="checkbox"
-                                                    name=""
-                                                    className="onoffswitch-checkbox test_mode"
-                                                    id={`testMode-${id}`}
-                                                    checked=""
-                                                    onChange={() => ''}
-                                                />
-                                                <label className="onoffswitch-label" htmlFor={`testMode-${id}`}>
-                                                    <span className="onoffswitch-inner onoffswitch-inner-testmode"></span>
-                                                    <span className="onoffswitch-switch"></span>
+                                            <Button onClick={() =>
+                                                navigate(NavigateMap[item.type], {
+                                                    state: { rule: item },
+                                                })
+                                            } variant="plain">Edit</Button>
+
+                                            <div className="toggle-container" style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                                                <label className="switch">
+                                                    <input
+                                                        type="checkbox"
+                                                        checked={item.active}
+                                                        id={`switch-${rule_id}`}
+                                                        onChange={(e) =>
+                                                            handleRuleStatusChange(item.rule_id, e.target.checked)
+                                                        }
+                                                    />
+                                                    <span className="slider"></span>
                                                 </label>
                                             </div>
+
                                         </Box>
                                     </Box>
                                 </ResourceItem>
@@ -255,7 +201,7 @@ const Loyalty = () => {
                         headerContent={<Text variant="headingMd" as="h6">Social Rules</Text>}
                         showHeader={true}
                         renderItem={(item) => {
-                            const { id, title, points, icon } = item;
+                            const { id, title, points, icon, rule_id } = item;
                             const IconSource = iconsMap[icon];
                             return (
                                 <ResourceItem id={id}>
@@ -269,18 +215,17 @@ const Loyalty = () => {
                                         </Box>
                                         <Box style={{ display: "flex", alignItems: "center", gap: "15px" }}>
                                             <Button onClick={() => navigate('/loyaltyProgram/loyaltySocialView')} variant="plain">Edit</Button>
-                                            <div className="onoffswitch">
-                                                <input
-                                                    type="checkbox"
-                                                    name=""
-                                                    className="onoffswitch-checkbox test_mode"
-                                                    id={`testMode-${id}`}
-                                                    checked=""
-                                                    onChange={() => ''}
-                                                />
-                                                <label className="onoffswitch-label" htmlFor={`testMode-${id}`}>
-                                                    <span className="onoffswitch-inner onoffswitch-inner-testmode"></span>
-                                                    <span className="onoffswitch-switch"></span>
+                                            <div className="toggle-container" style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                                                <label className="switch">
+                                                    <input
+                                                        type="checkbox"
+                                                        checked={item.active}
+                                                        id={`switch-${rule_id}`}
+                                                        onChange={(e) =>
+                                                            handleRuleStatusChange(item.rule_id, e.target.checked)
+                                                        }
+                                                    />
+                                                    <span className="slider"></span>
                                                 </label>
                                             </div>
                                         </Box>
@@ -326,18 +271,17 @@ const Loyalty = () => {
                                         </Box>
                                         <Box style={{ display: "flex", alignItems: "center", gap: "15px" }}>
                                             <Button variant="plain">Edit</Button>
-                                            <div className="onoffswitch">
-                                                <input
-                                                    type="checkbox"
-                                                    name=""
-                                                    className="onoffswitch-checkbox test_mode"
-                                                    id={`testMode-${id}`}
-                                                    checked=""
-                                                    onChange={() => ''}
-                                                />
-                                                <label className="onoffswitch-label" htmlFor={`testMode-${id}`}>
-                                                    <span className="onoffswitch-inner onoffswitch-inner-testmode"></span>
-                                                    <span className="onoffswitch-switch"></span>
+                                            <div className="toggle-container" style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                                                <label className="switch">
+                                                    <input
+                                                        type="checkbox"
+                                                        checked={item.active}
+                                                        // id={`switch-${rule_id}`}
+                                                        onChange={(e) =>
+                                                            handleRuleStatusChange(item.rule_id, e.target.checked)
+                                                        }
+                                                    />
+                                                    <span className="slider"></span>
                                                 </label>
                                             </div>
                                         </Box>
@@ -348,17 +292,6 @@ const Loyalty = () => {
                     />
                 </Card>
             </Layout.AnnotatedSection>
-            {/* <Layout.AnnotatedSection
-                title={'Points Expiry'}
-                description={'Increase engagement by setting customers points balances to expire after a certain amount of time'}
-            >
-                <Card>
-                    <Box style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-                        <Text variant="headingMd">This feature is Deactivated</Text>
-                        <Button primary>Activate</Button>
-                    </Box>
-                </Card>
-            </Layout.AnnotatedSection> */}
             <Layout.AnnotatedSection
                 title={'Birthday Eligibility Period'}
                 description={'Set how far in advance customers must provide their birthdate to be eligible for birthday rewards'}
@@ -386,7 +319,7 @@ const Loyalty = () => {
                     <ResourceList
                         items={waysToEarn}
                         renderItem={(item) => {
-                            const { id, title, type, platform, master_rule_id } = item;
+                            const { id, title, type } = item;
                             const route =
                                 NavigateMap[type] || `/loyaltyProgram/loyaltysocialview${window.location.search}`;
 
@@ -399,7 +332,9 @@ const Loyalty = () => {
                                             </Box>
                                             <Text>{title}</Text>
                                         </Box>
-                                        <Button onClick={() => navigate(route, { state: { type, platform, master_rule_id } })} >ADD</Button>
+                                        <Button onClick={() =>
+                                            navigate(route, { state: { rule: item } })
+                                        } >ADD</Button>
                                     </InlineStack>
                                 </ResourceItem>
                             );

@@ -1,20 +1,35 @@
 import { Badge, BlockStack, Box, Card, Grid, InlineStack, Layout, Page, RadioButton, Text, TextField } from '@shopify/polaris'
 import { SaveIcon } from '@shopify/polaris-icons';
-import React, { useState } from 'react'
-import { useNavigate } from 'react-router-dom';
+import React, { useEffect, useState } from 'react'
+import { useLocation, useNavigate } from 'react-router-dom';
 
-const OrderPoints = ({ type, platform, master_rule_id }) => {
+const OrderPoints = ({ item }) => {
+    // const { type, platform, master_rule_id } = item;
     const navigate = useNavigate();
+    const location = useLocation();
+    const { rule, edit } = location.state || {};
+
+    useEffect(() => {
+        if (rule) {
+            const pointsValue = rule.points ?? rule.default_points ?? 0;
+            setEarningPoints(pointsValue);
+            setStatus(rule.status ?? "inactive");
+        }
+    }, [rule]);
+    console.log('first', rule.rule_id)
+
     const [orderPointsMethod, setOrderPointsMethod] = useState('incremented');
     const [earningPoints, setEarningPoints] = useState();
     const [moneySpent, setMoneySpent] = useState();
+    const [status, setStatus] = useState("inactive");
 
-    
+
+
     return (
         <Page
             backAction={{ content: 'Back', onAction: () => navigate('/loyaltyProgram') }}
             title="Order Points"
-            primaryAction={{ content: 'Save', onAction: () => { } }}
+            primaryAction={{ content: edit ? "Update" : "Save", onAction: () => { } }}
         >
             <Layout>
                 <Layout.Section>
@@ -88,7 +103,7 @@ const OrderPoints = ({ type, platform, master_rule_id }) => {
                                             <Badge tone="success">Active</Badge>
                                         </Box>
                                         <Box>
-                                            <div className="onoffswitch">
+                                            {/* <div className="onoffswitch">
                                                 <input
                                                     type="checkbox"
                                                     name=""
@@ -100,6 +115,20 @@ const OrderPoints = ({ type, platform, master_rule_id }) => {
                                                 <label className="onoffswitch-label" htmlFor={`testMode-${''}`}>
                                                     <span className="onoffswitch-inner onoffswitch-inner-testmode"></span>
                                                     <span className="onoffswitch-switch"></span>
+                                                </label>
+                                            </div> */}
+
+                                            <div className="toggle-container" style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                                                <label className="switch">
+                                                    <input
+                                                        type="checkbox"
+                                                        // checked={item.active}
+                                                        // id={`switch-${rule_id}`}
+                                                        // onChange={(e) =>
+                                                        //     handleRuleStatusChange(item.rule_id, e.target.checked)
+                                                        // }
+                                                    />
+                                                    <span className="slider"></span>
                                                 </label>
                                             </div>
                                         </Box>
