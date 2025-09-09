@@ -17,14 +17,19 @@ import { useNavigate } from "react-router-dom";
 import { fetchData, iconsMap, NavigateMap } from "../../utils";
 
 const Loyalty = () => {
-    const navigate = useNavigate();
-    const [modalActive, setModalActive] = useState(false);
-    const toggleModal = useCallback(() => setModalActive((active) => !active), []);
+    const [status, setStatus] = useState(null);
+    const [loading, setLoading] = useState(false);
     const [waysToEarn, setWaysToEarn] = useState([]);
     const [earningOptions, setEarningOptions] = useState([]);
     const [socialOptions, setSocialOptions] = useState([]);
-    const [status, setStatus] = useState(null);
-    const [loading, setLoading] = useState(false);
+    const [modalActive, setModalActive] = useState(false);
+    const [redeemAvailableRules, setRedeemAvailableRules] = useState([]);
+    const [redeemPoints, setRedeemPoints] = useState([]);
+    const [redeemModalActive, setRedeemModalActive] = useState(false);
+    const navigate = useNavigate();
+    const toggleRedeemModal = useCallback(() => setRedeemModalActive((active) => !active), []);
+    const toggleModal = useCallback(() => setModalActive((active) => !active), []);
+
 
     const fetchSettings = async () => {
         const response = await fetchData("/get-merchant-settings?Y6vg3RZzOZz7a9W", new FormData());
@@ -68,9 +73,43 @@ const Loyalty = () => {
         }
     };
 
+    const fetchRedeemPoints = async () => {
+        const formData = new FormData();
+        formData.append("setting_id", "ztEfTSMcDejdHNDnDiM5xBPdJdEuyCEkwhxdaL==");
+
+        const response = await fetchData("/list-merchant-redeeming-rules?Y6vg3RZzOZz7a9W", formData);
+
+        if (response.status && response.data) {
+            const formatted = response.data.map(rule => ({
+                id: rule.id,
+                title: rule.title,
+                points: rule.points,
+                icon: "DiscountCodeIcon",
+                active: rule.status === "active"
+            }));
+            setRedeemPoints(formatted);
+        }
+    };
+
+    const fetchRedeemRules = async () => {
+        const formData = new FormData();
+        formData.append("setting_id", "ztEfTSMcDejdHNDnDiM5xBPdJdEuyCEkwhxdaL==");
+
+        const response = await fetchData(
+            "/get-master-redeeming-rules?Y6vg3RZzOZz7a9W",
+            formData
+        );
+
+        if (response.status && response.online_store_rewards) {
+            setRedeemAvailableRules(response.online_store_rewards);
+        }
+    };
+
     useEffect(() => {
         fetchSettings();
         waysToEarnAPI();
+        fetchRedeemRules();
+        fetchRedeemPoints();
     }, []);
 
     const handleRuleStatusChange = async (ruleId, isActive) => {
@@ -97,14 +136,6 @@ const Loyalty = () => {
             );
         }
     };
-
-    const redeemPoints = [
-        { id: "redeem1", title: "Rs. 5 of coupon", points: "100 points", icon: "DiscountCodeIcon" },
-        { id: "redeem2", title: "Rs. 10 of coupon", points: "200 points", icon: "DiscountCodeIcon" },
-        { id: "redeem4", title: "Free Shipping coupon", points: "1000 points", icon: "DeliveryIcon" },
-        { id: "redeem3", title: "50% of coupon", points: "500 points", icon: "DiscountCodeIcon" },
-        { id: "redeem4", title: "Free Product", points: "2000 points", icon: "GiftCardIcon" },
-    ]
 
     return (
         <div className="annotatedSection-border icon-size">
@@ -153,8 +184,6 @@ const Loyalty = () => {
                     <ResourceList
                         resourceName={{ singular: "earning", plural: "earnings" }}
                         items={earningOptions}
-                        headerContent={<Text variant="headingMd" as="h6">Online Store</Text>}
-                        showHeader={true}
                         renderItem={(item) => {
                             const { id, title, points, icon, rule_id } = item;
                             const IconSource = iconsMap[icon];
@@ -170,11 +199,10 @@ const Loyalty = () => {
                                         </Box>
                                         <Box style={{ display: "flex", alignItems: "center", gap: "15px" }}>
                                             <Button onClick={() =>
-                                                navigate(NavigateMap[item.type], {
-                                                    state: { rule: item },
+                                                navigate(NavigateMap[item.display_use_type], {
+                                                    state: { rule: item, edit: true },
                                                 })
                                             } variant="plain">Edit</Button>
-
                                             <div className="toggle-container" style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
                                                 <label className="switch">
                                                     <input
@@ -188,7 +216,6 @@ const Loyalty = () => {
                                                     <span className="slider"></span>
                                                 </label>
                                             </div>
-
                                         </Box>
                                     </Box>
                                 </ResourceItem>
@@ -214,7 +241,11 @@ const Loyalty = () => {
                                             </Box>
                                         </Box>
                                         <Box style={{ display: "flex", alignItems: "center", gap: "15px" }}>
-                                            <Button onClick={() => navigate('/loyaltyProgram/loyaltySocialView')} variant="plain">Edit</Button>
+                                            <Button onClick={() =>
+                                                navigate(NavigateMap[item.display_use_type], {
+                                                    state: { rule: item, edit: true },
+                                                })
+                                            } variant="plain">Edit</Button>
                                             <div className="toggle-container" style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
                                                 <label className="switch">
                                                     <input
@@ -244,7 +275,9 @@ const Loyalty = () => {
                             <p>Let customer redeem their earned points</p>
                         </Box>
                         <Box style={{ marginTop: 7, marginLeft: 0 }}>
-                            <Button variant="primary">Add new rule</Button>
+                            <Button variant="primary" onClick={() => {
+                                toggleRedeemModal();
+                            }}>Add new rule</Button>
                         </Box>
                     </>
                 }
@@ -257,8 +290,8 @@ const Loyalty = () => {
                         resourceName={{ singular: "rule", plural: "rules" }}
                         items={redeemPoints}
                         renderItem={(item) => {
-                            const { id, title, points, icon } = item;
-                            const IconSource = iconsMap[icon];
+                            const { id, title, points, icon, active } = item;
+                            const IconSource = iconsMap[icon] || RewardIcon;
                             return (
                                 <ResourceItem id={id}>
                                     <Box style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
@@ -270,15 +303,14 @@ const Loyalty = () => {
                                             </Box>
                                         </Box>
                                         <Box style={{ display: "flex", alignItems: "center", gap: "15px" }}>
-                                            <Button variant="plain">Edit</Button>
+                                            <Button variant="plain" onClick={() => navigate(`/loyaltyProgram/freeshipping${window.location.search}`)}>Edit</Button>
                                             <div className="toggle-container" style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
                                                 <label className="switch">
                                                     <input
                                                         type="checkbox"
-                                                        checked={item.active}
-                                                        // id={`switch-${rule_id}`}
+                                                        checked={active}
                                                         onChange={(e) =>
-                                                            handleRuleStatusChange(item.rule_id, e.target.checked)
+                                                            handleRuleStatusChange(item.id, e.target.checked)
                                                         }
                                                     />
                                                     <span className="slider"></span>
@@ -335,6 +367,42 @@ const Loyalty = () => {
                                         <Button onClick={() =>
                                             navigate(route, { state: { rule: item } })
                                         } >ADD</Button>
+                                    </InlineStack>
+                                </ResourceItem>
+                            );
+                        }}
+                    />
+                </Modal.Section>
+            </Modal>
+            <Modal
+                open={redeemModalActive}
+                onClose={toggleRedeemModal}
+                title="Redeeming Rules"
+                large
+            >
+                <Modal.Section>
+                    <ResourceList
+                        items={redeemAvailableRules}
+                        renderItem={(item) => {
+                            const { master_rule_id, title, icon } = item;
+                            const IconSource = iconsMap[icon] || RewardIcon;
+
+                            return (
+                                <ResourceItem id={master_rule_id}>
+                                    <InlineStack align="space-between" blockAlign="center">
+                                        <Box style={{ display: "flex", alignItems: "center", gap: "10px" }}>
+                                            <Box>
+                                                <Icon source={IconSource} />
+                                            </Box>
+                                            <Text>{title}</Text>
+                                        </Box>
+                                        <Button
+                                            onClick={() =>
+                                                navigate(`/loyaltyProgram/redeemRuleView`, { state: { rule: item } })
+                                            }
+                                        >
+                                            ADD
+                                        </Button>
                                     </InlineStack>
                                 </ResourceItem>
                             );

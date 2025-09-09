@@ -35,12 +35,20 @@ const LoyaltySignupView = () => {
         console.log('result', result);
     }
 
+    const handleSave = () => {
+        if (edit) {
+            EditEarningPoints()
+        } else {
+            // AddEarningPoints()
+        }
+    }
+
 
     return (
         <Page
             backAction={{ content: "Back", onAction: () => navigate("/loyaltyProgram") }}
             title={pageTitle}
-            primaryAction={{ content: edit ? "Update" : "Save", onAction: () => { EditEarningPoints() } }}
+            primaryAction={{ content: edit ? "Update" : "Save", onAction: () => { handleSave() } }}
         >
             <Layout>
                 <Layout.Section>

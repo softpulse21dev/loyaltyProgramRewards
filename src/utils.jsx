@@ -1,7 +1,8 @@
-import { ConfettiIcon, DeliveryIcon, DiscountCodeIcon, EnterIcon, GiftCardIcon, LogoInstagramIcon, LogoTiktokIcon, LogoXIcon, OrderIcon } from "@shopify/polaris-icons";
+import { ConfettiIcon, DeliveryIcon, DiscountCodeIcon, EnterIcon, GiftCardIcon, LogoFacebookIcon, LogoInstagramIcon, LogoTiktokIcon, LogoXIcon, OrderIcon } from "@shopify/polaris-icons";
 
 export const iconsMap = {
     LogoInstagramIcon,
+    LogoFacebookIcon: LogoFacebookIcon,
     LogoTiktokIcon,
     LogoTwitterIcon: LogoXIcon,
     UserSignupIcon: EnterIcon,
@@ -56,7 +57,6 @@ export const getApiURL = (path) => {
 export const fetchData = async (path, data = {}, dataType = "json") => {
     return new Promise( (resolve) => {
         const method = "POST";
-
         // Shop dynamic from URL
         let currentShop = getCurrentShop();
 
