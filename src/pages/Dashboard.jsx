@@ -1,6 +1,6 @@
-import { ActionList, Banner, BlockStack, Box, Button, Card, Collapsible, Grid, Layout, LegacyCard, LegacyStack, MediaCard, Page, Popover, Text, VideoThumbnail } from '@shopify/polaris'
+import { ActionList, Banner, BlockStack, Box, Button, Card, Collapsible, Grid, Layout, MediaCard, Page, Popover, Text, VideoThumbnail } from '@shopify/polaris'
 import { PlayCircleIcon } from '@shopify/polaris-icons';
-import React, { useCallback, useState } from 'react'
+import { useCallback, useState } from 'react'
 
 const Dashboard = () => {
     const [active, setActive] = useState(false);
@@ -37,7 +37,7 @@ const Dashboard = () => {
                 </Popover>
             }
         >
-            <Box paddingBlockEnd="800">
+            <Box>
                 <BlockStack gap="500">
                     <Banner
                         title={loyaltyStatus ? "Your loyalty program is currently enabled" : "Your loyalty program is currently disabled"}
@@ -159,41 +159,36 @@ const Dashboard = () => {
                     </BlockStack>
 
                     {/* Collapsible Section */}
-                    <div style={{ height: '200px' }}>
-
-                        <Card >
-                            <div className="accordian-title">
-                                <Button
-                                    variant="monochromePlain"
-                                    disclosure={open ? 'down' : 'up'}
-                                    onClick={() => {
-                                        handleToggle();
-                                    }}
-                                    // aria-expanded={open}
-                                    aria-controls="basic-collapsible"
-                                    fullWidth
-                                    textAlign="left"
-                                >
-                                    <Text as="h1" variant="headingMd">Get started with Loyalty program & Rewards</Text>
-                                </Button>
-                                <Text as="h1" variant="headingMd"></Text>
-                            </div>
-                            <Collapsible
-                                open={open}
-                                id="basic-collapsible"
-                                transition={{ duration: '500ms', timingFunction: 'ease-in-out' }}
-                                expandOnPrint
+                    <Card >
+                        <div className="accordian-title">
+                            <Button
+                                variant="monochromePlain"
+                                disclosure={open ? 'down' : 'up'}
+                                onClick={() => {
+                                    handleToggle();
+                                }}
+                                // aria-expanded={open}
+                                aria-controls="basic-collapsible"
+                                fullWidth
+                                textAlign="left"
                             >
-                                <p>
-                                    Your mailing list lets you contact customers or visitors who
-                                    have shown an interest in your store. Reach out to them with
-                                    exclusive offers or updates about your products.
-                                </p>
-                            </Collapsible>
-                        </Card>
-
-                    </div>
-
+                                <Text as="h1" variant="headingMd">Get started with Loyalty program & Rewards</Text>
+                            </Button>
+                            <Text as="h1" variant="headingMd"></Text>
+                        </div>
+                        <Collapsible
+                            open={open}
+                            id="basic-collapsible"
+                            transition={{ duration: '500ms', timingFunction: 'ease-in-out' }}
+                            expandOnPrint
+                        >
+                            <p>
+                                Your mailing list lets you contact customers or visitors who
+                                have shown an interest in your store. Reach out to them with
+                                exclusive offers or updates about your products.
+                            </p>
+                        </Collapsible>
+                    </Card>
                 </BlockStack>
             </Box>
         </Page>

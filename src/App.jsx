@@ -4,6 +4,7 @@ import Routes from "./routes";
 import { PolarisProvider } from "./components/provider/PolarisProvider";
 import { Provider } from "react-redux";
 import store from "./redux/store";
+import { Box } from "@shopify/polaris";
 
 function App() {
   const pages = import.meta.glob("./pages/**/!(*.test.[jt]sx)*.([jt]sx)", {
@@ -26,7 +27,9 @@ function App() {
                 <Link to={`/settings${window.location.search}`}>settings</Link>
               </NavMenu>
             </>
-            <Routes pages={pages} />
+            <Box paddingBlockEnd="1000">
+              <Routes pages={pages} />
+            </Box>
           </PolarisProvider>
         </Provider>
       </BrowserRouter>

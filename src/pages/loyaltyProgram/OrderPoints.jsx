@@ -1,34 +1,43 @@
-import { Badge, BlockStack, Box, Card, Grid, InlineStack, Layout, Page, RadioButton, Text, TextField } from '@shopify/polaris'
-import { SaveIcon } from '@shopify/polaris-icons';
-import React, { useEffect, useState } from 'react'
+import { Badge, BlockStack, Box, Card, Grid, Layout, Page, RadioButton, Text, TextField } from '@shopify/polaris'
+import { useEffect, useState } from 'react'
 import { useLocation, useNavigate } from 'react-router-dom';
 
-const OrderPoints = ({ item }) => {
-    // const { type, platform, master_rule_id } = item;
+const OrderPoints = () => {
     const navigate = useNavigate();
     const location = useLocation();
     const { rule, edit } = location.state || {};
+    console.log('rule', rule)
 
-    useEffect(() => {
-        if (rule) {
-            const pointsValue = rule.points ?? rule.default_points ?? 0;
-            setEarningPoints(pointsValue);
-            setStatus(rule.status ?? "inactive");
-        }
-    }, [rule]);
-    console.log('first', rule.rule_id)
-
+    const [pageTitle, setPageTitle] = useState("Order Points");
     const [orderPointsMethod, setOrderPointsMethod] = useState('incremented');
     const [earningPoints, setEarningPoints] = useState();
     const [moneySpent, setMoneySpent] = useState();
     const [status, setStatus] = useState("inactive");
 
+    useEffect(() => {
+        if (rule) {
+            setPageTitle(rule.title || "Order Points"); // ✅ dynamic title
+            const pointsValue = rule.points ?? rule.default_points ?? 0;
+            setEarningPoints(pointsValue);
+            setStatus(rule.status ?? "inactive");
+        }
+    }, [rule]);
 
+    const handleStatusChange = () => {
+        setStatus(prevStatus => prevStatus === 'active' ? 'inactive' : 'active');
+    };
 
     return (
         <Page
             backAction={{ content: 'Back', onAction: () => navigate('/loyaltyProgram') }}
-            title="Order Points"
+            title={
+                <Box style={{ display: "flex", justifyContent: "space-between", alignItems: "center", gap: "10px" }}>
+                    <Text as='h1' variant='headingLg'>{pageTitle}</Text>
+                    <Badge tone={status === "active" ? "success" : "critical"}>
+                        {status.charAt(0).toUpperCase() + status.slice(1)}
+                    </Badge>
+                </Box>
+            }
             primaryAction={{ content: edit ? "Update" : "Save", onAction: () => { } }}
         >
             <Layout>
@@ -43,12 +52,11 @@ const OrderPoints = ({ item }) => {
                                             label="Incremented points"
                                             checked={orderPointsMethod === 'incremented'}
                                             onChange={() => setOrderPointsMethod('incremented')}
-
                                         />
                                         <RadioButton
                                             label="Fixed points"
                                             checked={orderPointsMethod === 'fixed'}
-                                            onChange={() => { setOrderPointsMethod('fixed') }}
+                                            onChange={() => setOrderPointsMethod('fixed')}
                                         />
                                     </BlockStack>
                                 </Card>
@@ -77,7 +85,6 @@ const OrderPoints = ({ item }) => {
                                                     />
                                                 </>
                                             )}
-
                                         </Box>
                                         {orderPointsMethod === 'incremented' && (
                                             <Text alignment="center" variant="bodyMd">
@@ -100,33 +107,17 @@ const OrderPoints = ({ item }) => {
                                     <BlockStack gap={300}>
                                         <Box style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
                                             <Text variant='headingMd' as="span">Status</Text>
-                                            <Badge tone="success">Active</Badge>
+                                            <Badge tone={status === "active" ? "success" : "critical"}>
+                                                {status.charAt(0).toUpperCase() + status.slice(1)}
+                                            </Badge>
                                         </Box>
                                         <Box>
-                                            {/* <div className="onoffswitch">
-                                                <input
-                                                    type="checkbox"
-                                                    name=""
-                                                    className="onoffswitch-checkbox test_mode"
-                                                    id={`testMode-${''}`}
-                                                    checked=""
-                                                    onChange={() => ''}
-                                                />
-                                                <label className="onoffswitch-label" htmlFor={`testMode-${''}`}>
-                                                    <span className="onoffswitch-inner onoffswitch-inner-testmode"></span>
-                                                    <span className="onoffswitch-switch"></span>
-                                                </label>
-                                            </div> */}
-
                                             <div className="toggle-container" style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
                                                 <label className="switch">
                                                     <input
                                                         type="checkbox"
-                                                        // checked={item.active}
-                                                        // id={`switch-${rule_id}`}
-                                                        // onChange={(e) =>
-                                                        //     handleRuleStatusChange(item.rule_id, e.target.checked)
-                                                        // }
+                                                        checked={status === "active"}
+                                                        onChange={handleStatusChange}
                                                     />
                                                     <span className="slider"></span>
                                                 </label>

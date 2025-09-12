@@ -14,7 +14,8 @@ import {
 import { RewardIcon } from "@shopify/polaris-icons";
 import { useCallback, useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { fetchData, iconsMap, NavigateMap } from "../../utils";
+import { iconsMap, NavigateMap } from "../../utils";
+import { fetchData } from "../../action";
 
 const Loyalty = () => {
     const [status, setStatus] = useState(null);
@@ -303,7 +304,7 @@ const Loyalty = () => {
                                             </Box>
                                         </Box>
                                         <Box style={{ display: "flex", alignItems: "center", gap: "15px" }}>
-                                            <Button variant="plain" onClick={() => navigate(`/loyaltyProgram/freeshipping${window.location.search}`)}>Edit</Button>
+                                            <Button variant="plain" onClick={() => navigate(`/loyaltyProgram/CouponPage${window.location.search}`)}>Edit</Button>
                                             <div className="toggle-container" style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
                                                 <label className="switch">
                                                     <input

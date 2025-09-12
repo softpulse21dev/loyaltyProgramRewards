@@ -1,7 +1,8 @@
 import { useLocation, useNavigate } from "react-router-dom";
 import { useEffect, useState } from "react";
 import { Badge, BlockStack, Box, Card, Grid, Layout, Page, Text, TextField } from "@shopify/polaris";
-import { fetchData } from "../../utils";
+import { fetchData } from "../../action";
+
 
 const LoyaltySignupView = () => {
     const navigate = useNavigate();
@@ -22,7 +23,11 @@ const LoyaltySignupView = () => {
     }, [rule]);
     console.log('first', rule.rule_id)
 
-    const EditEarningPoints = async () => {
+    const handleStatusChange = () => {
+        setStatus(prevStatus => prevStatus === 'active' ? 'inactive' : 'active');
+    };
+
+    const EditEarningPointsAPI = async () => {
         const formData = new FormData();
         formData.append("shop", "kg-store-demo.myshopify.com");
         formData.append("rule_id", rule?.rule_id);
@@ -33,11 +38,16 @@ const LoyaltySignupView = () => {
         const response = await fetchData("/update-merchant-earning-rules?Y6vg3RZzOZz7a9W", formData);
         const result = await response.json();
         console.log('result', result);
+        if (result.status) {
+            shopify.toast.show(response?.message, { duration: 2000 });
+        } else {
+            shopify.toast.show(response?.errors?.points, { isError: true, duration: 2000 });
+        }
     }
 
     const handleSave = () => {
         if (edit) {
-            EditEarningPoints()
+            EditEarningPointsAPI()
         } else {
             // AddEarningPoints()
         }
@@ -47,7 +57,14 @@ const LoyaltySignupView = () => {
     return (
         <Page
             backAction={{ content: "Back", onAction: () => navigate("/loyaltyProgram") }}
-            title={pageTitle}
+            title={
+                <Box style={{ display: "flex", justifyContent: "space-between", alignItems: "center", gap: "10px" }}>
+                    <Text as='h1' variant='headingLg'>{pageTitle}</Text>
+                    <Badge tone={status === "active" ? "success" : "critical"}>
+                        {status.charAt(0).toUpperCase() + status.slice(1)}
+                    </Badge>
+                </Box>
+            }
             primaryAction={{ content: edit ? "Update" : "Save", onAction: () => { handleSave() } }}
         >
             <Layout>
@@ -84,61 +101,36 @@ const LoyaltySignupView = () => {
                                 </Card>
 
                                 <Card>
-                                    <Box
-                                        style={{
-                                            display: "flex",
-                                            justifyContent: "space-between",
-                                            alignItems: "center",
-                                        }}
-                                    >
-                                        <Text variant="headingMd" as="span">
-                                            Status
-                                        </Text>
-                                        <Badge tone={status === "active" ? "success" : "critical"}>
-                                            {status}
-                                        </Badge>
-                                    </Box>
+                                    <BlockStack gap={200}>
+                                        <Box
+                                            style={{
+                                                display: "flex",
+                                                justifyContent: "space-between",
+                                                alignItems: "center",
+                                            }}
+                                        >
+                                            <Text variant="headingMd" as="span">
+                                                Status
+                                            </Text>
+                                            <Badge tone={status === "active" ? "success" : "critical"}>
+                                                {status.charAt(0).toUpperCase() + status.slice(1)}
+                                            </Badge>
+                                        </Box>
 
-                                    <Box>
-                                        <div className="toggle-container" style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                                            <label className="switch">
-                                                <input
-                                                    type="checkbox"
-                                                // checked={item.active}
-                                                // id={`switch-${rule_id}`}
-                                                // onChange={(e) =>
-                                                //     handleRuleStatusChange(item.rule_id, e.target.checked)
-                                                // }
-                                                />
-                                                <span className="slider"></span>
-                                            </label>
-                                        </div>
+                                        <Box>
+                                            <div className="toggle-container" style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                                                <label className="switch">
+                                                    <input
+                                                        type="checkbox"
+                                                        checked={status === "active"}
+                                                        onChange={handleStatusChange}
+                                                    />
+                                                    <span className="slider"></span>
+                                                </label>
+                                            </div>
+                                        </Box>
+                                    </BlockStack>
 
-
-
-
-
-                                        {/* <div className="onoffswitch">
-                                            <input
-                                                type="checkbox"
-                                                className="onoffswitch-checkbox test_mode"
-                                                id={`testMode-${rule?.rule_id}`}
-                                                checked={status === "active"}
-                                                onChange={() =>
-                                                    setStatus((prev) =>
-                                                        prev === "active" ? "inactive" : "active"
-                                                    )
-                                                }
-                                            />
-                                            <label
-                                                className="onoffswitch-label"
-                                                htmlFor={`testMode-${rule?.rule_id}`}
-                                            >
-                                                <span className="onoffswitch-inner onoffswitch-inner-testmode"></span>
-                                                <span className="onoffswitch-switch"></span>
-                                            </label>
-                                        </div> */}
-                                    </Box>
                                 </Card>
                             </BlockStack>
                         </Grid.Cell>

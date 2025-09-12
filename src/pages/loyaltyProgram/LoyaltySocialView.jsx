@@ -2,7 +2,8 @@ import { Badge, BlockStack, Box, Button, Card, Grid, Layout, Page, Text, TextFie
 import { DeleteIcon } from '@shopify/polaris-icons';
 import { useState, useEffect } from 'react'
 import { useNavigate, useLocation } from 'react-router-dom';
-import { fetchData } from '../../utils';
+import { fetchData } from '../../action';
+
 
 const LoyaltySocialView = () => {
     const navigate = useNavigate();
@@ -23,6 +24,7 @@ const LoyaltySocialView = () => {
     });
     const [getdatabyID, setGetdatabyID] = useState();
     const [loading, setLoading] = useState(true);
+    const [errors, setErrors] = useState({});
 
     // Determine the field name dynamically based on platform
     const getFieldNameForPlatform = () => {
@@ -61,14 +63,15 @@ const LoyaltySocialView = () => {
             const pointsValue = getdatabyID?.points ?? getdatabyID?.default_points ?? '0';
             setEarningpoints(pointsValue);
 
-            // Dynamically set the conditionalJson field based on the platform
             const platformField = getFieldNameForPlatform();
-            setConditionalJson({
-                [platformField]: getdatabyID?.condition_json?.[platformField] || '',
-            });
+            if (platformField) {
+                setConditionalJson({
+                    [platformField]: getdatabyID?.condition_json?.[platformField] || '',
+                });
+            }
 
             setStatus(getdatabyID?.status ?? 'inactive');
-            setLoading(false); // Set loading to false when data is fetched
+            setLoading(false);
         }
     }, [getdatabyID]);
 
@@ -78,6 +81,11 @@ const LoyaltySocialView = () => {
         formData.append("rule_id", ruleId);
         const response = await fetchData("/delete-merchant-earning-rules?Y6vg3RZzOZz7a9W", formData);
         console.log('result delete earning rule', response);
+        if (response.status) {
+            navigate('/loyaltyProgram');
+        } else {
+            console.error('Delete Url Error', response);
+        }
     }
 
     const AddRuleAPI = async () => {
@@ -90,6 +98,11 @@ const LoyaltySocialView = () => {
         formData.append("condition_json", JSON.stringify(conditionalJson));
         const response = await fetchData("/add-merchant-earning-rules?Y6vg3RZzOZz7a9W", formData);
         console.log('Add Url Response', response);
+        if (response.status) {
+            navigate('/loyaltyProgram');
+        } else {
+            console.error('Add Url Error', response);
+        }
     }
 
     const getRuleByIdAPI = async (ruleId) => {
@@ -98,37 +111,77 @@ const LoyaltySocialView = () => {
         formData.append("rule_id", ruleId);
         const response = await fetchData("/get-merchant-earning-rules-by-id?Y6vg3RZzOZz7a9W", formData);
         if (response?.data) {
-            setGetdatabyID(response.data); // Update state with fetched data
+            setGetdatabyID(response.data);
             console.log('Get Rule By Id Response', response);
         }
     }
 
+    const updateRuleAPI = async (ruleId) => {
+        const formData = new FormData();
+        formData.append("rule_id", ruleId);
+        formData.append("points", earningpoints);
+        formData.append("status", status);
+        formData.append("condition_json", JSON.stringify(conditionalJson));
+        const response = await fetchData("/update-merchant-earning-rules?Y6vg3RZzOZz7a9W", formData);
+        console.log('Update Rule By Id Response', response);
+        if (response.status) {
+            navigate('/loyaltyProgram');
+        } else {
+            console.error('Update Url Error', response);
+        }
+    }
+
+    // ✅ **New validation function**
+    const validateFields = () => {
+        const newErrors = {};
+        const urlValue = conditionalJson[getFieldNameForPlatform()];
+
+        if (!earningpoints || !/^\d+$/.test(earningpoints) || parseInt(earningpoints, 10) < 0) {
+            newErrors.points = 'Please enter a whole number (0 or more).';
+        }
+
+        // ✅ **UPDATED REGEX to be more flexible and accept hashes (#) and other special characters**
+        const urlRegex = /^(https?:\/\/)?[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}(?:\/[^ \s]*)?$/;
+        if (urlValue && !urlRegex.test(urlValue)) {
+            newErrors.url = 'Please enter a valid URL.';
+        }
+
+        setErrors(newErrors);
+        return Object.keys(newErrors).length === 0;
+    };
+
     const handleSave = () => {
+        // Run validation before saving
+        if (!validateFields()) {
+            return; // Stop execution if validation fails
+        }
+
         if (edit) {
-            // AddRuleAPI(); // Uncomment if you want to handle edit saving
+            updateRuleAPI(rule.rule_id);
         } else {
             AddRuleAPI();
         }
     }
 
-    // Handle status toggle change
     const handleStatusChange = () => {
         setStatus(prevStatus => prevStatus === 'active' ? 'inactive' : 'active');
     };
+
+    const fieldName = getFieldNameForPlatform();
 
     return (
         <Page
             backAction={{ content: 'Back', onAction: () => navigate('/loyaltyProgram') }}
             title={
                 <Box style={{ display: "flex", justifyContent: "space-between", alignItems: "center", gap: "10px" }}>
-                    <Text>{pageTitle}</Text>
+                    <Text as='h1' variant='headingLg'>{pageTitle}</Text>
                     <Badge tone={status === "active" ? "success" : "critical"}>
-                        {status}
+                        {status.charAt(0).toUpperCase() + status.slice(1)}
                     </Badge>
                 </Box>
             }
-            secondaryActions={<Button tone='critical' icon={DeleteIcon} onClick={() => { deleteEarningRuleAPI(rule.rule_id) }}>Delete</Button>}
-            primaryAction={{ content: 'Save', onAction: () => { handleSave() } }}
+            secondaryActions={edit ? <Button variant='tertiary' tone='critical' icon={DeleteIcon} onClick={() => { deleteEarningRuleAPI(rule.rule_id) }}>Delete</Button> : undefined}
+            primaryAction={{ content: 'Save', onAction: handleSave }}
         >
             <Layout>
                 <Layout.Section>
@@ -137,41 +190,50 @@ const LoyaltySocialView = () => {
                             <BlockStack gap={400}>
                                 <Card>
                                     <BlockStack gap={400}>
-                                        <Text variant='headingMd' as="span">Social Settings</Text>
-
-                                        {/* Skeleton loader for the social media profile URL, show only when edit is true */}
+                                        <Text variant='headingMd' as="h2">Social Settings</Text>
                                         {loading && edit ? (
                                             <SkeletonBodyText lines={1} />
                                         ) : (
-                                            <TextField
+                                            fieldName && <TextField
                                                 label="Social Media Profile URL"
-                                                value={conditionalJson[getFieldNameForPlatform()]}
-                                                onChange={(value) => setConditionalJson({
-                                                    ...conditionalJson,
-                                                    [getFieldNameForPlatform()]: value
-                                                })}
+                                                value={conditionalJson[fieldName]}
+                                                // ✅ **Handle change and clear errors**
+                                                onChange={(value) => {
+                                                    setConditionalJson({
+                                                        ...conditionalJson,
+                                                        [fieldName]: value
+                                                    });
+                                                    if (errors.url) setErrors(prev => ({ ...prev, url: undefined }));
+                                                }}
                                                 maxLength={255}
+                                                autoComplete="off"
+                                                // ✅ **Display error message**
+                                                error={errors.url}
                                             />
                                         )}
                                     </BlockStack>
                                 </Card>
 
                                 <Card>
-                                    <Box style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
-                                        <Text variant='headingMd' as="span">Earning points</Text>
-                                        <Box>
-                                            {/* Skeleton loader for the points input, show only when edit is true */}
-                                            {loading && edit ? (
-                                                <SkeletonDisplayText size="small" />
-                                            ) : (
-                                                <TextField
-                                                    value={earningpoints}
-                                                    type='number'
-                                                    onChange={(value) => setEarningpoints(value)}
-                                                />
-                                            )}
-                                        </Box>
-                                    </Box>
+                                    <BlockStack gap={200}>
+                                        <Text variant='headingMd' as="h2">Earning points</Text>
+                                        {loading && edit ? (
+                                            <SkeletonDisplayText size="small" />
+                                        ) : (
+                                            <TextField
+                                                value={earningpoints}
+                                                type='number'
+                                                // ✅ **Handle change and clear errors**
+                                                onChange={(value) => {
+                                                    setEarningpoints(value);
+                                                    if (errors.points) setErrors(prev => ({ ...prev, points: undefined }));
+                                                }}
+                                                autoComplete="off"
+                                                // ✅ **Display error message**
+                                                error={errors.points}
+                                            />
+                                        )}
+                                    </BlockStack>
                                 </Card>
                             </BlockStack>
                         </Grid.Cell>
@@ -179,14 +241,13 @@ const LoyaltySocialView = () => {
                         <Grid.Cell columnSpan={{ xs: 6, sm: 2, md: 2, lg: 4, xl: 4 }}>
                             <BlockStack gap={400}>
                                 <Card>
-                                    <Box style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-                                        <Text variant='headingMd' as="span">Status</Text>
-                                        <Badge tone={status === "active" ? "success" : "critical"}>
-                                            {status}
-                                        </Badge>
-                                    </Box>
-                                    <Box>
-                                        {/* Status toggle */}
+                                    <BlockStack gap={200}>
+                                        <Box style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+                                            <Text variant='headingMd' as="h2">Status</Text>
+                                            <Badge tone={status === "active" ? "success" : "critical"}>
+                                                {status.charAt(0).toUpperCase() + status.slice(1)}
+                                            </Badge>
+                                        </Box>
                                         {loading && edit ? (
                                             <SkeletonBodyText lines={1} />
                                         ) : (
@@ -195,13 +256,13 @@ const LoyaltySocialView = () => {
                                                     <input
                                                         type="checkbox"
                                                         checked={status === "active"}
-                                                        onChange={handleStatusChange}  // Toggle status
+                                                        onChange={handleStatusChange}
                                                     />
                                                     <span className="slider"></span>
                                                 </label>
                                             </div>
                                         )}
-                                    </Box>
+                                    </BlockStack>
                                 </Card>
                             </BlockStack>
                         </Grid.Cell>
