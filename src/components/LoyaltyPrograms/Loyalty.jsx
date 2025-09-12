@@ -20,22 +20,20 @@ import { fetchData } from "../../action";
 const Loyalty = () => {
     const [status, setStatus] = useState(null);
     const [loading, setLoading] = useState(false);
-    const [waysToEarn, setWaysToEarn] = useState([]);
-    const [earningOptions, setEarningOptions] = useState([]);
-    const [socialOptions, setSocialOptions] = useState([]);
+    const [loyaltyData, setLoyaltyData] = useState([]);
     const [modalActive, setModalActive] = useState(false);
-    const [redeemAvailableRules, setRedeemAvailableRules] = useState([]);
-    const [redeemPoints, setRedeemPoints] = useState([]);
     const [redeemModalActive, setRedeemModalActive] = useState(false);
     const navigate = useNavigate();
     const toggleRedeemModal = useCallback(() => setRedeemModalActive((active) => !active), []);
     const toggleModal = useCallback(() => setModalActive((active) => !active), []);
 
-
-    const fetchSettings = async () => {
+    const fetchSettingsAPI = async () => {
         const response = await fetchData("/get-merchant-settings?Y6vg3RZzOZz7a9W", new FormData());
         if (response.status && response.data) {
             setStatus(response.data.status);
+            setLoyaltyData(response.data);
+        } else {
+            shopify.toast.show(response?.message, { duration: 2000, isError: true });
         }
     };
 
@@ -51,90 +49,23 @@ const Loyalty = () => {
         }
     };
 
-    const waysToEarnAPI = async () => {
-        const formData = new FormData();
-        formData.append("setting_id", "ztEfTSMcDejdHNDnDiM5xBPdJdEuyCEkwhxdaL==");
-
-        const result = await fetchData("/get-master-rules?Y6vg3RZzOZz7a9W", formData);
-        console.log('result', result);
-        if (result.status !== false) {
-            const earning = result.active_rules?.other_rules?.map(rule => ({
-                ...rule,
-                active: rule.status === "active"
-            })) || [];
-
-            const social = result.active_rules?.social_rules?.map(rule => ({
-                ...rule,
-                active: rule.status === "active"
-            })) || [];
-
-            setWaysToEarn(result.available_rules);
-            setEarningOptions(earning);
-            setSocialOptions(social);
-        }
-    };
-
-    const fetchRedeemPoints = async () => {
-        const formData = new FormData();
-        formData.append("setting_id", "ztEfTSMcDejdHNDnDiM5xBPdJdEuyCEkwhxdaL==");
-
-        const response = await fetchData("/list-merchant-redeeming-rules?Y6vg3RZzOZz7a9W", formData);
-
-        if (response.status && response.data) {
-            const formatted = response.data.map(rule => ({
-                id: rule.id,
-                title: rule.title,
-                points: rule.points,
-                icon: "DiscountCodeIcon",
-                active: rule.status === "active"
-            }));
-            setRedeemPoints(formatted);
-        }
-    };
-
-    const fetchRedeemRules = async () => {
-        const formData = new FormData();
-        formData.append("setting_id", "ztEfTSMcDejdHNDnDiM5xBPdJdEuyCEkwhxdaL==");
-
-        const response = await fetchData(
-            "/get-master-redeeming-rules?Y6vg3RZzOZz7a9W",
-            formData
-        );
-
-        if (response.status && response.online_store_rewards) {
-            setRedeemAvailableRules(response.online_store_rewards);
-        }
-    };
-
     useEffect(() => {
-        fetchSettings();
-        waysToEarnAPI();
-        fetchRedeemRules();
-        fetchRedeemPoints();
+        fetchSettingsAPI();
     }, []);
 
-    const handleRuleStatusChange = async (ruleId, isActive) => {
+    const handleRuleStatusChangeAPI = async (ruleId, isActive, isEarningRule = true) => {
         const formData = new FormData();
         formData.append("status", isActive ? "active" : "inactive");
-        formData.append("setting_id", "ztEfTSMcDejdHNDnDiM5xBPdJdEuyCEkwhxdaL==");
         formData.append("rule_id", ruleId);
 
-        const response = await fetchData(
-            "/update-merchant-earning-rules-status?Y6vg3RZzOZz7a9W",
-            formData
-        );
+        const url = isEarningRule ? "/update-merchant-earning-rules-status?Y6vg3RZzOZz7a9W" : "/update-merchant-redeeming-rules?Y6vg3RZzOZz7a9W";
+        const response = await fetchData(url, formData);
 
         if (response.status) {
-            setEarningOptions((prev) =>
-                prev.map((rule) =>
-                    rule.rule_id === ruleId ? { ...rule, active: isActive } : rule
-                )
-            );
-            setSocialOptions((prev) =>
-                prev.map((rule) =>
-                    rule.rule_id === ruleId ? { ...rule, active: isActive } : rule
-                )
-            );
+            shopify.toast.show(response?.message, { duration: 2000});
+            fetchSettingsAPI(); // Re-fetch data to update the UI
+        } else {
+            shopify.toast.show(response?.message, { duration: 2000, isError: true });
         }
     };
 
@@ -184,9 +115,9 @@ const Loyalty = () => {
                     </Box>
                     <ResourceList
                         resourceName={{ singular: "earning", plural: "earnings" }}
-                        items={earningOptions}
+                        items={loyaltyData?.earning_rules?.active_rules?.other_rules || []}
                         renderItem={(item) => {
-                            const { id, title, points, icon, rule_id } = item;
+                            const { id, title, points, icon, rule_id, status: itemStatus } = item;
                             const IconSource = iconsMap[icon];
                             return (
                                 <ResourceItem id={id}>
@@ -208,10 +139,10 @@ const Loyalty = () => {
                                                 <label className="switch">
                                                     <input
                                                         type="checkbox"
-                                                        checked={item.active}
+                                                        checked={itemStatus === 'active'}
                                                         id={`switch-${rule_id}`}
                                                         onChange={(e) =>
-                                                            handleRuleStatusChange(item.rule_id, e.target.checked)
+                                                            handleRuleStatusChangeAPI(item.rule_id, e.target.checked)
                                                         }
                                                     />
                                                     <span className="slider"></span>
@@ -225,11 +156,11 @@ const Loyalty = () => {
                     />
                     <ResourceList
                         resourceName={{ singular: "earning", plural: "earnings" }}
-                        items={socialOptions}
+                        items={loyaltyData?.earning_rules?.active_rules?.social_rules || []}
                         headerContent={<Text variant="headingMd" as="h6">Social Rules</Text>}
                         showHeader={true}
                         renderItem={(item) => {
-                            const { id, title, points, icon, rule_id } = item;
+                            const { id, title, points, icon, rule_id, status: itemStatus } = item;
                             const IconSource = iconsMap[icon];
                             return (
                                 <ResourceItem id={id}>
@@ -251,10 +182,10 @@ const Loyalty = () => {
                                                 <label className="switch">
                                                     <input
                                                         type="checkbox"
-                                                        checked={item.active}
+                                                        checked={itemStatus === 'active'}
                                                         id={`switch-${rule_id}`}
                                                         onChange={(e) =>
-                                                            handleRuleStatusChange(item.rule_id, e.target.checked)
+                                                            handleRuleStatusChangeAPI(item.rule_id, e.target.checked)
                                                         }
                                                     />
                                                     <span className="slider"></span>
@@ -276,9 +207,7 @@ const Loyalty = () => {
                             <p>Let customer redeem their earned points</p>
                         </Box>
                         <Box style={{ marginTop: 7, marginLeft: 0 }}>
-                            <Button variant="primary" onClick={() => {
-                                toggleRedeemModal();
-                            }}>Add new rule</Button>
+                            <Button variant="primary" onClick={toggleRedeemModal}>Add new rule</Button>
                         </Box>
                     </>
                 }
@@ -289,9 +218,9 @@ const Loyalty = () => {
                     </Box>
                     <ResourceList
                         resourceName={{ singular: "rule", plural: "rules" }}
-                        items={redeemPoints}
+                        items={loyaltyData?.redeeming_rules?.active_rules || []}
                         renderItem={(item) => {
-                            const { id, title, points, icon, active } = item;
+                            const { id, title, points, icon, status: itemStatus } = item;
                             const IconSource = iconsMap[icon] || RewardIcon;
                             return (
                                 <ResourceItem id={id}>
@@ -309,9 +238,9 @@ const Loyalty = () => {
                                                 <label className="switch">
                                                     <input
                                                         type="checkbox"
-                                                        checked={active}
+                                                        checked={itemStatus === 'active'}
                                                         onChange={(e) =>
-                                                            handleRuleStatusChange(item.id, e.target.checked)
+                                                            handleRuleStatusChangeAPI(item.id, e.target.checked, false)
                                                         }
                                                     />
                                                     <span className="slider"></span>
@@ -350,11 +279,10 @@ const Loyalty = () => {
             >
                 <Modal.Section>
                     <ResourceList
-                        items={waysToEarn}
+                        items={loyaltyData?.earning_rules?.master_rules || []}
                         renderItem={(item) => {
                             const { id, title, type } = item;
-                            const route =
-                                NavigateMap[type] || `/loyaltyProgram/loyaltysocialview${window.location.search}`;
+                            const route = NavigateMap[type] || `/loyaltyProgram/loyaltysocialview${window.location.search}`;
 
                             return (
                                 <ResourceItem id={id}>
@@ -375,6 +303,7 @@ const Loyalty = () => {
                     />
                 </Modal.Section>
             </Modal>
+
             <Modal
                 open={redeemModalActive}
                 onClose={toggleRedeemModal}
@@ -383,7 +312,7 @@ const Loyalty = () => {
             >
                 <Modal.Section>
                     <ResourceList
-                        items={redeemAvailableRules}
+                        items={loyaltyData?.redeeming_rules?.master_rules || []}
                         renderItem={(item) => {
                             const { master_rule_id, title, icon } = item;
                             const IconSource = iconsMap[icon] || RewardIcon;
@@ -413,6 +342,6 @@ const Loyalty = () => {
             </Modal>
         </div>
     );
-}
+};
 
 export default Loyalty;

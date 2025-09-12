@@ -1,6 +1,7 @@
 import { Badge, BlockStack, Box, Card, Grid, Layout, Page, RadioButton, Text, TextField } from '@shopify/polaris'
 import { useEffect, useState } from 'react'
 import { useLocation, useNavigate } from 'react-router-dom';
+import { fetchData } from '../../action';
 
 const OrderPoints = () => {
     const navigate = useNavigate();
@@ -14,9 +15,21 @@ const OrderPoints = () => {
     const [moneySpent, setMoneySpent] = useState();
     const [status, setStatus] = useState("inactive");
 
+    const [getdatabyID, setGetdatabyID] = useState();
+    
+    const getRuleByIdAPI = async (ruleId) => {
+        const formData = new FormData();
+        formData.append("rule_id", ruleId);
+        const response = await fetchData("/get-merchant-earning-rules-by-id?Y6vg3RZzOZz7a9W", formData);
+        if (response?.data) {
+            setGetdatabyID(response.data);
+
+            console.log('Get Rule By Id Response', response);
+        }
+    };
     useEffect(() => {
         if (rule) {
-            setPageTitle(rule.title || "Order Points"); // ✅ dynamic title
+            setPageTitle(rule.title || "Order Points");
             const pointsValue = rule.points ?? rule.default_points ?? 0;
             setEarningPoints(pointsValue);
             setStatus(rule.status ?? "inactive");

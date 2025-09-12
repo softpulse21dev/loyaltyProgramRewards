@@ -216,11 +216,12 @@ const LoyaltySocialView = () => {
 
                                 <Card>
                                     <BlockStack gap={200}>
-                                        <Text variant='headingMd' as="h2">Earning points</Text>
+                                        {/* <Text variant='headingMd' as="h2">Earning points</Text> */}
                                         {loading && edit ? (
                                             <SkeletonDisplayText size="small" />
                                         ) : (
                                             <TextField
+                                                label="Earning points"
                                                 value={earningpoints}
                                                 type='number'
                                                 // ✅ **Handle change and clear errors**

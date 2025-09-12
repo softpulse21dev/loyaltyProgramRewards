@@ -1,4 +1,4 @@
-import { ConfettiIcon, DeliveryIcon, DiscountCodeIcon, EnterIcon, GiftCardIcon, LogoFacebookIcon, LogoInstagramIcon, LogoTiktokIcon, LogoXIcon, OrderIcon } from "@shopify/polaris-icons";
+import { ArrowDiagonalIcon, ConfettiIcon, DeliveryIcon, DiscountCodeIcon, EnterIcon, GiftCardIcon, LogoFacebookIcon, LogoInstagramIcon, LogoTiktokIcon, LogoXIcon, OrderIcon, WalletIcon } from "@shopify/polaris-icons";
 
 export const iconsMap = {
     LogoInstagramIcon,
@@ -6,11 +6,13 @@ export const iconsMap = {
     LogoTiktokIcon,
     LogoTwitterIcon: LogoXIcon,
     UserSignupIcon: EnterIcon,
+    VisitURLIcon: ArrowDiagonalIcon,
     OrderCartIcon: OrderIcon,
-    ConfettiIcon,
+    BirthdayCakeIcon: ConfettiIcon,
     GiftCardIcon,
     DiscountCodeIcon,
-    DeliveryIcon
+    DeliveryIcon,
+    WalletPassIcon: WalletIcon,
 };
 
 export const NavigateMap = {
@@ -28,3 +30,6 @@ export const NavigateMap = {
     birthday: "/loyaltyProgram/loyaltySignupView",
     add_wallet: "/loyaltyProgram/loyaltySignupView",
 }
+
+
+// https://docs.google.com/document/d/11SHYSidCKFvxceiOE4-DTzvc3UthlGxb2JsLCY6i5rc/edit?hl=en-GB&forcehl=1&tab=t.sxv4ttgt6n4c
