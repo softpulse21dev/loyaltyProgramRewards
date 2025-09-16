@@ -16,18 +16,18 @@ const OrderPoints = () => {
     const [status, setStatus] = useState("inactive");
 
     const [getdatabyID, setGetdatabyID] = useState();
-    
+
     const getRuleByIdAPI = async (ruleId) => {
         const formData = new FormData();
         formData.append("rule_id", ruleId);
         const response = await fetchData("/get-merchant-earning-rules-by-id?Y6vg3RZzOZz7a9W", formData);
         if (response?.data) {
             setGetdatabyID(response.data);
-
-            console.log('Get Rule By Id Response', response);
+            console.log('Get Rule ID by order points', response);
         }
     };
     useEffect(() => {
+        getRuleByIdAPI(rule.rule_id);
         if (rule) {
             setPageTitle(rule.title || "Order Points");
             const pointsValue = rule.points ?? rule.default_points ?? 0;

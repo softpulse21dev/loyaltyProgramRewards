@@ -12,6 +12,9 @@
 .LPR_RedeemModal .p-theme-light {
   --p-space-400: 0;
 }
+.LPR_CollectionModal .Polaris-Modal-Section .Polaris-Box:first-of-type {
+  /* padding: 0; */
+}
 
 /* Toggle switch */
 .toggle-container {
