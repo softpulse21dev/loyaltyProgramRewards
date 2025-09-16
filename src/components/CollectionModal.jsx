@@ -1,33 +1,50 @@
-import { BlockStack, Box, Button, InlineStack, Modal, ResourceItem, ResourceList, Text, TextField, Icon } from '@shopify/polaris'
-import { SearchIcon, ProductIcon } from '@shopify/polaris-icons';
-import React, { useState } from 'react'
-
-const dummyCollections = [
-    {
-        id: '1',
-        title: 'All Products',
-        description: '3,000 products',
-    },
-    {
-        id: '2',
-        title: 'Bestsellers',
-        description: '25 products',
-    },
-    {
-        id: '3',
-        title: 'Summer Collection',
-        description: '150 products',
-    },
-    {
-        id: '4',
-        title: 'Winter Sale',
-        description: '200 products',
-    },
-];
+import { BlockStack, Box, Modal, ResourceItem, ResourceList, Text, TextField, Icon, Spinner } from '@shopify/polaris';
+import { SearchIcon } from '@shopify/polaris-icons';
+import { useState, useEffect } from 'react';
+import { fetchData } from '../action';
 
 const CollectionModal = ({ open, onClose, onSave }) => {
     const [collectionName, setCollectionName] = useState('');
+    const [collections, setCollections] = useState([]);
+    const [loading, setLoading] = useState(false);
     const [selectedItems, setSelectedItems] = useState([]);
+
+    console.log('selectedItems', selectedItems)
+
+    const fetchCollections = async (query = '') => {
+        try {
+            setLoading(true);
+            const formData = new FormData();
+            if (query) formData.append("query", query);
+
+            const response = await fetchData("/get-list-of-collection?Y6vg3RZzOZz7a9W", formData);
+            console.log("response", response);
+
+            if (response?.status && response?.data) {
+                setCollections(response.data);
+            } else {
+                setCollections([]);
+            }
+        } catch (err) {
+            console.error("Error fetching collections:", err);
+            setCollections([]);
+        } finally {
+            setLoading(false);
+        }
+    };
+
+    useEffect(() => {
+        if (open) {
+            fetchCollections();
+        }
+    }, [open]);
+
+    useEffect(() => {
+        const delay = setTimeout(() => {
+            fetchCollections(collectionName);
+        }, 500);
+        return () => clearTimeout(delay);
+    }, [collectionName]);
 
     return (
         <Modal
@@ -35,58 +52,67 @@ const CollectionModal = ({ open, onClose, onSave }) => {
             onClose={onClose}
             title="Add Collection"
             primaryAction={{
-                content: 'Add',
-                onAction: onSave,
+                content: "Add",
+                onAction: () =>
+                    onSave(collections.filter((c) => selectedItems.includes(c.collection_id))),
             }}
-            secondaryActions={[
-                {
-                    content: 'Cancel',
-                    onAction: onClose,
-                },
-            ]}
+            secondaryActions={[{ content: "Cancel", onAction: onClose }]}
         >
-            <div className='LPR_CollectionModal'>
+            <div className="LPR_CollectionModal">
                 <Modal.Section>
+                    <div
+                        style={{
+                            paddingBlockEnd: "16px",
+                            borderBottom: "0.1rem solid #dfe3e8",
+                        }}
+                    >
+                        <TextField
+                            value={collectionName}
+                            onChange={setCollectionName}
+                            placeholder="Search Collections"
+                            prefix={<Icon source={SearchIcon} />}
+                            clearButton
+                            onClearButtonClick={() => setCollectionName("")}
+                        />
+                    </div>
 
-                        <div style={{paddingBlockEnd: '16px', borderBottom: '0.1rem solid #dfe3e8' }}>
-                            <TextField
-                                value={collectionName}
-                                onChange={(value) => setCollectionName(value)}
-                                placeholder="Search Collections"
-                                prefix={<Icon source={SearchIcon} />}
-                            />
-                        </div>
-
+                    {loading ? (
+                        <Box padding="400" alignment="center">
+                            <Spinner accessibilityLabel="Loading collections" size="large" />
+                        </Box>
+                    ) : (
                         <ResourceList
-                            resourceName={{ singular: 'collection', plural: 'collections' }}
+                            resourceName={{ singular: "collection", plural: "collections" }}
                             showHeader={false}
-                            items={dummyCollections}
+                            items={collections}
                             selectedItems={selectedItems}
                             onSelectionChange={setSelectedItems}
                             selectable
                             renderItem={(item) => {
-                                const { id, title, description } = item;
+                                const { collection_id, name, image } = item;
                                 return (
                                     <ResourceItem
-                                        id={id}
-                                        media={<Icon source={ProductIcon} tone="base" />}
+                                        id={collection_id}
+                                        media={
+                                            <img
+                                                src={image}
+                                                alt=""
+                                                style={{ width: 40, height: 40, borderRadius: 4 }}
+                                            />
+                                        }
                                     >
                                         <BlockStack gap="100">
-                                            <Text variant="headingMd" as="h3">
-                                                {title}
-                                            </Text>
-                                            <Text variant="bodyMd" as="p" tone="subdued">
-                                                {description}
-                                            </Text>
+                                            <Text variant="headingMd">{name}</Text>
                                         </BlockStack>
                                     </ResourceItem>
                                 );
                             }}
                         />
+                    )}
                 </Modal.Section>
             </div>
-        </Modal >
-    )
-}
+        </Modal>
+    );
+};
 
-export default CollectionModal
+export default CollectionModal;

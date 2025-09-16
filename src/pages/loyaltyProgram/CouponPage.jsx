@@ -1,35 +1,73 @@
-import { Badge, BlockStack, Box, Button, Card, Checkbox, FormLayout, Grid, Layout, Page, RadioButton, Text, TextField } from '@shopify/polaris'
+import { Avatar, Badge, BlockStack, Box, Button, Card, Checkbox, FormLayout, Grid, Layout, Page, RadioButton, Text, TextField } from '@shopify/polaris'
 import { DeleteIcon } from '@shopify/polaris-icons';
 import { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useLocation, useNavigate } from 'react-router-dom';
 import CollectionModal from '../../components/CollectionModal';
+import { fetchData } from '../../action';
 
 const CouponPage = () => {
     const navigate = useNavigate();
+    const location = useLocation();
+    const { rule, edit } = location.state || {};
+    console.log('rule', rule)
     const [rewardTitle, setRewardTitle] = useState('');
-    const [pointsType, setPointsType] = useState('fixed');
-    const [minimumCartRequirement, setMinimumCartRequirement] = useState('none');
-    const [applyTo, setApplyTo] = useState('entire');
-    const [purchaseType, setPurchaseType] = useState('one_time');
     const [pointsAmount, setPointsAmount] = useState(100);
-    const [discount, setDiscount] = useState(1.0);
-    const [incrementPointsValue, setIncrementPointsValue] = useState(0);
-    const [customerGets, setCustomerGets] = useState(0);
-    const [isMinimumPointsRequired, setIsMinimumPointsRequired] = useState(false);
-    const [isMaximumPointsRequired, setIsMaximumPointsRequired] = useState(false);
-    const [minimumPointsRequired, setMinimumPointsRequired] = useState(0);
-    const [maximumPointsRequired, setMaximumPointsRequired] = useState(0);
-    const [minimumCartRequirementValue, setMinimumCartRequirementValue] = useState(0);
-    const [recurringPaymentOptions, setRecurringPaymentOptions] = useState(0);
     const [rewardExpiration, setRewardExpiration] = useState(0);
     const [collectionModalOpen, setCollectionModalOpen] = useState(false);
+    const [selectedCollections, setSelectedCollections] = useState([]);
+
+    const [settings_json, setSettingsJson] = useState({
+        points_type: 'fixed',
+        reward_value: 0,
+        min_requirement: 'none',
+        min_order_value_in_cents: 0,
+        applies_to: 'entire',
+        max_points_to_spend: false,
+        max_points_to_spend_value: 0,
+        min_points_to_redeem: false,
+        min_points_to_redeem_value: 0,
+        purchase_type: 'one_time',
+        number_of_times_on_recurring_purchases: 0,
+    });
+
+    const AddRedeemRuleAPI = async () => {
+        const formData = new FormData();
+        formData.append("master_rule_id", rule.master_rule_id);
+        formData.append("points", pointsAmount);
+        formData.append("title", rewardTitle);
+        formData.append("settings_json", JSON.stringify(settings_json));
+        formData.append("expiration_months", rewardExpiration);
+        const response = await fetchData("/add-merchant-redeeming-rules?Y6vg3RZzOZz7a9W", formData);
+        console.log('Add Redeem Rule Response', response);
+        if (response?.status === true) {
+            navigate('/loyaltyProgram');
+            shopify.toast.show(response?.message, { duration: 2000 });
+        } else {
+            console.error('Add Redeem Rule Error', response);
+            shopify.toast.show(response?.message, { duration: 2000, isError: true });
+        }
+    }
+
+    const DeleteRedeemRuleAPI = async () => {
+        const formData = new FormData();
+        formData.append("rule_id", 'ztEfTSMcDejdHOZdGXE0zSWgDejdx3MtvR5iDi0=');
+        const response = await fetchData("/delete-merchant-redeeming-rules?Y6vg3RZzOZz7a9W", formData);
+        console.log('Delete Redeem Rule Response', response);
+        if (response?.status === true) {
+            navigate('/loyaltyProgram');
+            shopify.toast.show(response?.message, { duration: 2000 });
+        } else {
+            console.error('Delete Redeem Rule Error', response);
+            shopify.toast.show(response?.message, { duration: 2000, isError: true });
+        }
+    }
 
     return (
         <Page
             backAction={{ content: 'Back', onAction: () => navigate('/loyaltyProgram') }}
-            title="off coupon"
-            secondaryActions={<Button tone='critical' icon={DeleteIcon} onAction={() => { }}>Delete</Button>}
-            primaryAction={{ content: 'Save', onAction: () => { } }}
+            title={rule?.title || "Coupon"}
+            secondaryActions={<Button tone='critical' icon={DeleteIcon} onAction={() => { DeleteRedeemRuleAPI() }}>Delete</Button>}
+            primaryAction={{ content: edit ? "Update" : "Save", onAction: () => { AddRedeemRuleAPI() } }}
         >
             <Layout>
                 <Layout.Section>
@@ -53,23 +91,24 @@ const CouponPage = () => {
                                         <BlockStack>
                                             <RadioButton
                                                 label="Fixed amount of points"
-                                                checked={pointsType === 'fixed'}
-                                                onChange={() => setPointsType('fixed')}
+                                                checked={settings_json.points_type === 'fixed'}
+                                                onChange={() => setSettingsJson({ ...settings_json, points_type: 'fixed' })}
                                             />
                                             <RadioButton
                                                 label="Incremented points"
-                                                checked={pointsType === 'multiplier'}
-                                                onChange={() => setPointsType('multiplier')}
+                                                checked={settings_json.points_type === 'multiplier'}
+                                                onChange={() => setSettingsJson({ ...settings_json, points_type: 'multiplier' })}
                                             />
                                         </BlockStack>
                                     </Box>
                                 </Card>
 
+
                                 <Card>
                                     <BlockStack gap={300}>
                                         <Text variant='headingMd' as="span">Reward</Text>
 
-                                        {pointsType === 'fixed' && (
+                                        {settings_json.points_type === 'fixed' && (
                                             <>
                                                 <FormLayout>
                                                     <FormLayout.Group>
@@ -85,25 +124,25 @@ const CouponPage = () => {
                                                             label="Discount"
                                                             type="number"
                                                             prefix="$"
-                                                            value={discount}
-                                                            onChange={(value) => setDiscount(value)}
+                                                            value={settings_json.reward_value}
+                                                            onChange={(value) => setSettingsJson({ ...settings_json, reward_value: value })}
                                                             autoComplete="off"
                                                         />
                                                     </FormLayout.Group>
                                                 </FormLayout>
-                                                <Text variant='bodyMd' tone='subdued'>Based on your cost per point, {pointsAmount} points is equal to Rs. {discount}</Text>
+                                                <Text variant='bodyMd' tone='subdued'>Based on your cost per point, {pointsAmount} points is equal to Rs. {settings_json.reward_value}</Text>
                                             </>
                                         )}
 
-                                        {pointsType === 'multiplier' && (
+                                        {settings_json.points_type === 'multiplier' && (
                                             <>
                                                 <FormLayout>
                                                     <FormLayout.Group>
                                                         <TextField
                                                             label="Increment points value"
                                                             type="number"
-                                                            value={incrementPointsValue}
-                                                            onChange={(value) => setIncrementPointsValue(value)}
+                                                            value={pointsAmount}
+                                                            onChange={(value) => setPointsAmount(value)}
                                                             autoComplete="off"
                                                             suffix="points"
                                                         />
@@ -111,38 +150,38 @@ const CouponPage = () => {
                                                             label="Customer gets"
                                                             type="number"
                                                             prefix="$"
-                                                            value={customerGets}
-                                                            onChange={(value) => setCustomerGets(value)}
+                                                            value={settings_json.reward_value}
+                                                            onChange={(value) => setSettingsJson({ ...settings_json, reward_value: value })}
                                                             autoComplete="off"
                                                         />
                                                     </FormLayout.Group>
                                                 </FormLayout>
-                                                <Text variant='bodyMd' tone='subdued'>Based on your cost per point, {incrementPointsValue} points is equal to Rs. {customerGets}</Text>
+                                                <Text variant='bodyMd' tone='subdued'>Based on your cost per point, {pointsAmount} points is equal to Rs. {settings_json.reward_value}</Text>
 
                                                 <Checkbox
                                                     label="Set a minimum amount of points required to redeem this reward"
-                                                    checked={isMinimumPointsRequired}
-                                                    onChange={() => setIsMinimumPointsRequired(!isMinimumPointsRequired)}
+                                                    checked={settings_json.min_points_to_redeem}
+                                                    onChange={() => setSettingsJson({ ...settings_json, min_points_to_redeem: !settings_json.min_points_to_redeem })}
                                                 />
-                                                {isMinimumPointsRequired && (
+                                                {settings_json.min_points_to_redeem && (
                                                     <TextField
                                                         type="number"
-                                                        value={minimumPointsRequired}
-                                                        onChange={(value) => setMinimumPointsRequired(value)}
+                                                        value={settings_json.min_points_to_redeem_value}
+                                                        onChange={(value) => setSettingsJson({ ...settings_json, min_points_to_redeem_value: value })}
                                                         suffix="points"
                                                     />
                                                 )}
 
                                                 <Checkbox
                                                     label="Set a maximum amount of points required to redeem this reward"
-                                                    checked={isMaximumPointsRequired}
-                                                    onChange={() => setIsMaximumPointsRequired(!isMaximumPointsRequired)}
+                                                    checked={settings_json.max_points_to_spend}
+                                                    onChange={() => setSettingsJson({ ...settings_json, max_points_to_spend: !settings_json.max_points_to_spend })}
                                                 />
-                                                {isMaximumPointsRequired && (
+                                                {settings_json.max_points_to_spend && (
                                                     <TextField
                                                         type="number"
-                                                        value={maximumPointsRequired}
-                                                        onChange={(value) => setMaximumPointsRequired(value)}
+                                                        value={settings_json.max_points_to_spend_value}
+                                                        onChange={(value) => setSettingsJson({ ...settings_json, max_points_to_spend_value: value })}
                                                         suffix="points"
                                                     />
                                                 )}
@@ -158,19 +197,19 @@ const CouponPage = () => {
                                         <BlockStack>
                                             <RadioButton
                                                 label="None"
-                                                checked={minimumCartRequirement === 'none'}
-                                                onChange={() => setMinimumCartRequirement('none')}
+                                                checked={settings_json.min_requirement === 'none'}
+                                                onChange={() => setSettingsJson({ ...settings_json, min_requirement: 'none' })}
                                             />
                                             <RadioButton
                                                 label="Minimum cart value"
-                                                checked={minimumCartRequirement === 'min_purchase_amount'}
-                                                onChange={() => setMinimumCartRequirement('min_purchase_amount')}
+                                                checked={settings_json.min_requirement === 'min_purchase_amount'}
+                                                onChange={() => setSettingsJson({ ...settings_json, min_requirement: 'min_purchase_amount' })}
                                             />
-                                            {minimumCartRequirement === 'min_purchase_amount' && (
+                                            {settings_json.min_requirement === 'min_purchase_amount' && (
                                                 <TextField
                                                     type="number"
-                                                    value={minimumCartRequirementValue}
-                                                    onChange={(value) => setMinimumCartRequirementValue(value)}
+                                                    value={settings_json.min_order_value_in_cents}
+                                                    onChange={(value) => setSettingsJson({ ...settings_json, min_order_value_in_cents: value })}
                                                     helpText="Value in cents. Eg: $20 = 2000"
                                                 />
                                             )}
@@ -185,20 +224,35 @@ const CouponPage = () => {
                                         <BlockStack>
                                             <RadioButton
                                                 label="Entire order"
-                                                checked={applyTo === 'entire'}
-                                                onChange={() => setApplyTo('entire')}
+                                                checked={settings_json.applies_to === 'entire'}
+                                                onChange={() => setSettingsJson({ ...settings_json, applies_to: 'entire' })}
                                             />
                                             <RadioButton
                                                 label="Collection"
-                                                checked={applyTo === 'collection'}
-                                                onChange={() => { setApplyTo('collection') }}
+                                                checked={settings_json.applies_to === 'collection'}
+                                                onChange={() => { setSettingsJson({ ...settings_json, applies_to: 'collection' }) }}
                                                 onFocus={() => {
                                                     setCollectionModalOpen(true);
                                                 }}
                                             />
+
+                                            {settings_json.applies_to === 'collection' && (
+                                                selectedCollections.length > 0 && (
+                                                    <>                                            {
+                                                        selectedCollections.map((col) => (
+                                                            <div key={col.collection_id} style={{ display: 'flex', alignItems: 'center', gap: 10 , padding:3}}>
+                                                                <Avatar source={col.image} customer/>
+                                                                <Text>{col.name}</Text>
+                                                            </div>
+                                                        ))
+                                                    }
+                                                    </>
+                                                ))}
                                         </BlockStack>
                                     </Box>
                                 </Card>
+
+
                                 <Card>
                                     <Box style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
                                         <Text variant='headingMd' as="span">Purchase Type (optional)</Text>
@@ -206,32 +260,32 @@ const CouponPage = () => {
                                             <Text>Additional settings for stores that have installed any "subscription" app</Text>
                                             <RadioButton
                                                 label="One-time Purchase"
-                                                checked={purchaseType === 'one_time'}
-                                                onChange={() => setPurchaseType('one_time')}
+                                                checked={settings_json.purchase_type === 'one_time'}
+                                                onChange={() => setSettingsJson({ ...settings_json, purchase_type: 'one_time' })}
                                             />
                                             <RadioButton
                                                 label="Subscription"
-                                                checked={purchaseType === 'subscription'}
-                                                onChange={() => setPurchaseType('subscription')}
+                                                checked={settings_json.purchase_type === 'subscription'}
+                                                onChange={() => setSettingsJson({ ...settings_json, purchase_type: 'subscription' })}
                                             />
                                             <RadioButton
                                                 label="Both"
-                                                checked={purchaseType === 'both'}
-                                                onChange={() => setPurchaseType('both')}
+                                                checked={settings_json.purchase_type === 'both'}
+                                                onChange={() => setSettingsJson({ ...settings_json, purchase_type: 'both' })}
                                             />
                                         </BlockStack>
                                     </Box>
                                 </Card>
 
-                                {(purchaseType === 'subscription' || purchaseType === 'both') && (
+                                {(settings_json.purchase_type === 'subscription' || settings_json.purchase_type === 'both') && (
                                     <>
                                         <Card>
                                             <BlockStack gap={300}>
                                                 <Text variant='headingSm' as="span">Recurring Payment Options</Text>
                                                 <TextField
                                                     type="number"
-                                                    value={recurringPaymentOptions}
-                                                    onChange={(value) => setRecurringPaymentOptions(value)}
+                                                    value={settings_json.number_of_times_on_recurring_purchases}
+                                                    onChange={(value) => setSettingsJson({ ...settings_json, number_of_times_on_recurring_purchases: value })}
                                                     helpText='The number of times a discount applies on recurring purchases. For example, if you set this field to 3, then the discount only applies to the first three billing cycles of a subscription. If you specify 0, then the discount applies indefinitely.'
                                                 />
                                             </BlockStack>
@@ -246,7 +300,7 @@ const CouponPage = () => {
                                             value={rewardExpiration}
                                             onChange={(value) => setRewardExpiration(value)}
                                             autoComplete="off"
-                                            suffix="months"
+                                            suffix="Days"
                                         />
                                         <Checkbox
                                             label="Automatically refund points when reward expires"
@@ -298,7 +352,10 @@ const CouponPage = () => {
             <CollectionModal
                 open={collectionModalOpen}
                 onClose={() => setCollectionModalOpen(false)}
-                onSave={() => { setCollectionModalOpen(false) }}
+                onSave={(selected) => {
+                    setSelectedCollections(selected);
+                    setCollectionModalOpen(false);
+                }}
             />
         </Page>
     )

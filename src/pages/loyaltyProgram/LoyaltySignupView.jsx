@@ -7,9 +7,11 @@ const LoyaltySignupView = () => {
     const navigate = useNavigate();
     const location = useLocation();
     const { rule, edit } = location.state || {};
-    console.log('rulesignup', rule)
+    console.log('rulesignup', rule);
 
     const [earningpoints, setEarningpoints] = useState('');
+    const [earningPointsError, setEarningPointsError] = useState(""); // error state
+
     const [pageTitle, setPageTitle] = useState("Sign Up");
     const [status, setStatus] = useState("inactive");
     const [loading, setLoading] = useState(true);
@@ -17,6 +19,7 @@ const LoyaltySignupView = () => {
     const [conditionalJson, setConditionalJson] = useState({
         birthday_updated_waiting_threshold_days: ''
     });
+    const [birthdayError, setBirthdayError] = useState(""); // error state
 
     const getRuleByIdAPI = async (ruleId) => {
         const formData = new FormData();
@@ -24,12 +27,12 @@ const LoyaltySignupView = () => {
         const response = await fetchData("/get-merchant-earning-rules-by-id?Y6vg3RZzOZz7a9W", formData);
         if (response?.data) {
             setGetdatabyID(response.data);
-
             console.log('Get Rule By Id Response', response);
         }
     };
 
     const AddRuleAPI = async () => {
+        if (earningPointsError || birthdayError) return; // stop save if error exists
         const formData = new FormData();
         formData.append("master_rule_id", rule.master_rule_id);
         formData.append("type", rule.type);
@@ -46,6 +49,7 @@ const LoyaltySignupView = () => {
     }
 
     const updateRuleAPI = async (ruleId) => {
+        if (earningPointsError || birthdayError) return; // stop save if error exists
         const formData = new FormData();
         formData.append("rule_id", ruleId);
         formData.append("points", earningpoints);
@@ -98,6 +102,38 @@ const LoyaltySignupView = () => {
         }
     };
 
+    // 🔹 Validation Handlers
+    const handleEarningPointsChange = (value) => {
+        if (value === "-") {
+            setEarningPointsError("Enter a valid number");
+        } else if (!/^-?\d*$/.test(value)) {
+            setEarningPointsError("Only numbers are allowed");
+        } else if (Number(value) < 0) {
+            setEarningPointsError("Points cannot be negative");
+        } else {
+            setEarningPointsError("");
+        }
+        setEarningpoints(value);
+    };
+
+    const handleBirthdayChange = (value) => {
+        if (value === "-") {
+            setBirthdayError("Enter a valid number");
+        } else if (!/^\d*$/.test(value)) {
+            setBirthdayError("Only numbers are allowed");
+        } else {
+            const num = Number(value);
+            if (num < 1 && value !== "") {
+                setBirthdayError("Must be at least 1 day");
+            } else if (num > 365) {
+                setBirthdayError("Cannot exceed 365 days");
+            } else {
+                setBirthdayError("");
+            }
+        }
+        setConditionalJson({ ...conditionalJson, birthday_updated_waiting_threshold_days: value });
+    };
+
     return (
         <Page
             backAction={{ content: "Back", onAction: () => navigate("/loyaltyProgram") }}
@@ -124,8 +160,9 @@ const LoyaltySignupView = () => {
                                             <TextField
                                                 label="Earning points"
                                                 value={earningpoints}
-                                                type="number"
-                                                onChange={(value) => setEarningpoints(value)}
+                                                type="text"
+                                                error={earningPointsError} // show error
+                                                onChange={handleEarningPointsChange}
                                             />
                                         )}
                                     </BlockStack>
@@ -137,20 +174,10 @@ const LoyaltySignupView = () => {
                                             label="Birthday Waiting Period"
                                             helpText="The number of days after a customer's birthday that they can earn points."
                                             suffix="Days"
-                                            type="number"
+                                            type="text"
                                             value={conditionalJson?.birthday_updated_waiting_threshold_days}
-                                            onChange={(value) => {
-                                                if (/^\d*$/.test(value)) {
-                                                    const num = Number(value);
-                                                    if (num < 1 && value !== "") {
-                                                        setConditionalJson({ ...conditionalJson, birthday_updated_waiting_threshold_days: "1" });
-                                                    } else if (num > 365) {
-                                                        setConditionalJson({ ...conditionalJson, birthday_updated_waiting_threshold_days: "365" });
-                                                    } else {
-                                                        setConditionalJson({ ...conditionalJson, birthday_updated_waiting_threshold_days: value });
-                                                    }
-                                                }
-                                            }}
+                                            error={birthdayError} // show error
+                                            onChange={handleBirthdayChange}
                                         />
                                     </Card>
                                 )}

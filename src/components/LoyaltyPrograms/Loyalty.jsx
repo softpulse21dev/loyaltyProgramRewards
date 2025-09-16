@@ -62,7 +62,7 @@ const Loyalty = () => {
         const response = await fetchData(url, formData);
 
         if (response.status) {
-            shopify.toast.show(response?.message, { duration: 2000});
+            shopify.toast.show(response?.message, { duration: 2000 });
             fetchSettingsAPI(); // Re-fetch data to update the UI
         } else {
             shopify.toast.show(response?.message, { duration: 2000, isError: true });
@@ -314,21 +314,19 @@ const Loyalty = () => {
                     <ResourceList
                         items={loyaltyData?.redeeming_rules?.master_rules || []}
                         renderItem={(item) => {
-                            const { master_rule_id, title, icon } = item;
-                            const IconSource = iconsMap[icon] || RewardIcon;
-
+                            const IconSource = iconsMap[item.icon] || RewardIcon;
                             return (
-                                <ResourceItem id={master_rule_id}>
+                                <ResourceItem id={item.master_rule_id}>
                                     <InlineStack align="space-between" blockAlign="center">
                                         <Box style={{ display: "flex", alignItems: "center", gap: "10px" }}>
                                             <Box>
                                                 <Icon source={IconSource} />
                                             </Box>
-                                            <Text>{title}</Text>
+                                            <Text>{item.title}</Text>
                                         </Box>
                                         <Button
                                             onClick={() =>
-                                                navigate(`/loyaltyProgram/redeemRuleView`, { state: { rule: item } })
+                                                navigate(`/loyaltyProgram/CouponPage`, { state: { rule: item } })
                                             }
                                         >
                                             ADD
