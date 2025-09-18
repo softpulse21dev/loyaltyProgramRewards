@@ -96,6 +96,7 @@ const Loyalty = () => {
                     </Box>
                 </Card>
             </Layout.AnnotatedSection>
+
             <Layout.AnnotatedSection
                 title="Earning Points"
                 description={
@@ -233,7 +234,7 @@ const Loyalty = () => {
                                             </Box>
                                         </Box>
                                         <Box style={{ display: "flex", alignItems: "center", gap: "15px" }}>
-                                            <Button variant="plain" onClick={() => navigate(`/loyaltyProgram/CouponPage${window.location.search}`)}>Edit</Button>
+                                            <Button variant="plain" onClick={() => navigate(`/loyaltyProgram/CouponPage${window.location.search}`, { state: { rule: item, edit: true } })}>Edit</Button>
                                             <div className="toggle-container" style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
                                                 <label className="switch">
                                                     <input
@@ -254,6 +255,7 @@ const Loyalty = () => {
                     />
                 </Card>
             </Layout.AnnotatedSection>
+
             <Layout.AnnotatedSection
                 title={'Birthday Eligibility Period'}
                 description={'Set how far in advance customers must provide their birthdate to be eligible for birthday rewards'}

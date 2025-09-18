@@ -34,16 +34,12 @@ const CollectionModal = ({ open, onClose, onSave }) => {
     };
 
     useEffect(() => {
-        if (open) {
-            fetchCollections();
+        if (open === true) {
+            const delay = setTimeout(() => {
+                fetchCollections(collectionName);
+            }, 500);
+            return () => clearTimeout(delay);
         }
-    }, [open]);
-
-    useEffect(() => {
-        const delay = setTimeout(() => {
-            fetchCollections(collectionName);
-        }, 500);
-        return () => clearTimeout(delay);
     }, [collectionName]);
 
     return (
@@ -77,7 +73,7 @@ const CollectionModal = ({ open, onClose, onSave }) => {
                     </div>
 
                     {loading ? (
-                        <Box padding="400" alignment="center">
+                        <Box alignment="center" style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '80px' }}>
                             <Spinner accessibilityLabel="Loading collections" size="large" />
                         </Box>
                     ) : (

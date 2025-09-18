@@ -1,6 +1,6 @@
 import { Avatar, Badge, BlockStack, Box, Button, Card, Checkbox, FormLayout, Grid, Layout, Page, RadioButton, Text, TextField } from '@shopify/polaris'
 import { DeleteIcon } from '@shopify/polaris-icons';
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import CollectionModal from '../../components/CollectionModal';
 import { fetchData } from '../../action';
@@ -15,6 +15,9 @@ const CouponPage = () => {
     const [rewardExpiration, setRewardExpiration] = useState(0);
     const [collectionModalOpen, setCollectionModalOpen] = useState(false);
     const [selectedCollections, setSelectedCollections] = useState([]);
+    const [status, setStatus] = useState("inactive");
+    const [loading, setLoading] = useState(true);
+    const [ruleId, setRuleId] = useState('');
 
     const [settings_json, setSettingsJson] = useState({
         points_type: 'fixed',
@@ -28,15 +31,24 @@ const CouponPage = () => {
         min_points_to_redeem_value: 0,
         purchase_type: 'one_time',
         number_of_times_on_recurring_purchases: 0,
+        collection_id: '',
+        min_order_quantity: 0,
     });
+
+    useEffect(() => {
+        if (edit) {
+            GetRedeemRuleByIdAPI();
+        }
+    }, [edit, rule]);
 
     const AddRedeemRuleAPI = async () => {
         const formData = new FormData();
         formData.append("master_rule_id", rule.master_rule_id);
+        formData.append("status", status);
         formData.append("points", pointsAmount);
         formData.append("title", rewardTitle);
         formData.append("settings_json", JSON.stringify(settings_json));
-        formData.append("expiration_months", rewardExpiration);
+        formData.append("expiration_days", rewardExpiration);
         const response = await fetchData("/add-merchant-redeeming-rules?Y6vg3RZzOZz7a9W", formData);
         console.log('Add Redeem Rule Response', response);
         if (response?.status === true) {
@@ -48,9 +60,29 @@ const CouponPage = () => {
         }
     }
 
-    const DeleteRedeemRuleAPI = async () => {
+    const UpdateRedeemRuleAPI = async () => {
         const formData = new FormData();
-        formData.append("rule_id", 'ztEfTSMcDejdHOZdGXE0zSWgDejdx3MtvR5iDi0=');
+        formData.append("rule_id", ruleId);
+        formData.append("status", status);
+        formData.append("points", pointsAmount);
+        formData.append("title", rewardTitle);
+        formData.append("settings_json", JSON.stringify(settings_json));
+        formData.append("expiration_days", rewardExpiration);
+        const response = await fetchData("/update-merchant-redeeming-rules?Y6vg3RZzOZz7a9W", formData);
+        console.log('Update Redeem Rule Response', response);
+        if (response?.status === true) {
+            navigate('/loyaltyProgram');
+            shopify.toast.show(response?.message, { duration: 2000 });
+        } else {
+            console.error('Update Redeem Rule Error', response);
+            shopify.toast.show(response?.message, { duration: 2000, isError: true });
+        }
+    }
+
+    const DeleteRedeemRuleAPI = async (id) => {
+        console.log('id', id)
+        const formData = new FormData();
+        formData.append("rule_id", id);
         const response = await fetchData("/delete-merchant-redeeming-rules?Y6vg3RZzOZz7a9W", formData);
         console.log('Delete Redeem Rule Response', response);
         if (response?.status === true) {
@@ -62,12 +94,38 @@ const CouponPage = () => {
         }
     }
 
+    const GetRedeemRuleByIdAPI = async () => {
+        setLoading(true);
+        const formData = new FormData();
+        formData.append("rule_id", rule.id);
+        const response = await fetchData("/get-merchant-redeeming-rules-by-id?Y6vg3RZzOZz7a9W", formData);
+        console.log('Get Redeem Rule By ID Response', response);
+        if (response?.status === true) {
+            setSettingsJson(response.data.settings_json);
+            setRewardTitle(response.data.title);
+            setPointsAmount(response.data.points);
+            setRewardExpiration(response.data.expiration_days);
+            setStatus(response.data.status);
+            setSelectedCollections(response.data.collection_id);
+            setRuleId(response.data.id);
+            setLoading(false);
+        } else {
+            console.error('Get Redeem Rule By ID Error', response);
+            shopify.toast.show(response?.message, { duration: 2000, isError: true });
+            setLoading(false);
+        }
+    }
+
+    const handleStatusChange = () => {
+        setStatus(prevStatus => prevStatus === 'active' ? 'inactive' : 'active');
+    };
+
     return (
         <Page
             backAction={{ content: 'Back', onAction: () => navigate('/loyaltyProgram') }}
             title={rule?.title || "Coupon"}
-            secondaryActions={<Button tone='critical' icon={DeleteIcon} onAction={() => { DeleteRedeemRuleAPI() }}>Delete</Button>}
-            primaryAction={{ content: edit ? "Update" : "Save", onAction: () => { AddRedeemRuleAPI() } }}
+            secondaryActions={edit ? <Button tone='critical' icon={DeleteIcon} onClick={() => { DeleteRedeemRuleAPI(ruleId) }}>Delete</Button> : ''}
+            primaryAction={{ content: edit ? "Update" : "Save", onAction: () => { if (edit) { UpdateRedeemRuleAPI() } else { AddRedeemRuleAPI() } } }}
         >
             <Layout>
                 <Layout.Section>
@@ -85,23 +143,25 @@ const CouponPage = () => {
                                     </BlockStack>
                                 </Card>
 
-                                <Card>
-                                    <Box style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
-                                        <Text variant='headingMd' as="span">Points Type</Text>
-                                        <BlockStack>
-                                            <RadioButton
-                                                label="Fixed amount of points"
-                                                checked={settings_json.points_type === 'fixed'}
-                                                onChange={() => setSettingsJson({ ...settings_json, points_type: 'fixed' })}
-                                            />
-                                            <RadioButton
-                                                label="Incremented points"
-                                                checked={settings_json.points_type === 'multiplier'}
-                                                onChange={() => setSettingsJson({ ...settings_json, points_type: 'multiplier' })}
-                                            />
-                                        </BlockStack>
-                                    </Box>
-                                </Card>
+                                {rule.type === "amount_discount" && (
+                                    <Card>
+                                        <Box style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+                                            <Text variant='headingMd' as="span">Points Type</Text>
+                                            <BlockStack>
+                                                <RadioButton
+                                                    label="Fixed amount of points"
+                                                    checked={settings_json.points_type === 'fixed'}
+                                                    onChange={() => setSettingsJson({ ...settings_json, points_type: 'fixed' })}
+                                                />
+                                                <RadioButton
+                                                    label="Incremented points"
+                                                    checked={settings_json.points_type === 'multiplier'}
+                                                    onChange={() => setSettingsJson({ ...settings_json, points_type: 'multiplier' })}
+                                                />
+                                            </BlockStack>
+                                        </Box>
+                                    </Card>
+                                )}
 
 
                                 <Card>
@@ -213,44 +273,62 @@ const CouponPage = () => {
                                                     helpText="Value in cents. Eg: $20 = 2000"
                                                 />
                                             )}
+                                            {rule.type === "free_product" && (
+                                                <>
+                                                    <RadioButton
+                                                        label="Minimum order quantity"
+                                                        checked={settings_json.min_requirement === 'min_purchase_quantity'}
+                                                        onChange={() => setSettingsJson({ ...settings_json, min_requirement: 'min_purchase_quantity' })}
+                                                    />
+                                                    {settings_json.min_requirement === 'min_purchase_quantity' && (
+                                                        <TextField
+                                                            type="number"
+                                                            value={settings_json.min_order_quantity}
+                                                            onChange={(value) => setSettingsJson({ ...settings_json, min_order_quantity: value })}
+                                                            helpText="Minimum number of items required in cart"
+                                                        />
+                                                    )}
+                                                </>
+                                            )}
                                         </BlockStack>
                                     </Box>
                                 </Card>
 
 
-                                <Card>
-                                    <Box style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
-                                        <Text variant='headingMd' as="span">Apply to</Text>
-                                        <BlockStack>
-                                            <RadioButton
-                                                label="Entire order"
-                                                checked={settings_json.applies_to === 'entire'}
-                                                onChange={() => setSettingsJson({ ...settings_json, applies_to: 'entire' })}
-                                            />
-                                            <RadioButton
-                                                label="Collection"
-                                                checked={settings_json.applies_to === 'collection'}
-                                                onChange={() => { setSettingsJson({ ...settings_json, applies_to: 'collection' }) }}
-                                                onFocus={() => {
-                                                    setCollectionModalOpen(true);
-                                                }}
-                                            />
-
-                                            {settings_json.applies_to === 'collection' && (
-                                                selectedCollections.length > 0 && (
-                                                    <>                                            {
-                                                        selectedCollections.map((col) => (
-                                                            <div key={col.collection_id} style={{ display: 'flex', alignItems: 'center', gap: 10 , padding:3}}>
-                                                                <Avatar source={col.image} customer/>
-                                                                <Text>{col.name}</Text>
-                                                            </div>
-                                                        ))
-                                                    }
-                                                    </>
-                                                ))}
-                                        </BlockStack>
-                                    </Box>
-                                </Card>
+                                {(rule.type === "amount_discount" || rule.type === "percentage_discount") && (
+                                    <Card>
+                                        <Box style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+                                            <Text variant='headingMd' as="span">Apply to</Text>
+                                            <BlockStack>
+                                                <RadioButton
+                                                    label="Entire order"
+                                                    checked={settings_json.applies_to === 'entire'}
+                                                    onChange={() => setSettingsJson({ ...settings_json, applies_to: 'entire' })}
+                                                />
+                                                <RadioButton
+                                                    label="Collection"
+                                                    checked={settings_json.applies_to === 'collection'}
+                                                    onChange={() => { setSettingsJson({ ...settings_json, applies_to: 'collection' }) }}
+                                                    onFocus={() => {
+                                                        setCollectionModalOpen(true);
+                                                    }}
+                                                />
+                                                {settings_json.applies_to === 'collection' && (
+                                                    selectedCollections?.length > 0 && (
+                                                        <>                                            {
+                                                            selectedCollections.map((col) => (
+                                                                <div key={col.collection_id} style={{ display: 'flex', alignItems: 'center', gap: 10, padding: 3 }}>
+                                                                    <Avatar source={col.image} customer />
+                                                                    <Text>{col.name}</Text>
+                                                                </div>
+                                                            ))
+                                                        }
+                                                        </>
+                                                    ))}
+                                            </BlockStack>
+                                        </Box>
+                                    </Card>
+                                )}
 
 
                                 <Card>
@@ -293,20 +371,15 @@ const CouponPage = () => {
                                     </>
                                 )}
                                 <Card>
-                                    <BlockStack gap={10}>
+                                    <BlockStack gap={300}>
                                         <Text variant='headingMd' >Reward Expiration</Text>
                                         <TextField
                                             type="number"
+                                            helpText="The number of days after which the reward expires"
                                             value={rewardExpiration}
                                             onChange={(value) => setRewardExpiration(value)}
                                             autoComplete="off"
                                             suffix="Days"
-                                        />
-                                        <Checkbox
-                                            label="Automatically refund points when reward expires"
-                                            helpText="When enabled, customers will automatically receive their points back if they don't use this reward before it expires"
-                                            checked={''}
-                                            onChange={''}
                                         />
                                     </BlockStack>
                                 </Card>
@@ -335,8 +408,8 @@ const CouponPage = () => {
                                             <label className="switch">
                                                 <input
                                                     type="checkbox"
-                                                    checked="active"
-                                                    onChange={''}
+                                                    checked={status === 'active'}
+                                                    onChange={handleStatusChange}
                                                 />
                                                 <span className="slider"></span>
                                             </label>
@@ -354,6 +427,10 @@ const CouponPage = () => {
                 onClose={() => setCollectionModalOpen(false)}
                 onSave={(selected) => {
                     setSelectedCollections(selected);
+                    setSettingsJson({
+                        ...settings_json,
+                        collection_id: selected.map((c) => c.collection_id), // array of IDs
+                    });
                     setCollectionModalOpen(false);
                 }}
             />
