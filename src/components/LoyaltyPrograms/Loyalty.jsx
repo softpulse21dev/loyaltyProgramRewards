@@ -58,7 +58,7 @@ const Loyalty = () => {
         formData.append("status", isActive ? "active" : "inactive");
         formData.append("rule_id", ruleId);
 
-        const url = isEarningRule ? "/update-merchant-earning-rules-status?Y6vg3RZzOZz7a9W" : "/update-merchant-redeeming-rules?Y6vg3RZzOZz7a9W";
+        const url = isEarningRule ? "/update-merchant-earning-rules-status?Y6vg3RZzOZz7a9W" : "/update-merchant-redeeming-rules-status?Y6vg3RZzOZz7a9W";
         const response = await fetchData(url, formData);
 
         if (response.status) {

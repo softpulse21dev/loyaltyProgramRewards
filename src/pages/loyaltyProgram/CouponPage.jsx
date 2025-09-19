@@ -4,6 +4,7 @@ import { useEffect, useState } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import CollectionModal from '../../components/CollectionModal';
 import { fetchData } from '../../action';
+import ProductModal from '../../components/ProductModal';
 
 const CouponPage = () => {
     const navigate = useNavigate();
@@ -14,7 +15,7 @@ const CouponPage = () => {
     const [pointsAmount, setPointsAmount] = useState(100);
     const [rewardExpiration, setRewardExpiration] = useState(0);
     const [collectionModalOpen, setCollectionModalOpen] = useState(false);
-    const [selectedCollections, setSelectedCollections] = useState([]);
+    const [productModalOpen, setProductModalOpen] = useState(false);
     const [status, setStatus] = useState("inactive");
     const [loading, setLoading] = useState(true);
     const [ruleId, setRuleId] = useState('');
@@ -31,8 +32,9 @@ const CouponPage = () => {
         min_points_to_redeem_value: 0,
         purchase_type: 'one_time',
         number_of_times_on_recurring_purchases: 0,
-        collection_id: '',
+        collection_id: [],
         min_order_quantity: 0,
+        min_order_value_excludes_free_product: false,
     });
 
     useEffect(() => {
@@ -106,7 +108,7 @@ const CouponPage = () => {
             setPointsAmount(response.data.points);
             setRewardExpiration(response.data.expiration_days);
             setStatus(response.data.status);
-            setSelectedCollections(response.data.collection_id);
+            // setSelectedCollections(response.data.collection_id);
             setRuleId(response.data.id);
             setLoading(false);
         } else {
@@ -163,6 +165,17 @@ const CouponPage = () => {
                                     </Card>
                                 )}
 
+                                {rule.type === "free_product" && (
+                                    <Card>
+                                        <Box style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+                                            <Text variant='headingMd' as="span">Product</Text>
+                                            <div>
+                                                <Button variant='secondary' onClick={() => { setProductModalOpen(true) }}><Text variant='bodyMd'>Select Product</Text></Button>
+                                            </div>
+                                        </Box>
+                                    </Card>
+                                )}
+
 
                                 <Card>
                                     <BlockStack gap={300}>
@@ -180,17 +193,22 @@ const CouponPage = () => {
                                                             autoComplete="off"
                                                             suffix="points"
                                                         />
-                                                        <TextField
-                                                            label="Discount"
-                                                            type="number"
-                                                            prefix="$"
-                                                            value={settings_json.reward_value}
-                                                            onChange={(value) => setSettingsJson({ ...settings_json, reward_value: value })}
-                                                            autoComplete="off"
-                                                        />
+                                                        {rule.type !== "free_shipping" && (
+                                                            <TextField
+                                                                label="Discount"
+                                                                type="number"
+                                                                prefix={rule.type !== "percentage_discount" ? "$" : ""}
+                                                                suffix={rule.type === "percentage_discount" ? "%" : ""}
+                                                                value={settings_json.reward_value}
+                                                                onChange={(value) => setSettingsJson({ ...settings_json, reward_value: value })}
+                                                                autoComplete="off"
+                                                            />
+                                                        )}
                                                     </FormLayout.Group>
                                                 </FormLayout>
-                                                <Text variant='bodyMd' tone='subdued'>Based on your cost per point, {pointsAmount} points is equal to Rs. {settings_json.reward_value}</Text>
+                                                {rule.type !== "free_shipping" && (
+                                                    <Text variant='bodyMd' tone='subdued'>Based on your cost per point, {pointsAmount} points is equal to Rs. {settings_json.reward_value}</Text>
+                                                )}
                                             </>
                                         )}
 
@@ -247,6 +265,26 @@ const CouponPage = () => {
                                                 )}
                                             </>
                                         )}
+
+
+                                        {/* only for free shipping same used in amount discount  */}
+                                        {rule.type === "free_shipping" && (
+                                            <>
+                                                <Checkbox
+                                                    label="Set a maximum shipping amount this reward can be applied to"
+                                                    checked={settings_json.max_points_to_spend}
+                                                    onChange={() => setSettingsJson({ ...settings_json, max_points_to_spend: !settings_json.max_points_to_spend })}
+                                                />
+                                                {settings_json.max_points_to_spend && (
+                                                    <TextField
+                                                        type="number"
+                                                        value={settings_json.max_points_to_spend_value}
+                                                        onChange={(value) => setSettingsJson({ ...settings_json, max_points_to_spend_value: value })}
+                                                        prefix="Rs."
+                                                    />
+                                                )}
+                                            </>
+                                        )}
                                     </BlockStack>
                                 </Card>
 
@@ -266,12 +304,21 @@ const CouponPage = () => {
                                                 onChange={() => setSettingsJson({ ...settings_json, min_requirement: 'min_purchase_amount' })}
                                             />
                                             {settings_json.min_requirement === 'min_purchase_amount' && (
-                                                <TextField
-                                                    type="number"
-                                                    value={settings_json.min_order_value_in_cents}
-                                                    onChange={(value) => setSettingsJson({ ...settings_json, min_order_value_in_cents: value })}
-                                                    helpText="Value in cents. Eg: $20 = 2000"
-                                                />
+                                                <>
+                                                    <TextField
+                                                        type="number"
+                                                        value={settings_json.min_order_value_in_cents}
+                                                        onChange={(value) => setSettingsJson({ ...settings_json, min_order_value_in_cents: value })}
+                                                        suffix="cents"
+                                                        helpText="Value in cents. Eg: $20 = 2000"
+                                                    />
+
+                                                    <Checkbox
+                                                        label="Exclude free product from minimum order value"
+                                                        checked={settings_json.min_order_value_excludes_free_product}
+                                                        onChange={() => setSettingsJson({ ...settings_json, min_order_value_excludes_free_product: !settings_json.min_order_value_excludes_free_product })}
+                                                    />
+                                                </>
                                             )}
                                             {rule.type === "free_product" && (
                                                 <>
@@ -314,9 +361,9 @@ const CouponPage = () => {
                                                     }}
                                                 />
                                                 {settings_json.applies_to === 'collection' && (
-                                                    selectedCollections?.length > 0 && (
+                                                    settings_json.collection_id?.length > 0 && (
                                                         <>                                            {
-                                                            selectedCollections.map((col) => (
+                                                            settings_json.collection_id.map((col) => (
                                                                 <div key={col.collection_id} style={{ display: 'flex', alignItems: 'center', gap: 10, padding: 3 }}>
                                                                     <Avatar source={col.image} customer />
                                                                     <Text>{col.name}</Text>
@@ -425,13 +472,22 @@ const CouponPage = () => {
             <CollectionModal
                 open={collectionModalOpen}
                 onClose={() => setCollectionModalOpen(false)}
+                initialSelectedCollections={settings_json.collection_id}
                 onSave={(selected) => {
-                    setSelectedCollections(selected);
+                    console.log('selected ll', selected)
                     setSettingsJson({
                         ...settings_json,
-                        collection_id: selected.map((c) => c.collection_id), // array of IDs
+                        collection_id: selected,
                     });
                     setCollectionModalOpen(false);
+                }}
+            />
+
+            <ProductModal
+                open={productModalOpen}
+                onClose={() => setProductModalOpen(false)}
+                onSave={(selected) => {
+                    console.log('selected product', selected)
                 }}
             />
         </Page>

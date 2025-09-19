@@ -3,12 +3,24 @@ import { SearchIcon } from '@shopify/polaris-icons';
 import { useState, useEffect } from 'react';
 import { fetchData } from '../action';
 
-const CollectionModal = ({ open, onClose, onSave }) => {
+const CollectionModal = ({ open, onClose, onSave, initialSelectedCollections = [] }) => {
     const [collectionName, setCollectionName] = useState('');
     const [collections, setCollections] = useState([]);
     const [loading, setLoading] = useState(false);
     const [selectedItems, setSelectedItems] = useState([]);
 
+
+    useEffect(() => {
+        if (open) {
+            // Extract just the IDs from the full collection objects
+            const initialIds = initialSelectedCollections.map(col => col.collection_id);
+            setSelectedItems(initialIds);
+
+            // Fetch all collections so the list is ready
+            fetchCollections(collectionName);
+        }
+    }, [open]); // This effect runs only when the modal opens
+    
     console.log('selectedItems', selectedItems)
 
     const fetchCollections = async (query = '') => {
