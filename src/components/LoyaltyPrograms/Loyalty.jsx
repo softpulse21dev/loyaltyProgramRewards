@@ -29,6 +29,7 @@ const Loyalty = () => {
 
     const fetchSettingsAPI = async () => {
         const response = await fetchData("/get-merchant-settings?Y6vg3RZzOZz7a9W", new FormData());
+        console.log('response', response);
         if (response.status && response.data) {
             setStatus(response.data.status);
             setLoyaltyData(response.data);
@@ -62,8 +63,8 @@ const Loyalty = () => {
         const response = await fetchData(url, formData);
 
         if (response.status) {
+            fetchSettingsAPI();
             shopify.toast.show(response?.message, { duration: 2000 });
-            fetchSettingsAPI(); // Re-fetch data to update the UI
         } else {
             shopify.toast.show(response?.message, { duration: 2000, isError: true });
         }
@@ -222,7 +223,7 @@ const Loyalty = () => {
                         items={loyaltyData?.redeeming_rules?.active_rules || []}
                         renderItem={(item) => {
                             const { id, title, points, icon, status: itemStatus } = item;
-                            const IconSource = iconsMap[icon] || RewardIcon;
+                            const IconSource = iconsMap[icon];
                             return (
                                 <ResourceItem id={id}>
                                     <Box style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
@@ -316,7 +317,7 @@ const Loyalty = () => {
                     <ResourceList
                         items={loyaltyData?.redeeming_rules?.master_rules || []}
                         renderItem={(item) => {
-                            const IconSource = iconsMap[item.icon] || RewardIcon;
+                            const IconSource = iconsMap[item.icon];
                             return (
                                 <ResourceItem id={item.master_rule_id}>
                                     <InlineStack align="space-between" blockAlign="center">
