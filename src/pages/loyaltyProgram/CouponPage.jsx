@@ -444,24 +444,26 @@ const CouponPage = () => {
                                 </Card>
 
                                 <Card>
-                                    <Box style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-                                        <Text variant='headingMd' as="span">Status</Text>
-                                        <Badge tone="critical">
-                                            active
-                                        </Badge>
-                                    </Box>
-                                    <Box>
-                                        <div className="toggle-container" style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                                            <label className="switch">
-                                                <input
-                                                    type="checkbox"
-                                                    checked={status === 'active'}
-                                                    onChange={handleStatusChange}
-                                                />
-                                                <span className="slider"></span>
-                                            </label>
-                                        </div>
-                                    </Box>
+                                    <BlockStack gap={300}>
+                                        <Box style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+                                            <Text variant='headingMd' as="span">Status</Text>
+                                            <Badge tone="critical">
+                                                active
+                                            </Badge>
+                                        </Box>
+                                        <Box>
+                                            <div className="toggle-container" style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                                                <label className="switch">
+                                                    <input
+                                                        type="checkbox"
+                                                        checked={status === 'active'}
+                                                        onChange={handleStatusChange}
+                                                    />
+                                                    <span className="slider"></span>
+                                                </label>
+                                            </div>
+                                        </Box>
+                                    </BlockStack>
                                 </Card>
                             </BlockStack>
                         </Grid.Cell>

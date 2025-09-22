@@ -1,219 +1,241 @@
-import { Box, Button, Grid, Icon, InlineStack, Modal, Select, Text, TextField } from '@shopify/polaris'
+// --- STEP 1: Make sure Button is imported ---
+import { Avatar, Box, Button, Checkbox, Filters, Grid, Icon, InlineStack, Modal, ResourceItem, ResourceList, Select, Text, TextField } from '@shopify/polaris';
 import { SearchIcon } from '@shopify/polaris-icons';
-import React, { useState } from 'react'
+import React, { useCallback, useEffect, useMemo, useState } from 'react';
+import { fetchData } from '../action';
 
 const ProductModal = ({ open, onClose, onSave }) => {
-
     const [searchValue, setSearchValue] = useState('');
+    const [products, setProducts] = useState([]);
+    const [isLoading, setIsLoading] = useState(false);
+    const [selectedItems, setSelectedItems] = useState(new Set());
+
+    const SELECTION_LIMIT = 5;
+
+    const fetchProductsAPI = async () => {
+        try {
+            setIsLoading(true);
+            const formData = new FormData();
+            const response = await fetchData("/get-list-of-product?Y6vg3RZzOZz7a9W", formData);
+            if (response.status && response.data) {
+                setProducts(response.data);
+            } else {
+                setProducts([]);
+            }
+        } catch (error) {
+            console.error("Error fetching products:", error);
+        } finally {
+            setIsLoading(false);
+        }
+    };
+
+    useEffect(() => {
+        if (open) {
+            fetchProductsAPI();
+            setSelectedItems(new Set());
+        }
+    }, [open]);
+
+    const flattenedItems = useMemo(() => {
+        const items = [];
+        products.forEach((product) => {
+            items.push({
+                ...product,
+                variants: product.variants || [],
+                isVariant: false,
+                uniqueId: `product-${product.product_id}`,
+                parentProductId: product.product_id,
+            });
+
+            if (product.variants && product.variants.length > 1) {
+                product.variants.forEach((variant) => {
+                    items.push({
+                        ...variant,
+                        isVariant: true,
+                        uniqueId: `variant-${variant.variant_id || variant.id}`,
+                        parentProductId: product.product_id,
+                        image: variant.image || product.image,
+                        name: variant.title,
+                    });
+                });
+            }
+        });
+        return items;
+    }, [products]);
+
+    const itemMap = useMemo(() => {
+        const map = new Map();
+        flattenedItems.forEach((item) => map.set(item.uniqueId, item));
+        return map;
+    }, [flattenedItems]);
+
+    const selectedProductIds = useMemo(() => {
+        const productIds = new Set();
+        selectedItems.forEach((id) => {
+            const item = itemMap.get(id);
+            if (item) {
+                productIds.add(item.parentProductId);
+            }
+        });
+        return productIds;
+    }, [selectedItems, itemMap]);
+
+    const handleSelectionChange = useCallback((item) => {
+        const isCurrentlySelected = selectedItems.has(item.uniqueId);
+
+        if (!isCurrentlySelected && !selectedProductIds.has(item.parentProductId) && selectedProductIds.size >= SELECTION_LIMIT) {
+            return;
+        }
+
+        const newSelectedItems = new Set(selectedItems);
+        const childVariantIds = (item.variants || []).map(v => `variant-${v.variant_id || v.id}`);
+
+        if (item.isVariant) {
+            if (newSelectedItems.has(item.uniqueId)) {
+                newSelectedItems.delete(item.uniqueId);
+            } else {
+                newSelectedItems.add(item.uniqueId);
+            }
+
+            const parentId = `product-${item.parentProductId}`;
+            const parentItem = itemMap.get(parentId);
+            const parentChildVariantIds = (parentItem?.variants || []).map(v => `variant-${v.variant_id || v.id}`);
+            const selectedChildrenCount = parentChildVariantIds.filter(id => newSelectedItems.has(id)).length;
+
+            if (selectedChildrenCount > 0) {
+                newSelectedItems.add(parentId);
+            } else {
+                newSelectedItems.delete(parentId);
+            }
+        } else {
+            const allChildrenSelected = childVariantIds.length > 0 && childVariantIds.every(id => newSelectedItems.has(id));
+            if (allChildrenSelected) {
+                newSelectedItems.delete(item.uniqueId);
+                childVariantIds.forEach(id => newSelectedItems.delete(id));
+            } else {
+                newSelectedItems.add(item.uniqueId);
+                childVariantIds.forEach(id => newSelectedItems.add(id));
+            }
+        }
+        setSelectedItems(newSelectedItems);
+    }, [selectedItems, itemMap, selectedProductIds]);
+
+    const filterControl = (
+        <div style={{ padding: '8px 16px', borderBottom: '1px solid var(--p-color-border-subdued)' }}>
+            <Grid>
+                <Grid.Cell columnSpan={{ xs: 6, sm: 4, md: 8, lg: 8, xl: 8 }}>
+                    <TextField
+                        value={searchValue}
+                        onChange={setSearchValue}
+                        placeholder="Search Product"
+                        prefix={<Icon source={SearchIcon} />}
+                    />
+                </Grid.Cell>
+                <Grid.Cell columnSpan={{ xs: 6, sm: 2, md: 2, lg: 4, xl: 4 }}>
+                    <Select
+                        label="Search by"
+                        labelInline
+                        options={[{ label: "Variant title", value: "variant" }, { label: "Product title", value: "product" }]}
+                        onChange={() => { }}
+                        value={"product"}
+                    />
+                </Grid.Cell>
+            </Grid>
+        </div>
+    );
+
+    const filters = [
+        {
+            key: 'accountStatus',
+            label: 'Account status',
+            filter: 'asfasf',
+            shortcut: true,
+        },
+    ];
+
+    const modalFooter = (
+        <Text variant="bodyMd">
+            {`${selectedProductIds.size} of ${SELECTION_LIMIT} products selected`}
+        </Text>
+    );
+
     return (
         <Modal
             open={open}
             onClose={onClose}
-            title="Add Collection"
+            title="Add Product"
+            footer={modalFooter}
             primaryAction={{
                 content: "Add",
-                onAction: () =>
-                    onSave([]),
+                onAction: () => onSave(Array.from(selectedItems)),
             }}
             secondaryActions={[{ content: "Cancel", onAction: onClose }]}
         >
-            <Modal.Section>
-                <Box>
-                    <Grid>
-                        <Grid.Cell columnSpan={{ xs: 6, sm: 4, md: 8, lg: 8, xl: 8 }}>
-                            <Box>
-                                <TextField
-                                    value={searchValue}
-                                    onChange={setSearchValue}
-                                    placeholder="Search Product"
-                                    prefix={<Icon source={SearchIcon} />}
-                                />
-                            </Box>
-                        </Grid.Cell>
-                        <Grid.Cell columnSpan={{ xs: 6, sm: 2, md: 2, lg: 4, xl: 4 }}>
-                            <Box>
-                                <Select
-                                    options={[
-                                        {
-                                            label: "Variant title",
-                                            value: "variant"
-                                        },
-                                        {
-                                            label: "Product title",
-                                            value: "product"
-                                        }
-                                    ]}
-                                    onChange={() => { }}
-                                    value={[]}
-                                />
-                            </Box>
-                        </Grid.Cell>
-                    </Grid>
-                    
-                </Box>
-                <Text>Product</Text>
-            </Modal.Section>
+            <ResourceList
+                resourceName={{ singular: 'product', plural: 'products' }}
+                items={flattenedItems}
+                loading={isLoading}
+                flushFilters
+                filterControl={<>
+                    {filterControl}
+                    <Filters
+                        hideQueryField={true}
+                        filters={filters}
+                    />
+                </>}
+                renderItem={(item) => {
+                    const { uniqueId, name, image, isVariant } = item;
+
+                    const isLimitReached = selectedProductIds.size >= SELECTION_LIMIT;
+                    const isPartOfSelection = selectedProductIds.has(item.parentProductId);
+                    const disabled = isLimitReached && !isPartOfSelection;
+
+                    const itemStyle = {
+                        paddingLeft: isVariant ? '32px' : undefined,
+                        opacity: disabled ? 0.5 : 1,
+                        cursor: disabled ? 'not-allowed' : 'pointer',
+                    };
+
+                    let checked = false;
+                    let indeterminate = false;
+
+                    if (isVariant) {
+                        checked = selectedItems.has(uniqueId);
+                    } else { // It's a parent product
+                        checked = selectedItems.has(uniqueId);
+
+                        const childVariantIds = (item.variants || []).map(v => `variant-${v.variant_id || v.id}`);
+                        if (childVariantIds.length > 0) {
+                            const selectedChildrenCount = childVariantIds.filter(id => selectedItems.has(id)).length;
+                            const allChildrenSelected = selectedChildrenCount === childVariantIds.length;
+
+                            if (checked && !allChildrenSelected) {
+                                indeterminate = true;
+                            }
+                        }
+                    }
+
+                    return (
+                        <ResourceItem id={uniqueId} key={uniqueId}>
+                            <div style={itemStyle}>
+                                <InlineStack blockAlign="center" gap="300" wrap={false}>
+                                    <Checkbox
+                                        labelHidden
+                                        checked={checked}
+                                        indeterminate={indeterminate}
+                                        onChange={() => handleSelectionChange(item)}
+                                        disabled={disabled}
+                                    />
+                                    <Avatar source={image} alt="" size="lg" />
+                                    <Text variant="bodyMd" as="span" fontWeight="semibold">{name}</Text>
+                                </InlineStack>
+                            </div>
+                        </ResourceItem>
+                    );
+                }}
+            />
         </Modal>
-    )
+    );
 }
 
-export default ProductModal
-
-
-
-
-// import {
-//     Modal,
-//     Filters,
-//     ResourceList,
-//     Text,
-//     Thumbnail,
-//     ChoiceList,
-//     Select,
-//     Box,
-// } from '@shopify/polaris';
-// import { useState, useCallback, useMemo } from 'react';
-
-// // --- Mock Data: In a real app, this would come from an API ---
-// const mockProducts = [
-//     { id: '1', name: 'Selling Plans Ski Wax', sku: 'WAX-001', available: true },
-//     { id: '2', name: 'Gift Card', sku: 'GIFTCARD', available: true },
-//     { id: '3', name: 'Out of Stock Snowboard', sku: 'BOARD-003', available: false },
-//     { id: '4', name: 'Premium Ski Goggles', sku: 'GGL-004', available: true },
-// ];
-// // --- End Mock Data ---
-
-// const ProductModal = ({ open, onClose, onSave }) => {
-//     // State for all filters
-//     const [availability, setAvailability] = useState(null);
-//     const [searchType, setSearchType] = useState('PRODUCT_TITLE');
-//     const [queryValue, setQueryValue] = useState('');
-
-//     // Callbacks to update filter state
-//     const handleAvailabilityChange = useCallback((value) => setAvailability(value), []);
-//     const handleSearchTypeChange = useCallback((value) => setSearchType(value), []);
-//     const handleQueryValueChange = useCallback((value) => setQueryValue(value), []);
-//     const handleAvailabilityRemove = useCallback(() => setAvailability(null), []);
-//     const handleQueryValueRemove = useCallback(() => setQueryValue(''), []);
-//     const handleClearAll = useCallback(() => {
-//         handleAvailabilityRemove();
-//         handleQueryValueRemove();
-//     }, [handleAvailabilityRemove, handleQueryValueRemove]);
-
-//     // Define the available filters for the "Add filter" button
-//     const filters = [
-//         {
-//             key: 'availability',
-//             label: 'Availability',
-//             filter: (
-//                 <ChoiceList
-//                     title="Availability"
-//                     titleHidden
-//                     choices={[
-//                         { label: 'Available', value: 'true' },
-//                         { label: 'Not available', value: 'false' },
-//                     ]}
-//                     selected={availability || []}
-//                     onChange={handleAvailabilityChange}
-//                 />
-//             ),
-//             shortcut: true,
-//         },
-//     ];
-
-//     // Create the "applied" filter tags that show up when a filter is active
-//     const appliedFilters = [];
-//     if (availability && !isEmpty(availability)) {
-//         const key = 'availability';
-//         appliedFilters.push({
-//             key,
-//             label: `Availability is ${availability[0] === 'true' ? 'Available' : 'Not Available'}`,
-//             onRemove: handleAvailabilityRemove,
-//         });
-//     }
-
-//     // Use useMemo to efficiently filter the list when data or filters change
-//     const filteredItems = useMemo(() => {
-//         let items = [...mockProducts];
-
-//         // Filter by text query
-//         if (queryValue) {
-//             const query = queryValue.toLowerCase();
-//             items = items.filter((item) => {
-//                 if (searchType === 'SKU') {
-//                     return item.sku.toLowerCase().includes(query);
-//                 }
-//                 return item.name.toLowerCase().includes(query);
-//             });
-//         }
-
-//         // Filter by availability
-//         if (availability && availability.length > 0) {
-//             const isAvailable = availability[0] === 'true';
-//             items = items.filter((item) => item.available === isAvailable);
-//         }
-
-//         return items;
-//     }, [queryValue, searchType, availability]);
-
-//     return (
-//         <Modal
-//             open={open}
-//             onClose={onClose}
-//             title="Add product"
-//             primaryAction={{ content: "Add", onAction: () => onSave([]) }}
-//             secondaryActions={[{ content: "Cancel", onAction: onClose }]}
-//         >
-//             <ResourceList
-//                 resourceName={{ singular: 'product', plural: 'products' }}
-//                 items={filteredItems}
-//                 renderItem={(item) => (
-//                     <ResourceList.Item id={item.id} media={() => <Thumbnail source="" alt={item.name} />}>
-//                         <Text variant="bodyMd" fontWeight="bold" as="h3">{item.name}</Text>
-//                         <Text variant="bodySm" tone="subdued">{item.sku}</Text>
-//                     </ResourceList.Item>
-//                 )}
-//                 // The Filters component is passed directly here
-//                 filterControl={
-//                     <Filters
-//                         queryValue={queryValue}
-//                         filters={filters}
-//                         appliedFilters={appliedFilters}
-//                         onQueryChange={handleQueryValueChange}
-//                         onQueryClear={handleQueryValueRemove}
-//                         onClearAll={handleClearAll}
-//                         queryPlaceholder="Search products"
-//                     >
-//                         {/* This is where the "Search by" dropdown goes */}
-
-//                         <Box>
-//                             <Select
-//                                 label="Search by"
-//                                 labelInline
-//                                 options={[
-//                                     { label: 'Product title', value: 'PRODUCT_TITLE' },
-//                                     { label: 'SKU', value: 'SKU' },
-//                                 ]}
-//                                 value={searchType}
-//                                 onChange={handleSearchTypeChange}
-//                             />
-//                         </Box>
-
-//                     </Filters>
-//                 }
-//                 flushFilters
-//             />
-//         </Modal>
-//     );
-// };
-
-// // Helper function
-// function isEmpty(value) {
-//     if (Array.isArray(value)) {
-//         return value.length === 0;
-//     } else {
-//         return value === '' || value == null;
-//     }
-// }
-
-// export default ProductModal;
+export default ProductModal;
