@@ -18,8 +18,13 @@ export const getCurrentShop = () => {
 
 // Base URL for APIs
 export const getApiURL = (path) => {
+  const key = "Y6vg3RZzOZz7a9W";
   const base_url = "https://demo.shopiapps.in/loyalty/api";
-  return `${base_url}${path}`;
+  if (key === '') {
+    return `${base_url}${path}`;
+  } else {
+    return `${base_url}${path}?${key}`;
+  }
 };
 
 // Common fetch function

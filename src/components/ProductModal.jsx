@@ -16,7 +16,7 @@ const ProductModal = ({ open, onClose, onSave }) => {
         try {
             setIsLoading(true);
             const formData = new FormData();
-            const response = await fetchData("/get-list-of-product?Y6vg3RZzOZz7a9W", formData);
+            const response = await fetchData("/get-list-of-product", formData);
             if (response.status && response.data) {
                 setProducts(response.data);
             } else {

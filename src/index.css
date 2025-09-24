@@ -9,6 +9,10 @@
   height: 2rem;
   width: 2rem;
 }
+.icon-sizeTier .Polaris-Icon {
+  height: 1.5rem;
+  width: 1.5rem;
+}
 .LPR_RedeemModal .p-theme-light {
   --p-space-400: 0;
 }

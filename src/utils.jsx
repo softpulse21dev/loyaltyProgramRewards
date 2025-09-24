@@ -1,4 +1,4 @@
-import { ArrowDiagonalIcon, ConfettiIcon, DeliveryIcon, DiscountCodeIcon, DiscountIcon, EnterIcon, GiftCardIcon, LogoFacebookIcon, LogoInstagramIcon, LogoTiktokIcon, LogoXIcon, OrderIcon, WalletIcon } from "@shopify/polaris-icons";
+import { ArrowDiagonalIcon, ConfettiIcon, DeliveryIcon, DiscountCodeIcon, DiscountIcon, EnterIcon, GiftCardIcon, LogoFacebookIcon, LogoInstagramIcon, LogoTiktokIcon, LogoXIcon, MoneyIcon, OrderIcon, WalletIcon } from "@shopify/polaris-icons";
 
 export const iconsMap = {
     LogoInstagramIcon,
@@ -16,6 +16,7 @@ export const iconsMap = {
     ShippingIcon: DeliveryIcon,
     GiftIcon: GiftCardIcon,
     DiscountIcon: DiscountIcon,
+    EarnPointsIcon: MoneyIcon,
 };
 
 export const NavigateMap = {

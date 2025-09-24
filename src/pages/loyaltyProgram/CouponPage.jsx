@@ -51,7 +51,7 @@ const CouponPage = () => {
         formData.append("title", rewardTitle);
         formData.append("settings_json", JSON.stringify(settings_json));
         formData.append("expiration_days", rewardExpiration);
-        const response = await fetchData("/add-merchant-redeeming-rules?Y6vg3RZzOZz7a9W", formData);
+        const response = await fetchData("/add-merchant-redeeming-rules", formData);
         console.log('Add Redeem Rule Response', response);
         if (response?.status === true) {
             navigate('/loyaltyProgram');
@@ -70,7 +70,7 @@ const CouponPage = () => {
         formData.append("title", rewardTitle);
         formData.append("settings_json", JSON.stringify(settings_json));
         formData.append("expiration_days", rewardExpiration);
-        const response = await fetchData("/update-merchant-redeeming-rules?Y6vg3RZzOZz7a9W", formData);
+        const response = await fetchData("/update-merchant-redeeming-rules", formData);
         console.log('Update Redeem Rule Response', response);
         if (response?.status === true) {
             navigate('/loyaltyProgram');
@@ -85,7 +85,7 @@ const CouponPage = () => {
         console.log('id', id)
         const formData = new FormData();
         formData.append("rule_id", id);
-        const response = await fetchData("/delete-merchant-redeeming-rules?Y6vg3RZzOZz7a9W", formData);
+        const response = await fetchData("/delete-merchant-redeeming-rules", formData);
         console.log('Delete Redeem Rule Response', response);
         if (response?.status === true) {
             navigate('/loyaltyProgram');
@@ -100,7 +100,7 @@ const CouponPage = () => {
         setLoading(true);
         const formData = new FormData();
         formData.append("rule_id", rule.id);
-        const response = await fetchData("/get-merchant-redeeming-rules-by-id?Y6vg3RZzOZz7a9W", formData);
+        const response = await fetchData("/get-merchant-redeeming-rules-by-id", formData);
         console.log('Get Redeem Rule By ID Response', response);
         if (response?.status === true) {
             setSettingsJson(response.data.settings_json);

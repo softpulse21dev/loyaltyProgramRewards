@@ -16,6 +16,7 @@ import { useCallback, useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { iconsMap, NavigateMap } from "../../utils";
 import { fetchData } from "../../action";
+import RedeemModal from "../RedeemModal";
 
 const Loyalty = () => {
     const [status, setStatus] = useState(null);
@@ -24,11 +25,10 @@ const Loyalty = () => {
     const [modalActive, setModalActive] = useState(false);
     const [redeemModalActive, setRedeemModalActive] = useState(false);
     const navigate = useNavigate();
-    const toggleRedeemModal = useCallback(() => setRedeemModalActive((active) => !active), []);
     const toggleModal = useCallback(() => setModalActive((active) => !active), []);
 
     const fetchSettingsAPI = async () => {
-        const response = await fetchData("/get-merchant-settings?Y6vg3RZzOZz7a9W", new FormData());
+        const response = await fetchData("/get-merchant-settings", new FormData());
         console.log('response', response);
         if (response.status && response.data) {
             setStatus(response.data.status);
@@ -43,7 +43,7 @@ const Loyalty = () => {
         const formData = new FormData();
         formData.append("status", !status ? "true" : "false");
 
-        const response = await fetchData("/update-merchant-settings?Y6vg3RZzOZz7a9W", formData);
+        const response = await fetchData("/update-merchant-settings", formData);
         setLoading(false);
         if (response.status) {
             setStatus((prev) => !prev);
@@ -59,7 +59,7 @@ const Loyalty = () => {
         formData.append("status", isActive ? "active" : "inactive");
         formData.append("rule_id", ruleId);
 
-        const url = isEarningRule ? "/update-merchant-earning-rules-status?Y6vg3RZzOZz7a9W" : "/update-merchant-redeeming-rules-status?Y6vg3RZzOZz7a9W";
+        const url = isEarningRule ? "/update-merchant-earning-rules-status" : "/update-merchant-redeeming-rules-status";
         const response = await fetchData(url, formData);
 
         if (response.status) {
@@ -119,10 +119,10 @@ const Loyalty = () => {
                         resourceName={{ singular: "earning", plural: "earnings" }}
                         items={loyaltyData?.earning_rules?.active_rules?.other_rules || []}
                         renderItem={(item) => {
-                            const { id, title, points, icon, rule_id, status: itemStatus } = item;
+                            const { title, points, icon, rule_id, status: itemStatus } = item;
                             const IconSource = iconsMap[icon];
                             return (
-                                <ResourceItem id={id}>
+                                <ResourceItem key={rule_id}>
                                     <Box style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
                                         <Box style={{ display: "flex", alignItems: "center", gap: "15px" }}>
                                             <Icon source={IconSource} />
@@ -162,10 +162,10 @@ const Loyalty = () => {
                         headerContent={<Text variant="headingMd" as="h6">Social Rules</Text>}
                         showHeader={true}
                         renderItem={(item) => {
-                            const { id, title, points, icon, rule_id, status: itemStatus } = item;
+                            const { title, points, icon, rule_id, status: itemStatus } = item;
                             const IconSource = iconsMap[icon];
                             return (
-                                <ResourceItem id={id}>
+                                <ResourceItem key={rule_id}>
                                     <Box style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
                                         <Box style={{ display: "flex", alignItems: "center", gap: "15px" }}>
                                             <Icon source={IconSource} />
@@ -209,7 +209,7 @@ const Loyalty = () => {
                             <p>Let customer redeem their earned points</p>
                         </Box>
                         <Box style={{ marginTop: 7, marginLeft: 0 }}>
-                            <Button variant="primary" onClick={toggleRedeemModal}>Add new rule</Button>
+                            <Button variant="primary" onClick={() => setRedeemModalActive(true)}>Add new rule</Button>
                         </Box>
                     </>
                 }
@@ -225,7 +225,7 @@ const Loyalty = () => {
                             const { id, title, points, icon, status: itemStatus } = item;
                             const IconSource = iconsMap[icon];
                             return (
-                                <ResourceItem id={id}>
+                                <ResourceItem key={id}>
                                     <Box style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
                                         <Box style={{ display: "flex", alignItems: "center", gap: "15px" }}>
                                             <Icon source={IconSource} />
@@ -235,7 +235,7 @@ const Loyalty = () => {
                                             </Box>
                                         </Box>
                                         <Box style={{ display: "flex", alignItems: "center", gap: "15px" }}>
-                                            <Button variant="plain" onClick={() => navigate(`/loyaltyProgram/CouponPage${window.location.search}`, { state: { rule: item, edit: true } })}>Edit</Button>
+                                            <Button variant="plain" onClick={() => navigate(`/loyaltyProgram/CouponPage`, { state: { rule: item, edit: true } })}>Edit</Button>
                                             <div className="toggle-container" style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
                                                 <label className="switch">
                                                     <input
@@ -280,67 +280,35 @@ const Loyalty = () => {
                 title="Ways to Earn"
                 large
             >
-                <Modal.Section>
-                    <ResourceList
-                        items={loyaltyData?.earning_rules?.master_rules || []}
-                        renderItem={(item) => {
-                            const { id, title, type } = item;
-                            const route = NavigateMap[type] || `/loyaltyProgram/loyaltysocialview${window.location.search}`;
+                {/* <Modal.Section> */}
+                <ResourceList
+                    items={loyaltyData?.earning_rules?.master_rules || []}
+                    renderItem={(item) => {
+                        const { id, title, type } = item;
+                        const route = NavigateMap[type] || `/loyaltyProgram/loyaltysocialview${window.location.search}`;
 
-                            return (
-                                <ResourceItem id={id}>
-                                    <InlineStack align="space-between" blockAlign="center">
-                                        <Box style={{ display: "flex", alignItems: "center", gap: "10px" }}>
-                                            <Box>
-                                                <Icon source={RewardIcon} />
-                                            </Box>
-                                            <Text>{title}</Text>
+                        return (
+                            <ResourceItem id={id}>
+                                <InlineStack align="space-between" blockAlign="center">
+                                    <Box style={{ display: "flex", alignItems: "center", gap: "10px" }}>
+                                        <Box>
+                                            <Icon source={RewardIcon} />
                                         </Box>
-                                        <Button onClick={() =>
-                                            navigate(route, { state: { rule: item } })
-                                        } >ADD</Button>
-                                    </InlineStack>
-                                </ResourceItem>
-                            );
-                        }}
-                    />
-                </Modal.Section>
+                                        <Text>{title}</Text>
+                                    </Box>
+                                    <Button onClick={() =>
+                                        navigate(route, { state: { rule: item } })
+                                    } >ADD</Button>
+                                </InlineStack>
+                            </ResourceItem>
+                        );
+                    }}
+                />
+                {/* </Modal.Section> */}
             </Modal>
 
-            <Modal
-                open={redeemModalActive}
-                onClose={toggleRedeemModal}
-                title="Redeeming Rules"
-                large
-            >
-                <Modal.Section>
-                    <ResourceList
-                        items={loyaltyData?.redeeming_rules?.master_rules || []}
-                        renderItem={(item) => {
-                            const IconSource = iconsMap[item.icon];
-                            return (
-                                <ResourceItem id={item.master_rule_id}>
-                                    <InlineStack align="space-between" blockAlign="center">
-                                        <Box style={{ display: "flex", alignItems: "center", gap: "10px" }}>
-                                            <Box>
-                                                <Icon source={IconSource} />
-                                            </Box>
-                                            <Text>{item.title}</Text>
-                                        </Box>
-                                        <Button
-                                            onClick={() =>
-                                                navigate(`/loyaltyProgram/CouponPage`, { state: { rule: item } })
-                                            }
-                                        >
-                                            ADD
-                                        </Button>
-                                    </InlineStack>
-                                </ResourceItem>
-                            );
-                        }}
-                    />
-                </Modal.Section>
-            </Modal>
+            <RedeemModal active={redeemModalActive} setActive={setRedeemModalActive} data={loyaltyData?.redeeming_rules?.master_rules} />
+
         </div>
     );
 };

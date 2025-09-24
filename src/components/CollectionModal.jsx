@@ -29,7 +29,7 @@ const CollectionModal = ({ open, onClose, onSave, initialSelectedCollections = [
             const formData = new FormData();
             if (query) formData.append("query", query);
 
-            const response = await fetchData("/get-list-of-collection?Y6vg3RZzOZz7a9W", formData);
+            const response = await fetchData("/get-list-of-collection", formData);
             console.log("response", response);
 
             if (response?.status && response?.data) {

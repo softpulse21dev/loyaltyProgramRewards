@@ -24,7 +24,7 @@ const LoyaltySignupView = () => {
     const getRuleByIdAPI = async (ruleId) => {
         const formData = new FormData();
         formData.append("rule_id", ruleId);
-        const response = await fetchData("/get-merchant-earning-rules-by-id?Y6vg3RZzOZz7a9W", formData);
+        const response = await fetchData("/get-merchant-earning-rules-by-id", formData);
         if (response?.data) {
             setGetdatabyID(response.data);
             console.log('Get Rule By Id Response', response);
@@ -39,7 +39,7 @@ const LoyaltySignupView = () => {
         formData.append("points", earningpoints);
         formData.append("status", status);
         formData.append("condition_json", JSON.stringify(conditionalJson));
-        const response = await fetchData("/add-merchant-earning-rules?Y6vg3RZzOZz7a9W", formData);
+        const response = await fetchData("/add-merchant-earning-rules", formData);
         console.log('Add Rule Response', response);
         if (response.status) {
             navigate('/loyaltyProgram');
@@ -55,7 +55,7 @@ const LoyaltySignupView = () => {
         formData.append("points", earningpoints);
         formData.append("status", status);
         formData.append("condition_json", JSON.stringify(conditionalJson));
-        const response = await fetchData("/update-merchant-earning-rules?Y6vg3RZzOZz7a9W", formData);
+        const response = await fetchData("/update-merchant-earning-rules", formData);
         console.log('Update Rule By Id Response', response);
         if (response.status) {
             navigate('/loyaltyProgram');

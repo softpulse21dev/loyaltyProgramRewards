@@ -79,7 +79,7 @@ const LoyaltySocialView = () => {
         const formData = new FormData();
         formData.append("setting_id", "ztEfTSMcDejdHNDnDiM5xBPdJdEuyCEkwhxdaL==");
         formData.append("rule_id", ruleId);
-        const response = await fetchData("/delete-merchant-earning-rules?Y6vg3RZzOZz7a9W", formData);
+        const response = await fetchData("/delete-merchant-earning-rules", formData);
         console.log('result delete earning rule', response);
         if (response.status) {
             navigate('/loyaltyProgram');
@@ -96,7 +96,7 @@ const LoyaltySocialView = () => {
         formData.append("points", earningpoints);
         formData.append("status", status);
         formData.append("condition_json", JSON.stringify(conditionalJson));
-        const response = await fetchData("/add-merchant-earning-rules?Y6vg3RZzOZz7a9W", formData);
+        const response = await fetchData("/add-merchant-earning-rules", formData);
         console.log('Add Url Response', response);
         if (response.status) {
             navigate('/loyaltyProgram');
@@ -109,7 +109,7 @@ const LoyaltySocialView = () => {
         const formData = new FormData();
         console.log('ruleId', ruleId);
         formData.append("rule_id", ruleId);
-        const response = await fetchData("/get-merchant-earning-rules-by-id?Y6vg3RZzOZz7a9W", formData);
+        const response = await fetchData("/get-merchant-earning-rules-by-id", formData);
         if (response?.data) {
             setGetdatabyID(response.data);
             console.log('Get Rule By Id Response', response);
@@ -122,7 +122,7 @@ const LoyaltySocialView = () => {
         formData.append("points", earningpoints);
         formData.append("status", status);
         formData.append("condition_json", JSON.stringify(conditionalJson));
-        const response = await fetchData("/update-merchant-earning-rules?Y6vg3RZzOZz7a9W", formData);
+        const response = await fetchData("/update-merchant-earning-rules", formData);
         console.log('Update Rule By Id Response', response);
         if (response.status) {
             navigate('/loyaltyProgram');
@@ -180,7 +180,7 @@ const LoyaltySocialView = () => {
                     </Badge>
                 </Box>
             }
-            secondaryActions={edit ? <Button variant='tertiary' tone='critical' icon={DeleteIcon} onClick={() => { deleteEarningRuleAPI(rule.rule_id) }}>Delete</Button> : undefined}
+            secondaryActions={edit ? <Button variant='secondary' tone='critical' icon={DeleteIcon} onClick={() => { deleteEarningRuleAPI(rule.rule_id) }}>Delete</Button> : undefined}
             primaryAction={{ content: 'Save', onAction: handleSave }}
         >
             <Layout>

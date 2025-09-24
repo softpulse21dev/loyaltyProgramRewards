@@ -1,32 +1,12 @@
-import { Box, Icon, Modal, ResourceItem, ResourceList, Text } from '@shopify/polaris'
+import { Box, Button, Icon, InlineStack, Modal, ResourceItem, ResourceList, Text } from '@shopify/polaris'
 import { CurrencyConvertIcon } from '@shopify/polaris-icons'
 import React from 'react'
+import { iconsMap } from '../utils'
+import { useNavigate } from 'react-router-dom'
 
-const RedeemModal = ({ active, setActive }) => {
-    const methods = [
-        {
-            id: 1,
-            name: 'Amount Discount',
-            icon: CurrencyConvertIcon,
-        },
-        {
-            id: 2,
-            name: 'Percentage Discount',
-            icon: CurrencyConvertIcon,
-        },
-
-        {
-            id: 3,
-            name: 'Free Shipping',
-            icon: CurrencyConvertIcon,
-        },
-
-        {
-            id: 4,
-            name: 'Free Gift',
-            icon: CurrencyConvertIcon,
-        },
-    ]
+const RedeemModal = ({ active, setActive, data }) => {
+    console.log('data', data)
+    const navigate = useNavigate();
 
     return (
         <Modal
@@ -35,34 +15,30 @@ const RedeemModal = ({ active, setActive }) => {
             title="Ways to Redeem"
         >
 
-            <Modal.Section>
-                <div className='LPR_RedeemModal'>
-                    <ResourceList
-                        resourceName={{ singular: 'method', plural: 'methods' }}
-                        items={methods}
-                        renderItem={(item) => {
-                            const { id, name, icon } = item;
-
-                            return (
-                                <ResourceItem
-                                    id={id}
-                                    icon={icon}
-                                    name={name}
-                                >
-                                    <Box className='LPR_RedeemModal' style={{ display: 'flex', alignItems: 'center', gap: '10px', }}>
-                                        <Box>
-                                            <Icon source={icon} />
-                                        </Box>
-                                        <Text variant="bodyMd" fontWeight="bold" as="h3">
-                                            {name}
-                                        </Text>
+            <ResourceList
+                items={data || []}
+                renderItem={(item) => {
+                    const IconSource = iconsMap[item.icon];
+                    return (
+                        <ResourceItem id={item.master_rule_id}>
+                            <InlineStack align="space-between" blockAlign="center">
+                                <Box style={{ display: "flex", alignItems: "center", gap: "10px" }}>
+                                    <Box>
+                                        <Icon source={IconSource} />
                                     </Box>
-                                </ResourceItem>
-                            );
-                        }}
-                    />
-                </div>
-            </Modal.Section>
+                                    <Text>{item.title}</Text>
+                                </Box>
+                                <Button
+                                    onClick={() =>
+                                        navigate(`/loyaltyProgram/CouponPage`, { state: { rule: item } })
+                                    }
+                                > ADD
+                                </Button>
+                            </InlineStack>
+                        </ResourceItem>
+                    );
+                }}
+            />
         </Modal >
     )
 }

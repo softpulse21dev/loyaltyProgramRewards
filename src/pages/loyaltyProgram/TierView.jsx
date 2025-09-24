@@ -1,15 +1,59 @@
-import { BlockStack, Box, Button, Card, Grid, Icon, Layout, Page, RadioButton, Text, TextField } from '@shopify/polaris'
-import { CashDollarIcon, CheckIcon, CurrencyConvertIcon, DeleteIcon, GiftCardIcon, HeartIcon, SaveIcon, StarIcon } from '@shopify/polaris-icons';
-import React, { useState } from 'react'
-import { useNavigate } from 'react-router-dom';
+import { BlockStack, Box, Button, Card, DropZone, Grid, Icon, Layout, LegacyStack, Page, RadioButton, Text, TextField, Thumbnail } from '@shopify/polaris'
+import { CashDollarIcon, CheckIcon, CurrencyConvertIcon, DeleteIcon, GiftCardIcon, HeartIcon, NoteIcon, RewardIcon, SaveIcon, StarIcon } from '@shopify/polaris-icons';
+import React, { useCallback, useState } from 'react'
+import { useLocation, useNavigate } from 'react-router-dom';
 import RedeemModal from '../../components/RedeemModal';
 
 const TierView = () => {
     const navigate = useNavigate();
+    const location = useLocation();
+    const { rule, edit } = location.state || {};
+    console.log('rule', rule)
+    console.log('edit', edit)
     const [tierName, setTierName] = useState('');
     const [goalValue, setGoalValue] = useState('');
+    const [pointsMultiplier, setPointsMultiplier] = useState('');
     const [selected, setSelected] = useState("star");
     const [active, setActive] = useState(false);
+    const [files, setFiles] = useState([]);
+
+    const handleDropZoneDrop = useCallback(
+        (_dropFiles, acceptedFiles) => {
+            setFiles((prevFiles) => [...prevFiles, ...acceptedFiles]);
+        },
+        [],
+    );
+    const validImageTypes = ['image/gif', 'image/jpeg', 'image/png'];
+
+    const uploadedFiles = files.length > 0 && (
+        <div style={{ padding: '1rem' }}>
+            <LegacyStack vertical>
+                {files.map((file, index) => (
+                    <LegacyStack alignment="center" key={index}>
+                        <Thumbnail
+                            size="small"
+                            alt={file.name}
+                            source={
+                                validImageTypes.includes(file.type)
+                                    ? window.URL.createObjectURL(file)
+                                    : NoteIcon
+                            }
+                        />
+                        <div>
+                            {file.name}{' '}
+                            <Text variant="bodySm" as="p">
+                                {file.size} bytes
+                            </Text>
+                        </div>
+                    </LegacyStack>
+                ))}
+            </LegacyStack>
+        </div>
+    );
+
+    const fileUpload = !files.length && (
+        <DropZone.FileUpload actionHint="Accepts .gif, .jpg, and .png" />
+    )
 
     const icons = [
         { id: "star", icon: StarIcon },
@@ -24,7 +68,7 @@ const TierView = () => {
         <Page
             backAction={{ content: 'Back', onAction: () => navigate('/loyaltyProgram') }}
             title="VIP Tier"
-            secondaryActions={<Button tone='critical' icon={DeleteIcon} onAction={() => { }}>Delete</Button>}
+            secondaryActions={edit ? <Button tone='critical' icon={DeleteIcon} onAction={() => { }}>Delete</Button> : ''}
             primaryAction={{ content: 'Save', onAction: () => { } }}
         >
             <Layout>
@@ -46,13 +90,28 @@ const TierView = () => {
                                 <Card>
                                     <Box style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
                                         <Text variant='headingMd' as="span">Goal to achieve tier</Text>
-                                        <Box style={{ maxWidth: 250 }}>
+                                        <Box style={{ maxWidth: 300 }}>
                                             <TextField
                                                 value={goalValue}
                                                 type='number'
                                                 label='Amount spent since start date'
                                                 requiredIndicator={true}
                                                 onChange={(value) => setGoalValue(value)}
+                                            />
+                                        </Box>
+                                    </Box>
+                                </Card>
+
+                                <Card>
+                                    <Box style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+                                        <Text variant='headingMd' as="span">Points Multiplier</Text>
+                                        <Box style={{ maxWidth: 300 }}>
+                                            <TextField
+                                                value={pointsMultiplier}
+                                                type='number'
+                                                label='Points earned will be multiplied by this value'
+                                                requiredIndicator={true}
+                                                onChange={(value) => setPointsMultiplier(value)}
                                             />
                                         </Box>
                                     </Box>
@@ -89,34 +148,34 @@ const TierView = () => {
                                     <Box
                                         style={{
                                             display: "grid",
-                                            gridTemplateColumns: "repeat(3, 1fr)",
+
                                             gap: "8px",
-                                            marginTop: "16px",
+                                            marginTop: "8px",
                                         }}
                                     >
-                                        {icons.map(({ id, icon }) => (
-                                            <Box
-                                                key={id}
-                                                padding="3"
-                                                borderWidth="1"
-                                                borderColor={selected === id ? "border-brand" : "border-subdued"}
-                                                borderStyle="solid"
-                                                borderRadius="200"
-                                                background="bg-surface"
-                                                onClick={() => setSelected(id)}
-                                                style={{ cursor: "pointer", textAlign: "center" }}
-                                            >
-                                                <RadioButton
-                                                    label={<Icon source={icon} />}
-                                                    id={id}
-                                                    name="icon-select"
-                                                    checked={selected === id}
-                                                    onChange={() => setSelected(id)}
-                                                />
-                                            </Box>
-                                        ))}
+                                        <RadioButton
+                                            label={'Default Icon'}
+                                            name="icon-select"
+                                        // checked={selected === id}
+                                        // onChange={() => setSelected(id)}
+                                        />
+                                        <div className='icon-size' style={{ display: "flex", width: "15%", alignItems: "flex-start", justifyContent: "center" }}>
+                                            <Icon source={RewardIcon} />
+                                        </div>
+                                        <RadioButton
+                                            label='Custom Icon'
+                                            name="icon-select"
+                                        // checked={selected === id}
+                                        // onChange={() => setSelected(id)}
+                                        />
+                                        <DropZone onDrop={handleDropZoneDrop} variableHeight>
+                                            {uploadedFiles}
+                                            {fileUpload}
+                                        </DropZone>
                                     </Box>
                                 </Card>
+
+
                             </BlockStack>
                         </Grid.Cell>
                     </Grid>
