@@ -18,13 +18,12 @@ import {
     Select,
     Button
 } from "@shopify/polaris";
-import React, { useState, useCallback, useMemo } from "react";
+import React, { useState, useCallback, useMemo, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
+import { fetchData } from "../action";
+import { formatShortDate } from "../utils";
 
 const Customer = () => {
-    // --- State Management for Filters ---
-
-    // State for the main search query
     const [queryValue, setQueryValue] = useState('');
 
     // State for specific filters
@@ -34,56 +33,44 @@ const Customer = () => {
     // Polaris hook to manage filter UI mode
     // const { mode, setMode } = useSetIndexFiltersMode();
 
+    const [customers, setCustomers] = useState([]);
+    const [customerType, setCustomerType] = useState('');
 
-    // --- Original Data ---
-    const customers = [
-        {
-            id: "1",
-            name: "Softpulse Dev1",
-            email: "softplusedev010@gmail.com",
-            points: "0 points",
-            Storecredit: "0 Storecredit",
-            vip: "No VIP tier",
-            referrals: 0,
-            dateJoined: "2025-01-01",
-        },
-        {
-            id: "2",
-            name: "mansi sp",
-            email: "softplusedev002@gmail.com",
-            points: "3,780 points",
-            Storecredit: "0 Storecredit",
-            vip: "No VIP tier",
-            referrals: 1, // Added a different referrals for filtering example
-            dateJoined: "2025-01-01",
-        },
-        {
-            id: "3",
-            name: "Softpulse Dev15",
-            email: "softplusedev15@gmail.com",
-            points: "0 points",
-            Storecredit: "0 Storecredit",
-            vip: "No VIP tier",
-            referrals: 0,
-            dateJoined: "2025-01-01",
-        },
-        {
-            id: "4",
-            name: "Karine Ruby",
-            email: "karine.ruby@example.com",
-            points: "0 points",
-            Storecredit: "0 Storecredit",
-            vip: "No VIP tier",
-            referrals: 2, // Added a different status for filtering example
-            dateJoined: "2025-01-01",
-        },
-    ];
+    const GetCustomersAPI = async () => {
+        try {
+            const formData = new FormData();
+            formData.append("customer_type", customerType);
+            formData.append("search", queryValue);
+            formData.append("next", "");
+            formData.append("previous", "");
+            const response = await fetchData("/list-customer", formData);
+            console.log('Get Customers Response', response);
+            if (response?.status === true) {
+                setCustomers(response.data);
+            } else {
+                shopify.toast.show(response?.message, { duration: 2000, isError: true });
+            }
+        } catch (error) {
+            console.error('Error fetching customers:', error);
+        } finally {
+            // setLoading(false);
+        }
+    }
+    useEffect(() => {
+        GetCustomersAPI();
+    }, [customerType]);
+
+    const customerTypeOptions = [
+        { label: 'All', value: '' },
+        { label: 'Guest', value: 'guest' },
+        { label: 'Member', value: 'member' },
+    ]
 
     // --- Filter Handlers ---
 
     // `useCallback` is used for performance, preventing re-creation of these functions on every render
     const handleNameFilterRemove = useCallback(() => setNameFilter(''), []);
-    const handleStatusFilterRemove = useCallback(() => setStatusFilter(undefined), []);
+    const handleStatusFilterRemove = useCallback(() => setStatusFilter(), []);
     const handleFiltersClearAll = useCallback(() => {
         handleNameFilterRemove();
         handleStatusFilterRemove();
@@ -115,8 +102,8 @@ const Customer = () => {
                     title="Status"
                     titleHidden
                     choices={[
-                        { label: 'Guest', value: 'Guest' },
-                        { label: 'Member', value: 'Member' },
+                        { label: 'Guest', value: 'guest' },
+                        { label: 'Member', value: 'member' },
                     ]}
                     selected={statusFilter || []}
                     onChange={setStatusFilter}
@@ -148,29 +135,31 @@ const Customer = () => {
 
     // --- Data Filtering Logic ---
 
-    // `useMemo` filters the data and only recalculates when dependencies change
     const filteredCustomers = useMemo(() => {
         let filtered = [...customers];
 
         // 1. Apply main search query (searches name and email)
         if (queryValue) {
+            const lowercasedQuery = queryValue.toLowerCase();
             filtered = filtered.filter(customer =>
-                customer.name.toLowerCase().includes(queryValue.toLowerCase()) ||
-                customer.email.toLowerCase().includes(queryValue.toLowerCase())
+                (customer.name ?? '').toLowerCase().includes(lowercasedQuery) ||
+                (customer.email ?? '').toLowerCase().includes(lowercasedQuery)
             );
         }
 
         // 2. Apply name filter
         if (nameFilter) {
+            const lowercasedNameFilter = nameFilter.toLowerCase();
             filtered = filtered.filter(customer =>
-                customer.name.toLowerCase().includes(nameFilter.toLowerCase())
+                (customer.name ?? '').toLowerCase().includes(lowercasedNameFilter)
             );
         }
 
         // 3. Apply status filter
         if (statusFilter && statusFilter.length > 0) {
             filtered = filtered.filter(customer =>
-                statusFilter.includes(customer.status)
+                // This is safe, but adding a fallback is good practice
+                statusFilter.includes(customer.source ?? '')
             );
         }
 
@@ -181,42 +170,54 @@ const Customer = () => {
 
     const rowMarkup = filteredCustomers.map((val, index) => (
         <IndexTable.Row
-            id={val.id}
-            key={val.id}
+            id={val.shopify_cust_id}
+            key={val.shopify_cust_id}
             position={index}
-            onClick={() => navigate(`/customerView/`)}
+            onClick={() => navigate(`/customerView/`, { state: { id: val.shopify_cust_id } })}
         >
-            <IndexTable.Cell>
-                <Text variant='bodyMd' as="span">{val.id}</Text>
-            </IndexTable.Cell>
-            <IndexTable.Cell>
-                <Text variant='bodyMd' as="span" fontWeight="bold">{val.name}</Text>
-            </IndexTable.Cell>
+            {/* <IndexTable.Cell>
+                <Text variant='bodyMd' as="span">{val.shopify_cust_id}</Text>
+            // </IndexTable.Cell> */}
             <IndexTable.Cell>
                 <Text variant='bodyMd' as="span">{val.email}</Text>
             </IndexTable.Cell>
             <IndexTable.Cell>
-                <Text variant='bodyMd' as="span">{val.status}</Text>
+                <Text variant='bodyMd' as="span">{val.name}</Text>
+            </IndexTable.Cell>
+            <IndexTable.Cell>
+                <Text variant='bodyMd' as="span">{val.source}</Text>
             </IndexTable.Cell>
             <IndexTable.Cell>
                 <Text variant='bodyMd' as="span">{val.referrals}</Text>
             </IndexTable.Cell>
             <IndexTable.Cell>
-                <Text variant='bodyMd' as="span">{val.points}</Text>
+                <Text variant='bodyMd' as="span">{val.points_balance}</Text>
             </IndexTable.Cell>
             <IndexTable.Cell>
-                <Text variant='bodyMd' as="span">{val.Storecredit}</Text>
+                <Text variant='bodyMd' as="span">{val.total_spent}</Text>
             </IndexTable.Cell>
             <IndexTable.Cell>
-                <Text variant='bodyMd' as="span">{val.dateJoined}</Text>
+                <Text variant='bodyMd' as="span">{val.orders_count}</Text>
             </IndexTable.Cell>
-        </IndexTable.Row>
+            <IndexTable.Cell>
+                <Text variant='bodyMd' as="span"> {formatShortDate(val.registration_date)}</Text>
+            </IndexTable.Cell>
+        </IndexTable.Row >
     ));
 
     // --- Final Render ---
 
     return (
-        <Page title="Customers">
+        <Page title="Customers"
+            secondaryActions={
+                <Select
+                    label="Filter customers by type"
+                    options={customerTypeOptions}
+                    onChange={(value) => setCustomerType(value)}
+                    value={customerType}
+                />
+            }
+        >
             <Card padding="0">
                 <div>
                     <IndexFilters
@@ -233,18 +234,19 @@ const Customer = () => {
                     />
                 </div>
                 <IndexTable
-                    sortable={[false, false, false, false, true, true, true]}
+                    sortable={[false, false, false, false, true, true, true, true, true]}
                     resourceName={{ singular: 'customer', plural: 'customers' }}
                     itemCount={filteredCustomers.length}
                     selectable={false} // Set to true if you want checkboxes
                     headings={[
-                        { title: 'Customer ID' },
-                        { title: 'Name' },
+                        // { title: 'Customer ID' },
                         { title: 'Email' },
+                        { title: 'Name' },
                         { title: 'Status' },
                         { title: 'Referrals' },
                         { title: 'Points' },
-                        { title: 'Store credit' },
+                        { title: 'Orders' },
+                        { title: 'Points Spent' },
                         { title: 'Date Joined' },
                     ]}
                 >

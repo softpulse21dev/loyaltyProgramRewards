@@ -112,8 +112,10 @@ const OrderPoints = () => {
                         <Grid.Cell columnSpan={{ xs: 6, sm: 2, md: 2, lg: 4, xl: 4 }}>
                             <BlockStack gap={400}>
                                 <Card>
-                                    <Text>Summary</Text>
-                                    <li>Customers earn points for every Rs. 1 spent</li>
+                                    <Text variant="headingMd" as="span" >Summary</Text>
+                                    <ul style={{ listStyle: "inherit", paddingInline: 20 }}>
+                                        <li>Customers earn points for every Rs. 1 spent</li>
+                                    </ul>
                                 </Card>
 
                                 <Card>

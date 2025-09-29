@@ -13,7 +13,7 @@ const TierView = () => {
     const [tierName, setTierName] = useState('');
     const [goalValue, setGoalValue] = useState('');
     const [pointsMultiplier, setPointsMultiplier] = useState('');
-    const [selected, setSelected] = useState("star");
+    const [selected, setSelected] = useState("default");
     const [active, setActive] = useState(false);
     const [files, setFiles] = useState([]);
 
@@ -55,15 +55,6 @@ const TierView = () => {
         <DropZone.FileUpload actionHint="Accepts .gif, .jpg, and .png" />
     )
 
-    const icons = [
-        { id: "star", icon: StarIcon },
-        { id: "gift", icon: GiftCardIcon },
-        { id: "tick", icon: CheckIcon },
-        { id: "heart", icon: HeartIcon },
-        { id: "trophy", icon: DeleteIcon },
-        { id: "cart", icon: CurrencyConvertIcon },
-        { id: "cash", icon: CashDollarIcon },
-    ];
     return (
         <Page
             backAction={{ content: 'Back', onAction: () => navigate('/loyaltyProgram') }}
@@ -143,30 +134,26 @@ const TierView = () => {
                                     <Text variant="headingMd" as="h2">
                                         Icon
                                     </Text>
-
-                                    {/* Grid container */}
+                                    
                                     <Box
                                         style={{
                                             display: "grid",
-
                                             gap: "8px",
                                             marginTop: "8px",
                                         }}
                                     >
                                         <RadioButton
                                             label={'Default Icon'}
-                                            name="icon-select"
-                                        // checked={selected === id}
-                                        // onChange={() => setSelected(id)}
+                                            checked={selected === "default"}
+                                            onChange={() => setSelected("default")}
                                         />
-                                        <div className='icon-size' style={{ display: "flex", width: "15%", alignItems: "flex-start", justifyContent: "center" }}>
+                                        <div className='icon-size' style={{ display: "flex", maxWidth: "15%", alignItems: "flex-start", justifyContent: "center" }}>
                                             <Icon source={RewardIcon} />
                                         </div>
                                         <RadioButton
                                             label='Custom Icon'
-                                            name="icon-select"
-                                        // checked={selected === id}
-                                        // onChange={() => setSelected(id)}
+                                            checked={selected === "custom"}
+                                            onChange={() => setSelected("custom")}
                                         />
                                         <DropZone onDrop={handleDropZoneDrop} variableHeight>
                                             {uploadedFiles}

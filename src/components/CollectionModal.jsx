@@ -20,7 +20,7 @@ const CollectionModal = ({ open, onClose, onSave, initialSelectedCollections = [
             fetchCollections(collectionName);
         }
     }, [open]); // This effect runs only when the modal opens
-    
+
     console.log('selectedItems', selectedItems)
 
     const fetchCollections = async (query = '') => {
@@ -66,59 +66,58 @@ const CollectionModal = ({ open, onClose, onSave, initialSelectedCollections = [
             }}
             secondaryActions={[{ content: "Cancel", onAction: onClose }]}
         >
-            <div className="LPR_CollectionModal">
-                <Modal.Section>
-                    <div
-                        style={{
-                            paddingBlockEnd: "16px",
-                            borderBottom: "0.1rem solid #dfe3e8",
-                        }}
-                    >
-                        <TextField
-                            value={collectionName}
-                            onChange={setCollectionName}
-                            placeholder="Search Collections"
-                            prefix={<Icon source={SearchIcon} />}
-                            clearButton
-                            onClearButtonClick={() => setCollectionName("")}
-                        />
-                    </div>
 
-                    {loading ? (
-                        <Box alignment="center" style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '80px' }}>
-                            <Spinner accessibilityLabel="Loading collections" size="large" />
-                        </Box>
-                    ) : (
-                        <ResourceList
-                            resourceName={{ singular: "collection", plural: "collections" }}
-                            showHeader={false}
-                            items={collections}
-                            selectedItems={selectedItems}
-                            onSelectionChange={setSelectedItems}
-                            selectable
-                            renderItem={(item) => {
-                                const { collection_id, name, image } = item;
-                                return (
-                                    <ResourceItem
-                                        id={collection_id}
-                                        media={
-                                            <img
-                                                src={image}
-                                                alt=""
-                                                style={{ width: 40, height: 40, borderRadius: 4 }}
-                                            />
-                                        }
-                                    >
-                                        <BlockStack gap="100">
-                                            <Text variant="headingMd">{name}</Text>
-                                        </BlockStack>
-                                    </ResourceItem>
-                                );
-                            }}
-                        />
-                    )}
-                </Modal.Section>
-            </div>
+            <Modal.Section>
+                <div
+                    style={{
+                        paddingBlockEnd: "16px",
+                        borderBottom: "0.1rem solid #dfe3e8",
+                    }}
+                >
+                    <TextField
+                        value={collectionName}
+                        onChange={setCollectionName}
+                        placeholder="Search Collections"
+                        prefix={<Icon source={SearchIcon} />}
+                        clearButton
+                        onClearButtonClick={() => setCollectionName("")}
+                    />
+                </div>
+
+                {loading ? (
+                    <Box alignment="center" style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '80px' }}>
+                        <Spinner accessibilityLabel="Loading collections" size="large" />
+                    </Box>
+                ) : (
+                    <ResourceList
+                        resourceName={{ singular: "collection", plural: "collections" }}
+                        showHeader={false}
+                        items={collections}
+                        selectedItems={selectedItems}
+                        onSelectionChange={setSelectedItems}
+                        selectable
+                        renderItem={(item) => {
+                            const { collection_id, name, image } = item;
+                            return (
+                                <ResourceItem
+                                    id={collection_id}
+                                    media={
+                                        <img
+                                            src={image}
+                                            alt=""
+                                            style={{ width: 40, height: 40, borderRadius: 4 }}
+                                        />
+                                    }
+                                >
+                                    <BlockStack gap="100">
+                                        <Text variant="headingMd">{name}</Text>
+                                    </BlockStack>
+                                </ResourceItem>
+                            );
+                        }}
+                    />
+                )}
+            </Modal.Section>
         </Modal>
     );
 };

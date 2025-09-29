@@ -1,7 +1,8 @@
 import { useLocation, useNavigate } from "react-router-dom";
 import { useEffect, useState } from "react";
-import { Badge, BlockStack, Box, Card, Grid, Layout, Page, Text, TextField, SkeletonBodyText, SkeletonDisplayText } from "@shopify/polaris";
+import { Badge, BlockStack, Box, Card, Grid, Layout, Page, Text, TextField, SkeletonBodyText, SkeletonDisplayText, Button } from "@shopify/polaris";
 import { fetchData } from "../../action";
+import { DeleteIcon } from "@shopify/polaris-icons";
 
 const LoyaltySignupView = () => {
     const navigate = useNavigate();
@@ -9,7 +10,7 @@ const LoyaltySignupView = () => {
     const { rule, edit } = location.state || {};
     console.log('rulesignup', rule);
 
-    const [earningpoints, setEarningpoints] = useState('');
+    const [earningpoints, setEarningpoints] = useState(1);
     const [earningPointsError, setEarningPointsError] = useState(""); // error state
 
     const [pageTitle, setPageTitle] = useState("Sign Up");
@@ -64,13 +65,33 @@ const LoyaltySignupView = () => {
         }
     };
 
+    const deleteEarningRuleAPI = async (ruleId) => {
+        try {
+            const formData = new FormData();
+            formData.append("rule_id", ruleId);
+            const response = await fetchData("/delete-merchant-earning-rules", formData);
+            console.log('Delete Earning Rule Response', response);
+            if (response.status) {
+                navigate('/loyaltyProgram');
+                shopify.toast.show(response?.message, { duration: 2000 });
+            }
+            else {
+                shopify.toast.show(response?.message, { duration: 2000, isError: true });
+            }
+        } catch (error) {
+            console.error('Delete Earning Rule Error', error);
+        } finally {
+            // setLoading(false);
+        }
+    }
+
     useEffect(() => {
         if (edit) {
             getRuleByIdAPI(rule.rule_id);
         } else {
             setLoading(false);
             if (rule) {
-                const pointsValue = rule.points ?? rule.default_points ?? "0";
+                const pointsValue = rule.points ?? rule.default_points ?? 1;
                 setEarningpoints(pointsValue);
                 setStatus(rule.status ?? "inactive");
             }
@@ -82,7 +103,7 @@ const LoyaltySignupView = () => {
 
     useEffect(() => {
         if (getdatabyID) {
-            const pointsValue = getdatabyID?.points ?? getdatabyID?.default_points ?? "0";
+            const pointsValue = getdatabyID?.points ?? getdatabyID?.default_points ?? 1;
             setEarningpoints(pointsValue);
             setStatus(getdatabyID?.status ?? "inactive");
             setConditionalJson(getdatabyID?.condition_json);
@@ -146,6 +167,7 @@ const LoyaltySignupView = () => {
                 </Box>
             }
             primaryAction={{ content: edit ? "Update" : "Save", onAction: handleSave }}
+            secondaryActions={(getdatabyID?.default_rules === '0' && edit) ? <Button variant='secondary' tone='critical' icon={DeleteIcon} onClick={() => { deleteEarningRuleAPI(rule.rule_id) }}>Delete</Button> : undefined}
         >
             <Layout>
                 <Layout.Section>

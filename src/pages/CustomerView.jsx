@@ -1,18 +1,45 @@
 import { Avatar, Badge, BlockStack, Box, Button, Card, Grid, Icon, IndexTable, InlineStack, Layout, Page, ResourceItem, ResourceList, Tabs, Text, TextField, useCopyToClipboard } from '@shopify/polaris'
 import { ClipboardIcon, DeleteIcon, EditIcon, InfoIcon, PinIcon, PlusIcon, RewardIcon, ViewIcon } from '@shopify/polaris-icons';
-import React, { useCallback, useState } from 'react'
-import { useNavigate } from 'react-router-dom';
+import React, { useCallback, useEffect, useState } from 'react'
+import { useLocation, useNavigate } from 'react-router-dom';
 import { BronzeIcon } from '../assets/svg/svg';
 import TierModal from '../components/TierModal';
 import PointsModal from '../components/PointsModal';
+import { fetchData } from '../action';
+import { formatShortDate } from '../utils';
 
 const CustomerView = () => {
     const navigate = useNavigate();
+    const location = useLocation();
+    const { id } = location.state || {};
+    console.log('id', id)
     const [selected, setSelected] = useState(0);
     const [tierModalOpen, setTierModalOpen] = useState(false);
     const [pointsModalOpen, setPointsModalOpen] = useState(false);
     const [customerTier, setCustomerTier] = useState("Bronze");
     const [customerPoints, setCustomerPoints] = useState(0);
+    const [customerData, setCustomerData] = useState();
+
+    const GetCustomerByIdAPI = async () => {
+        try {
+            const formData = new FormData();
+            formData.append("customer", id);
+            const response = await fetchData("/get-customer", formData);
+            console.log('Get Customer By Id Response', response);
+            if (response?.status === true) {
+                setCustomerData(response.data);
+            } else {
+                shopify.toast.show(response?.message, { duration: 2000, isError: true });
+            }
+        } catch (error) {
+            console.error('Get Customer By Id Error', error);
+        }
+    }
+
+    useEffect(() => {
+        GetCustomerByIdAPI();
+    }, [id]);
+
 
     const handlePointsSave = (newPoints) => {
         setCustomerPoints(newPoints); // update customer points when modal saves
@@ -36,7 +63,7 @@ const CustomerView = () => {
         [],
     );
     const referralLink =
-        "https://kg-store-demo.myshopify.com?referral_code=D3CmLr60awIvMKKpOD1H";
+        `https://kg-store-demo.myshopify.com?referral_code=${customerData?.referral_code}`;
     const handleCopy = () => {
         navigator.clipboard.writeText(referralLink);
     };
@@ -52,8 +79,8 @@ const CustomerView = () => {
     return (
         <div>
             <Page
-                title="Customer Name"
-                subtitle="Joined on: 19 Aug 2025"
+                title={customerData?.name}
+                subtitle={`Joined on: ${formatShortDate(customerData?.created_at)}`}
                 titleMetadata={<Badge tone='success'>Active</Badge>}
                 backAction={{ content: 'Back', onAction: () => navigate('/Customer') }}
                 secondaryActions={[
@@ -343,8 +370,8 @@ const CustomerView = () => {
                                             <Box style={{ margin: '0px 0px 16px 0px' }}>
                                                 <Text variant='headingMd' as="span">Details</Text>
                                             </Box>
-                                            <Text variant='bodyMd' as="span">Kenil SP</Text>
-                                            <Text variant='bodyMd' as="span">ansgbajsf@gmail.com</Text>
+                                            <Text variant='bodyMd' as="span">{customerData?.name}</Text>
+                                            <Text variant='bodyMd' as="span">{customerData?.email}</Text>
                                             <Text variant='bodyMd' as="span">Diamond World, Mini - Bazzar</Text>
                                         </BlockStack>
                                     </Card>
@@ -358,7 +385,7 @@ const CustomerView = () => {
                                                     <Icon source={BronzeIcon} />
                                                 </Box>
                                                 <Text variant='headingLg' fontWeight='bold'>
-                                                    {Tiers.find(t => t.id === customerTier)?.content}
+                                                    {customerData?.current_tier_info?.title}
                                                 </Text>
                                             </Box>
                                             <Button variant='primary' tone='success' size='medium' onClick={() => setTierModalOpen(true)} icon={EditIcon}>Change Tier</Button>
