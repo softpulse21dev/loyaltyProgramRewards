@@ -19,7 +19,9 @@
 .LPR_CollectionModal .Polaris-Modal-Section .Polaris-Box:first-of-type {
   /* padding: 0; */
 }
-
+.LPR_ProductModal .Polaris-Modal__Body .Polaris-Scrollable {
+  height: 300px;
+}
 /* Toggle switch */
 .toggle-container {
   display: flex;

@@ -17,6 +17,31 @@ const TierView = () => {
     const [active, setActive] = useState(false);
     const [files, setFiles] = useState([]);
 
+    const AddVipTierAPI = async () => {
+        try {
+            const formData = new FormData();
+            formData.append("title", tierName);
+            formData.append("points", goalValue);
+            formData.append("multiplier", pointsMultiplier);
+            formData.append("edit", selectedTierProgressExpiry);
+            formData.append("icon", selectedTierProgressExpiry);
+            formData.append("benefits", selectedTierProgressExpiry);
+            const response = await fetchData("/add-vip-tier", formData);
+            console.log('response', response);
+            if (response.status && response.data) {
+                setVipTierData(response.data);
+                shopify.toast.show(response?.message, { duration: 2000 });
+            }
+            else {
+                shopify.toast.show(response?.message, { duration: 2000, isError: true });
+            }
+        } catch (error) {
+            console.error('Error adding VIP tier:', error);
+        } finally {
+            // setLoading(false);
+        }
+    }
+
     const handleDropZoneDrop = useCallback(
         (_dropFiles, acceptedFiles) => {
             setFiles((prevFiles) => [...prevFiles, ...acceptedFiles]);
@@ -134,7 +159,7 @@ const TierView = () => {
                                     <Text variant="headingMd" as="h2">
                                         Icon
                                     </Text>
-                                    
+
                                     <Box
                                         style={{
                                             display: "grid",

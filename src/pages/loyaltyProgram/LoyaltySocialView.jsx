@@ -131,18 +131,20 @@ const LoyaltySocialView = () => {
         }
     }
 
-    // ✅ **New validation function**
     const validateFields = () => {
         const newErrors = {};
         const urlValue = conditionalJson[getFieldNameForPlatform()];
 
-        if (!earningpoints || !/^\d+$/.test(earningpoints) || parseInt(earningpoints, 10) < 0) {
-            newErrors.points = 'Please enter a whole number (0 or more).';
+        if (!earningpoints || !/^\d+$/.test(earningpoints) || parseInt(earningpoints, 10) < 1) {
+            newErrors.points = 'Please enter a whole number (1 or more).';
         }
 
-        // ✅ **UPDATED REGEX to be more flexible and accept hashes (#) and other special characters**
         const urlRegex = /^(https?:\/\/)?[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}(?:\/[^ \s]*)?$/;
-        if (urlValue && !urlRegex.test(urlValue)) {
+        if (!urlValue || urlValue.trim() === '') {
+            newErrors.url = 'Please enter Valid URL.';
+        }
+
+        else if (!urlRegex.test(urlValue)) {
             newErrors.url = 'Please enter a valid URL.';
         }
 
@@ -197,7 +199,6 @@ const LoyaltySocialView = () => {
                                             fieldName && <TextField
                                                 label="Social Media Profile URL"
                                                 value={conditionalJson[fieldName]}
-                                                // ✅ **Handle change and clear errors**
                                                 onChange={(value) => {
                                                     setConditionalJson({
                                                         ...conditionalJson,
@@ -207,7 +208,6 @@ const LoyaltySocialView = () => {
                                                 }}
                                                 maxLength={255}
                                                 autoComplete="off"
-                                                // ✅ **Display error message**
                                                 error={errors.url}
                                             />
                                         )}
@@ -223,14 +223,15 @@ const LoyaltySocialView = () => {
                                             <TextField
                                                 label="Earning points"
                                                 value={earningpoints}
-                                                type='number'
-                                                // ✅ **Handle change and clear errors**
+                                                type="text"
+                                                inputMode="numeric"
                                                 onChange={(value) => {
-                                                    setEarningpoints(value);
+                                                    if (/^\d*$/.test(value)) {
+                                                        setEarningpoints(value);
+                                                    }
                                                     if (errors.points) setErrors(prev => ({ ...prev, points: undefined }));
                                                 }}
                                                 autoComplete="off"
-                                                // ✅ **Display error message**
                                                 error={errors.points}
                                             />
                                         )}

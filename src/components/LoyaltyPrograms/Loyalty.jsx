@@ -128,7 +128,7 @@ const Loyalty = () => {
                                             <Icon source={IconSource} />
                                             <Box>
                                                 <Text variant="bodyMd">{title}</Text>
-                                                <Text variant="bodyMd">{points}</Text>
+                                                <Text variant="bodyMd">{points} points</Text>
                                             </Box>
                                         </Box>
                                         <Box style={{ display: "flex", alignItems: "center", gap: "15px" }}>
@@ -171,7 +171,7 @@ const Loyalty = () => {
                                             <Icon source={IconSource} />
                                             <Box>
                                                 <Text variant="bodyMd">{title}</Text>
-                                                <Text variant="bodyMd">{points}</Text>
+                                                <Text variant="bodyMd">{points} points</Text>
                                             </Box>
                                         </Box>
                                         <Box style={{ display: "flex", alignItems: "center", gap: "15px" }}>
@@ -231,7 +231,7 @@ const Loyalty = () => {
                                             <Icon source={IconSource} />
                                             <Box>
                                                 <Text variant="bodyMd">{title}</Text>
-                                                <Text variant="bodyMd">{points}</Text>
+                                                <Text variant="bodyMd">{points} points</Text>
                                             </Box>
                                         </Box>
                                         <Box style={{ display: "flex", alignItems: "center", gap: "15px" }}>
