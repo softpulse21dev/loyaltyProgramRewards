@@ -7,7 +7,7 @@ import RedeemModal from '../../components/RedeemModal';
 const TierView = () => {
     const navigate = useNavigate();
     const location = useLocation();
-    const { rule, edit } = location.state || {};
+    const { rule, edit, masterRewardsList } = location.state || {};
     console.log('rule', rule)
     console.log('edit', edit)
     const [tierName, setTierName] = useState('');
@@ -23,8 +23,9 @@ const TierView = () => {
             formData.append("title", tierName);
             formData.append("points", goalValue);
             formData.append("multiplier", pointsMultiplier);
-            formData.append("edit", selectedTierProgressExpiry);
-            formData.append("icon", selectedTierProgressExpiry);
+            formData.append("edit", '');
+            formData.append("icon", selectedIcon);
+            formData.append("icon_type", selectedIcon);
             formData.append("benefits", selectedTierProgressExpiry);
             const response = await fetchData("/add-vip-tier", formData);
             console.log('response', response);
@@ -42,9 +43,44 @@ const TierView = () => {
         }
     }
 
+    const DeleteVipTierAPI = async (tierId) => {
+        try {
+            const formData = new FormData();
+            formData.append("delete", tierId);
+            const response = await fetchData("/delete-tier", formData);
+            console.log('response', response);
+            if (response.status) {
+                navigate('/loyaltyProgram', { state: { navigateTo: 3 } });
+                shopify.toast.show(response?.message, { duration: 2000 });
+            } else {
+                shopify.toast.show(response?.message, { duration: 2000, isError: true });
+            }
+        } catch (error) {
+            console.error('Error deleting VIP tier:', error);
+            shopify.toast.show(error?.message, { duration: 2000, isError: true });
+        } finally {
+            // setLoading(false);
+        }
+    }
+
+    const handleBackAction = () => {
+        // Also clear storage if the user abandons the creation
+        sessionStorage.removeItem(SESSION_STORAGE_KEY);
+        navigate('/loyaltyProgram');
+    };
+
     const handleDropZoneDrop = useCallback(
-        (_dropFiles, acceptedFiles) => {
-            setFiles((prevFiles) => [...prevFiles, ...acceptedFiles]);
+        (_droppedFiles, acceptedFiles, rejectedFiles) => {
+            // Log the accepted files to the console
+            console.log('Accepted Files on Drop:', acceptedFiles);
+
+            if (rejectedFiles.length > 0) {
+                // Show an error toast if any files were rejected
+                shopify.toast.show('Only .gif, .jpg, and .png files are accepted.', { duration: 3000, isError: true });
+            }
+
+            // Set the state with the valid, accepted files
+            setFiles(acceptedFiles);
         },
         [],
     );
@@ -54,7 +90,10 @@ const TierView = () => {
         <div style={{ padding: '1rem' }}>
             <LegacyStack vertical>
                 {files.map((file, index) => (
-                    <LegacyStack alignment="center" key={index}>
+<>
+                        {console.log(`File object from state at index ${index}:`, file)}
+                    <LegacyStack alignment="center" key={index} distribution="equalSpacing">
+                            <Box alignment="center" style={{ width: '90%', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                         <Thumbnail
                             size="small"
                             alt={file.name}
@@ -64,13 +103,27 @@ const TierView = () => {
                                     : NoteIcon
                             }
                         />
-                        <div>
+                        <Box style={{ gap: 10, marginLeft: 10, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                                    <Box>
                             {file.name}{' '}
                             <Text variant="bodySm" as="p">
                                 {file.size} bytes
                             </Text>
-                        </div>
-                    </LegacyStack>
+                        </Box>
+                                    <Button
+                                        variant="plain"
+                                        icon={DeleteIcon}
+                                        accessibilityLabel="Remove file"
+                                        onClick={(event) => {
+                                            // Stop the click from bubbling up to the DropZone
+                                            event.stopPropagation();
+                                            setFiles([]);
+                                        }}
+                                    />
+                                </Box>
+                            </Box>
+                    </LegacyStack >
+                    </>
                 ))}
             </LegacyStack>
         </div>
@@ -84,8 +137,8 @@ const TierView = () => {
         <Page
             backAction={{ content: 'Back', onAction: () => navigate('/loyaltyProgram') }}
             title="VIP Tier"
-            secondaryActions={edit ? <Button tone='critical' icon={DeleteIcon} onAction={() => { }}>Delete</Button> : ''}
-            primaryAction={{ content: 'Save', onAction: () => { } }}
+            secondaryActions={edit ? <Button tone='critical' icon={DeleteIcon} onClick={() => { DeleteVipTierAPI(rule?.uid) }}>Delete</Button> : ''}
+            primaryAction={{ content: 'Save', onAction: () => { AddVipTierAPI(), navigate('/loyaltyProgram') } }}
         >
             <Layout>
                 <Layout.Section>
@@ -180,7 +233,7 @@ const TierView = () => {
                                             checked={selected === "custom"}
                                             onChange={() => setSelected("custom")}
                                         />
-                                        <DropZone onDrop={handleDropZoneDrop} variableHeight>
+                                        <DropZone onDrop={handleDropZoneDrop} variableHeight allowMultiple={false} accept="image/png, image/gif, image/jpeg">
                                             {uploadedFiles}
                                             {fileUpload}
                                         </DropZone>
@@ -194,7 +247,7 @@ const TierView = () => {
                 </Layout.Section>
             </Layout>
 
-            <RedeemModal active={active} setActive={setActive} />
+            <RedeemModal active={active} setActive={setActive} data={masterRewardsList} />
         </Page>
     )
 }

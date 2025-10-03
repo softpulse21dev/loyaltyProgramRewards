@@ -56,9 +56,8 @@ const Loyalty = () => {
 
     const handleRuleStatusChangeAPI = async (ruleId, isActive, isEarningRule = true) => {
         const formData = new FormData();
-        formData.append("status", isActive ? "active" : "inactive");
+        formData.append("status", isActive ? true : false);
         formData.append("rule_id", ruleId);
-
         const url = isEarningRule ? "/update-merchant-earning-rules-status" : "/update-merchant-redeeming-rules-status";
         const response = await fetchData(url, formData);
 
@@ -141,7 +140,7 @@ const Loyalty = () => {
                                                 <label className="switch">
                                                     <input
                                                         type="checkbox"
-                                                        checked={itemStatus === 'active'}
+                                                        checked={itemStatus === true}
                                                         id={`switch-${rule_id}`}
                                                         onChange={(e) =>
                                                             handleRuleStatusChangeAPI(item.rule_id, e.target.checked)
@@ -184,7 +183,7 @@ const Loyalty = () => {
                                                 <label className="switch">
                                                     <input
                                                         type="checkbox"
-                                                        checked={itemStatus === 'active'}
+                                                        checked={itemStatus === true}
                                                         id={`switch-${rule_id}`}
                                                         onChange={(e) =>
                                                             handleRuleStatusChangeAPI(item.rule_id, e.target.checked)
@@ -201,6 +200,7 @@ const Loyalty = () => {
                     />
                 </Card>
             </Layout.AnnotatedSection>
+
             <Layout.AnnotatedSection
                 title={'Redeeming rule'}
                 description={
@@ -240,7 +240,7 @@ const Loyalty = () => {
                                                 <label className="switch">
                                                     <input
                                                         type="checkbox"
-                                                        checked={itemStatus === 'active'}
+                                                        checked={itemStatus === true}
                                                         onChange={(e) =>
                                                             handleRuleStatusChangeAPI(item.id, e.target.checked, false)
                                                         }

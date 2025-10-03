@@ -15,6 +15,7 @@ const Referral = () => {
     const [isReferalRule, setIsReferalRule] = useState(false);
     const [activateLoading, setActivateLoading] = useState(false);
     const [requireAccountLoading, setRequireAccountLoading] = useState(false);
+    const [navigateTo, setNavigateTo] = useState(0);
     const navigate = useNavigate();
 
     const GetReferralRulesAPI = async () => {
@@ -102,7 +103,12 @@ const Referral = () => {
 
             <Layout.AnnotatedSection
                 title={'Referral Rewards'}
-                description={'Set rewards for referrals'}
+                description={<>
+                    <Box style={{ display: "flex", flexDirection: "column", gap: "8px" }}>
+                        <Text>Set referrals/Advocate rewards</Text>
+                        <Text>Only one reward can be enabled at a time for each type</Text>
+                    </Box>
+                </>}
             >
                 <BlockStack gap="400">
                     {/* referral rewards */}
@@ -111,7 +117,7 @@ const Referral = () => {
                         <Box style={{ backgroundColor: "#F5F5F5", padding: "16px", display: "flex", justifyContent: "space-between", alignItems: "center" }}>
                             <Text variant="headingMd">Referral Rewards</Text>
                             {referralData?.referred_friend_reward?.available?.length > 0 && (
-                                <Button variant="plain" onClick={() => { setIsAdvocate(false), setIsReferalRule(true); setReferralModalActive(true); }}>Add Reward</Button>
+                                <Button variant="plain" onClick={() => { setIsAdvocate(false), setIsReferalRule(true); setReferralModalActive(true); setNavigateTo(1); }}>Add Reward</Button>
                             )}
                         </Box>
 
@@ -138,7 +144,7 @@ const Referral = () => {
                                                     </div>
                                                 </Box>
                                                 <Box style={{ display: "flex", alignItems: "center", gap: "10px" }}>
-                                                    <Button onClick={() => { navigate(`/loyaltyProgram/CouponPage`, { state: { rule: item, referralRule: true, edit: true } }) }} variant="plain" primary>Edit</Button>
+                                                    <Button onClick={() => { navigate(`/loyaltyProgram/CouponPage`, { state: { rule: item, referralRule: true, edit: true, navigateTo: 1 } }) }} variant="plain" primary>Edit</Button>
                                                     <div className="toggle-container" style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
                                                         <label className="switch">
                                                             <input
@@ -169,7 +175,7 @@ const Referral = () => {
                         <Box style={{ backgroundColor: "#F5F5F5", padding: "16px", display: "flex", justifyContent: "space-between", alignItems: "center" }}>
                             <Text variant="headingMd">Advocate Rewards</Text>
                             {referralData?.advocate_reward?.available?.length > 0 && (
-                                <Button variant="plain" onClick={() => { setIsAdvocate(true), setIsReferalRule(true), setReferralModalActive(true); }}>Add Reward</Button>
+                                <Button variant="plain" onClick={() => { setIsAdvocate(true), setIsReferalRule(true), setReferralModalActive(true); setNavigateTo(1); }}>Add Reward</Button>
                             )}
                         </Box>
 
@@ -198,7 +204,7 @@ const Referral = () => {
                                                             </div>
                                                         </Box>
                                                         <Box style={{ display: "flex", alignItems: "center", gap: "10px" }}>
-                                                            <Button onClick={() => { navigate(`/loyaltyProgram/CouponPage`, { state: { rule: item, referralRule: true, edit: true } }) }} variant="plain" primary>Edit</Button>
+                                                            <Button onClick={() => { navigate(`/loyaltyProgram/CouponPage`, { state: { rule: item, referralRule: true, edit: true, navigateTo: 1 } }) }} variant="plain" primary>Edit</Button>
                                                             <div className="toggle-container" style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
                                                                 <label className="switch">
                                                                     <input
@@ -271,7 +277,7 @@ const Referral = () => {
                 </Card>
             </Layout.AnnotatedSection>
 
-            <RedeemModal active={referralModalActive} setActive={setReferralModalActive} data={isAdvocate ? referralData?.advocate_reward?.available : referralData?.referred_friend_reward?.available} referralRule={isReferalRule} />
+            <RedeemModal navigateTo={navigateTo} active={referralModalActive} setActive={setReferralModalActive} data={isAdvocate ? referralData?.advocate_reward?.available : referralData?.referred_friend_reward?.available} referralRule={isReferalRule} />
         </div >
     );
 }

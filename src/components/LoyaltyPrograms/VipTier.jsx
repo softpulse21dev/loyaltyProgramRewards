@@ -12,23 +12,32 @@ const VipTier = () => {
     const [selectedEntry, setSelectedEntry] = useState('points-earned');
     const [selectedTierProgressExpiry, setSelectedTierProgressExpiry] = useState('lifetime');
     const [vipTierData, setVipTierData] = useState([]);
+    const [masterRewardsList, setMasterRewardsList] = useState([]);
 
     const GetVipTierAPI = async () => {
         try {
             const formData = new FormData();
             const response = await fetchData("/get-tiers", formData);
-            console.log('response', response);
-            if (response.status && response.data) {
-                setVipTierData(response.data);
+            console.log('response vip Tier', response);
+            if (response.status) {
+                setVipTierData(response);
+                setMasterRewardsList(response?.master_rewards);
+            } else {
+                shopify.toast.show(response?.message, { duration: 2000, isError: true });
             }
         } catch (error) {
             console.error('Error fetching VIP tiers:', error);
+            shopify.toast.show(error?.message, { duration: 2000, isError: true });
         }
     }
 
     useEffect(() => {
         GetVipTierAPI();
     }, []);
+
+    const handleAddTierClick = () => {
+        navigate(`/loyaltyProgram/tierview`, { state: { masterRewardsList: masterRewardsList } });
+    };
 
     const handleSelectedEntry = (value) => {
         setSelectedEntry(value);
@@ -60,7 +69,7 @@ const VipTier = () => {
                     <Box>
                         <Text>Incentivize customer spending and activity by allowing members to reach exclusive VIP tiers.</Text>
                         <Box style={{ marginTop: '10px' }}>
-                            <Button onClick={() => navigate(`/loyaltyProgram/tierview`)} variant="secondary">Add VIP Tier</Button>
+                            <Button onClick={() => handleAddTierClick()} variant="secondary">Add VIP Tier</Button>
                         </Box>
                     </Box>
                 }
@@ -73,7 +82,7 @@ const VipTier = () => {
                     </Box>
 
                     <ResourceList
-                        items={vipTierData?.tier_settings || []}
+                        items={vipTierData?.data?.tier_settings || []}
                         renderItem={(item) => {
                             const IconSource = iconsMap[item?.icon];
                             return (

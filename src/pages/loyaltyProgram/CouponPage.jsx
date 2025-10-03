@@ -9,14 +9,15 @@ import ProductModal from '../../components/ProductModal';
 const CouponPage = () => {
     const navigate = useNavigate();
     const location = useLocation();
-    const { rule, edit, referralRule } = location.state || {};
+    const { rule, edit, referralRule, navigateTo } = location.state || {};
+    console.log('navigateTo coupons', navigateTo)
     console.log('rule', rule)
     const [rewardTitle, setRewardTitle] = useState('');
     const [pointsAmount, setPointsAmount] = useState(100);
     const [rewardExpiration, setRewardExpiration] = useState(0);
     const [collectionModalOpen, setCollectionModalOpen] = useState(false);
     const [productModalOpen, setProductModalOpen] = useState(false);
-    const [status, setStatus] = useState("inactive");
+    const [status, setStatus] = useState(false);
     const [loading, setLoading] = useState(true);
     const [ruleId, setRuleId] = useState('');
     const [ruleType, setRuleType] = useState('');
@@ -141,7 +142,7 @@ const CouponPage = () => {
             const response = await fetchData("/add-referral-rule", formData);
             console.log('Add Referral Rule Response', response);
             if (response?.status === true) {
-                navigate('/loyaltyProgram');
+                navigate('/loyaltyProgram', { state: { navigateTo: navigateTo } });
                 shopify.toast.show(response?.message, { duration: 2000 });
             } else {
                 console.error('Add Referral Rule Error', response);
@@ -158,6 +159,7 @@ const CouponPage = () => {
         try {
             const formData = new FormData();
             formData.append("master_rule_id", rule.master_rule_id);
+            formData.append("status", status);
             formData.append("points", pointsAmount);
             formData.append("title", rewardTitle);
             formData.append("settings_json", JSON.stringify(settings_json));
@@ -168,7 +170,7 @@ const CouponPage = () => {
             const response = await fetchData("/update-referral-rule", formData);
             console.log('Update Referral Rule Response', response);
             if (response?.status === true) {
-                navigate('/loyaltyProgram');
+                navigate('/loyaltyProgram', { state: { navigateTo: navigateTo } });
                 shopify.toast.show(response?.message, { duration: 2000 });
             } else {
                 console.error('Update Referral Rule Error', response);
@@ -213,7 +215,7 @@ const CouponPage = () => {
             const response = await fetchData("/delete-referral-reward", formData);
             console.log('Delete Referral Rule Response', response);
             if (response?.status === true) {
-                navigate('/loyaltyProgram');
+                navigate('/loyaltyProgram', { state: { navigateTo: navigateTo } });
                 shopify.toast.show(response?.message, { duration: 2000 });
             }
             else {
@@ -228,12 +230,12 @@ const CouponPage = () => {
     }
 
     const handleStatusChange = () => {
-        setStatus(prevStatus => prevStatus === 'active' ? 'inactive' : 'active');
+        setStatus(prevStatus => prevStatus === true ? false : true);
     };
 
     return (
         <Page
-            backAction={{ content: 'Back', onAction: () => navigate('/loyaltyProgram') }}
+            backAction={{ content: 'Back', onAction: () => navigate('/loyaltyProgram', { state: { navigateTo: navigateTo } }) }}
             title={rule?.title || "Coupon"}
             secondaryActions={edit ? <Button tone='critical' icon={DeleteIcon} onClick={() => { referralRule ? DeleteReferralRuleAPI(ruleId) : DeleteRedeemRuleAPI(ruleId) }}>Delete</Button> : ''}
             primaryAction={{ content: edit ? "Update" : "Save", onAction: () => { if (edit) { referralRule ? UpdateReferralRuleAPI() : UpdateRedeemRuleAPI() } else { referralRule ? AddReferralRuleAPI() : AddRedeemRuleAPI() } } }}
@@ -425,13 +427,13 @@ const CouponPage = () => {
                                 </Card>
 
 
-                                {(rule.type !== "store_credit") && (
+                                {/* {(rule.type !== "store_credit") && (
                                     <Card>
                                         <BlockStack gap={300}>
                                             <Text variant='headingMd' as="span">Referral Reward</Text>
                                         </BlockStack>
                                     </Card>
-                                )}
+                                )} */}
 
 
                                 {(rule.type === "amount_discount" || rule.type === "percentage_discount") && (
@@ -552,7 +554,7 @@ const CouponPage = () => {
                                                 <label className="switch">
                                                     <input
                                                         type="checkbox"
-                                                        checked={status === 'active'}
+                                                        checked={status === true}
                                                         onChange={handleStatusChange}
                                                     />
                                                     <span className="slider"></span>

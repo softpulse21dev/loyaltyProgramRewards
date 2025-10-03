@@ -37,7 +37,7 @@ const OrderPoints = () => {
     }, [rule]);
 
     const handleStatusChange = () => {
-        setStatus(prevStatus => prevStatus === 'active' ? 'inactive' : 'active');
+        setStatus(prevStatus => prevStatus === true ? false : true);
     };
 
     return (
@@ -46,8 +46,8 @@ const OrderPoints = () => {
             title={
                 <Box style={{ display: "flex", justifyContent: "space-between", alignItems: "center", gap: "10px" }}>
                     <Text as='h1' variant='headingLg'>{pageTitle}</Text>
-                    <Badge tone={status === "active" ? "success" : "critical"}>
-                        {status.charAt(0).toUpperCase() + status.slice(1)}
+                    <Badge tone={status === true ? "success" : "critical"}>
+                        {status ? "Active" : "Inactive"}
                     </Badge>
                 </Box>
             }
@@ -122,8 +122,8 @@ const OrderPoints = () => {
                                     <BlockStack gap={300}>
                                         <Box style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
                                             <Text variant='headingMd' as="span">Status</Text>
-                                            <Badge tone={status === "active" ? "success" : "critical"}>
-                                                {status.charAt(0).toUpperCase() + status.slice(1)}
+                                            <Badge tone={status === true ? "success" : "critical"}>
+                                                {status ? "Active" : "Inactive"}
                                             </Badge>
                                         </Box>
                                         <Box>
@@ -131,7 +131,7 @@ const OrderPoints = () => {
                                                 <label className="switch">
                                                     <input
                                                         type="checkbox"
-                                                        checked={status === "active"}
+                                                        checked={status === true}
                                                         onChange={handleStatusChange}
                                                     />
                                                     <span className="slider"></span>

@@ -1,14 +1,24 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Page, Tabs, } from "@shopify/polaris";
 
 import VipTier from "../components/LoyaltyPrograms/VipTier";
 import Loyalty from "../components/LoyaltyPrograms/Loyalty";
 import Referral from "../components/LoyaltyPrograms/Referral";
 import StoreCredit from "../components/LoyaltyPrograms/StoreCredit";
+import { useLocation } from "react-router-dom";
 
 
 const LoyaltyProgram = () => {
+    const location = useLocation();
+    const { navigateTo } = location.state || {};
+    console.log('navigateTo', navigateTo)
     const [selectedTab, setSelectedTab] = useState(0);
+
+    useEffect(() => {
+        if (navigateTo) {
+            setSelectedTab(navigateTo);
+        }
+    }, [navigateTo]);
 
     const tabs = [
         {

@@ -108,7 +108,7 @@ const LoyaltySignupView = () => {
     }, [getdatabyID]);
 
     const handleStatusChange = () => {
-        setStatus(prevStatus => prevStatus === 'active' ? 'inactive' : 'active');
+        setStatus(prevStatus => prevStatus === true ? false : true);
     };
 
     // Validate inputs for errors
@@ -211,8 +211,8 @@ const LoyaltySignupView = () => {
             title={
                 <Box style={{ display: "flex", justifyContent: "space-between", alignItems: "center", gap: "10px" }}>
                     <Text as='h1' variant='headingLg'>{pageTitle}</Text>
-                    <Badge tone={status === "active" ? "success" : "critical"}>
-                        {status.charAt(0).toUpperCase() + status.slice(1)}
+                    <Badge tone={status === true ? "success" : "critical"}>
+                        {status ? "Active" : "Inactive"}
                     </Badge>
                 </Box>
             }
@@ -282,8 +282,8 @@ const LoyaltySignupView = () => {
                                             <Text variant="headingMd" as="span">
                                                 Status
                                             </Text>
-                                            <Badge tone={status === "active" ? "success" : "critical"}>
-                                                {status.charAt(0).toUpperCase() + status.slice(1)}
+                                            <Badge tone={status === true ? "success" : "critical"}>
+                                                {status ? "Active" : "Inactive"}
                                             </Badge>
                                         </Box>
                                         {loading && edit ? (
@@ -294,7 +294,7 @@ const LoyaltySignupView = () => {
                                                     <label className="switch">
                                                         <input
                                                             type="checkbox"
-                                                            checked={status === "active"}
+                                                            checked={status === true}
                                                             onChange={handleStatusChange}
                                                         />
                                                         <span className="slider"></span>
