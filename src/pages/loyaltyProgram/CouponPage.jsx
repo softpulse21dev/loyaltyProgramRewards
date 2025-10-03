@@ -5,11 +5,14 @@ import { useLocation, useNavigate } from 'react-router-dom';
 import CollectionModal from '../../components/CollectionModal';
 import { fetchData } from '../../action';
 import ProductModal from '../../components/ProductModal';
+import { useDispatch } from 'react-redux';
+import { addData } from '../../redux/action';
 
 const CouponPage = () => {
     const navigate = useNavigate();
     const location = useLocation();
-    const { rule, edit, referralRule, navigateTo } = location.state || {};
+    const { rule, edit, referralRule, navigateTo, localSave } = location.state || {};
+    console.log('localSave', localSave)
     console.log('navigateTo coupons', navigateTo)
     console.log('rule', rule)
     const [rewardTitle, setRewardTitle] = useState('');
@@ -21,6 +24,7 @@ const CouponPage = () => {
     const [loading, setLoading] = useState(true);
     const [ruleId, setRuleId] = useState('');
     const [ruleType, setRuleType] = useState('');
+    const dispatch = useDispatch();
 
     const [settings_json, setSettingsJson] = useState({
         points_type: 'fixed',
@@ -41,6 +45,9 @@ const CouponPage = () => {
     });
 
     useEffect(() => {
+        if (localSave) {
+            return;
+        }
         if (edit) {
             if (referralRule) {
                 GetReferralRuleByIdAPI();
@@ -48,7 +55,21 @@ const CouponPage = () => {
                 GetRedeemRuleByIdAPI();
             }
         }
-    }, [edit, rule, referralRule]);
+    }, [edit, rule, referralRule, localSave]);
+
+    const addDatas = {
+        master_rule_id: rule.master_rule_id,
+        status: status,
+        points: pointsAmount,
+        title: rewardTitle,
+        settings_json: settings_json,
+        expiration_days: rewardExpiration,
+    }
+
+    const handleAddLocalData = () => {
+        dispatch(addData(addDatas));
+        navigate('/loyaltyProgram/tierview');
+    }
 
     // Redeem API
 
@@ -238,7 +259,7 @@ const CouponPage = () => {
             backAction={{ content: 'Back', onAction: () => navigate('/loyaltyProgram', { state: { navigateTo: navigateTo } }) }}
             title={rule?.title || "Coupon"}
             secondaryActions={edit ? <Button tone='critical' icon={DeleteIcon} onClick={() => { referralRule ? DeleteReferralRuleAPI(ruleId) : DeleteRedeemRuleAPI(ruleId) }}>Delete</Button> : ''}
-            primaryAction={{ content: edit ? "Update" : "Save", onAction: () => { if (edit) { referralRule ? UpdateReferralRuleAPI() : UpdateRedeemRuleAPI() } else { referralRule ? AddReferralRuleAPI() : AddRedeemRuleAPI() } } }}
+            primaryAction={{ content: edit ? "Update" : "Save", onAction: () => { if (edit) { referralRule ? UpdateReferralRuleAPI() : UpdateRedeemRuleAPI() } else { localSave ? handleAddLocalData() : referralRule ? AddReferralRuleAPI() : AddRedeemRuleAPI() } } }}
         >
             <Layout>
                 <Layout.Section>
@@ -296,7 +317,6 @@ const CouponPage = () => {
                                         </Box>
                                     </Card>
                                 )}
-
 
                                 <Card>
                                     <BlockStack gap={300}>

@@ -4,20 +4,26 @@ import React, { useCallback, useState } from 'react'
 import { useLocation, useNavigate } from 'react-router-dom';
 import RedeemModal from '../../components/RedeemModal';
 import { fetchData } from '../../action';
+import { useDispatch, useSelector } from 'react-redux';
+import { removeData } from '../../redux/action';
 
 const TierView = () => {
     const navigate = useNavigate();
     const location = useLocation();
+    const dispatch = useDispatch();
+    const Data = useSelector((state) => state.merchantSettings.Data);
+    console.log('Data', Data)
     const { rule, edit, masterRewardsList, navigateTo } = location.state || {};
     console.log('rule', rule)
     console.log('edit', edit)
-const [vipTierData, setVipTierData] = useState([]);
+    const [vipTierData, setVipTierData] = useState([]);
     const [tierName, setTierName] = useState('');
     const [goalValue, setGoalValue] = useState('');
     const [pointsMultiplier, setPointsMultiplier] = useState('');
     const [selectedIcon, setSelectedIcon] = useState("default");
     const [active, setActive] = useState(false);
     const [files, setFiles] = useState([]);
+
 
     const AddVipTierAPI = async () => {
         try {
@@ -26,9 +32,9 @@ const [vipTierData, setVipTierData] = useState([]);
             formData.append("points", goalValue);
             formData.append("multiplier", pointsMultiplier);
             formData.append("edit", '');
-            formData.append("icon", selectedIcon);
+            formData.append("icon", files[0]);
             formData.append("icon_type", selectedIcon);
-            formData.append("benefits", selectedTierProgressExpiry);
+            formData.append("benefits", '');
             const response = await fetchData("/add-vip-tier", formData);
             console.log('response', response);
             if (response.status && response.data) {
@@ -84,26 +90,26 @@ const [vipTierData, setVipTierData] = useState([]);
         <div style={{ padding: '1rem' }}>
             <LegacyStack vertical>
                 {files.map((file, index) => (
-<>
+                    <>
                         {console.log(`File object from state at index ${index}:`, file)}
-                    <LegacyStack alignment="center" key={index} distribution="equalSpacing">
+                        <LegacyStack alignment="center" key={index} distribution="equalSpacing">
                             <Box alignment="center" style={{ width: '90%', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                        <Thumbnail
-                            size="small"
-                            alt={file.name}
-                            source={
-                                validImageTypes.includes(file.type)
-                                    ? window.URL.createObjectURL(file)
-                                    : NoteIcon
-                            }
-                        />
-                        <Box style={{ gap: 10, marginLeft: 10, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                                <Thumbnail
+                                    size="small"
+                                    alt={file.name}
+                                    source={
+                                        validImageTypes.includes(file.type)
+                                            ? window.URL.createObjectURL(file)
+                                            : NoteIcon
+                                    }
+                                />
+                                <Box style={{ gap: 10, marginLeft: 10, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                                     <Box>
-                            {file.name}{' '}
-                            <Text variant="bodySm" as="p">
-                                {file.size} bytes
-                            </Text>
-                        </Box>
+                                        {file.name}{' '}
+                                        <Text variant="bodySm" as="p">
+                                            {file.size} bytes
+                                        </Text>
+                                    </Box>
                                     <Button
                                         variant="plain"
                                         icon={DeleteIcon}
@@ -116,7 +122,7 @@ const [vipTierData, setVipTierData] = useState([]);
                                     />
                                 </Box>
                             </Box>
-                    </LegacyStack >
+                        </LegacyStack >
                     </>
                 ))}
             </LegacyStack>
@@ -129,7 +135,7 @@ const [vipTierData, setVipTierData] = useState([]);
 
     return (
         <Page
-            backAction={{ content: 'Back', onAction: () => navigate('/loyaltyProgram', { state: { navigateTo: navigateTo } }) }}
+            backAction={{ content: 'Back', onAction: () => { dispatch(removeData()); navigate('/loyaltyProgram', { state: { navigateTo: navigateTo } }) } }}
             title="VIP Tier"
             secondaryActions={edit ? <Button tone='critical' icon={DeleteIcon} onClick={() => { DeleteVipTierAPI(rule?.uid) }}>Delete</Button> : ''}
             primaryAction={{ content: 'Save', onAction: () => { AddVipTierAPI(), navigate('/loyaltyProgram', { state: { navigateTo: navigateTo } }) } }}

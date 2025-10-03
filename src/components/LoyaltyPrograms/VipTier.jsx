@@ -1,18 +1,18 @@
 import { BlockStack, Box, Button, Card, Collapsible, Icon, Layout, RadioButton, ResourceItem, ResourceList, Text } from '@shopify/polaris'
 import { CheckIcon, EditIcon, RewardIcon, XIcon } from '@shopify/polaris-icons'
-import React, { useCallback, useEffect, useState } from 'react'
+import React, { useEffect, useState } from 'react'
 import { useNavigate } from 'react-router-dom';
 import { fetchData } from '../../action';
 import { iconsMap } from '../../utils';
 
 const VipTier = () => {
     const navigate = useNavigate();
-    const [openEntryMethod, setOpenEntryMethod] = useState(false)
-    const [openTierProgressExpiry, setOpenTierProgressExpiry] = useState(false)
-    const [selectedEntry, setSelectedEntry] = useState('points-earned');
-    const [selectedTierProgressExpiry, setSelectedTierProgressExpiry] = useState('lifetime');
+    const [selectedEntry, setSelectedEntry] = useState(1);
+    const [selectedTierProgressExpiry, setSelectedTierProgressExpiry] = useState(1);
     const [vipTierData, setVipTierData] = useState([]);
     const [masterRewardsList, setMasterRewardsList] = useState([]);
+    const [vipStatus, setVipStatus] = useState(false);
+    const [loading, setLoading] = useState(false);
 
     const GetVipTierAPI = async () => {
         try {
@@ -35,8 +35,33 @@ const VipTier = () => {
         GetVipTierAPI();
     }, []);
 
+    const UpdateVipTierAPI = async () => {
+        try {
+            setLoading(true);
+
+            const formData = new FormData();
+            formData.append("tier_method", selectedEntry);
+            formData.append("tier_expiry", selectedTierProgressExpiry);
+            formData.append("status", !vipStatus);
+
+            const response = await fetchData("/tier-setting", formData);
+            console.log('responseStatus', response);
+
+            if (response?.status) {
+                setVipStatus(!vipStatus);
+                GetVipTierAPI();
+            } else {
+                console.log('response?.message', response?.message)
+            }
+        } catch (err) {
+            console.error("Error updating VIP Tier:", err);
+        } finally {
+            setLoading(false);
+        }
+    };
+
     const handleAddTierClick = () => {
-        navigate(`/loyaltyProgram/tierview`, { state: { masterRewardsList: masterRewardsList } });
+        navigate(`/loyaltyProgram/tierview`, { state: { masterRewardsList: masterRewardsList, navigateTo: 3 } });
     };
 
     const handleSelectedEntry = (value) => {
@@ -46,9 +71,6 @@ const VipTier = () => {
     const handleSelectedTierProgressExpiry = (value) => {
         setSelectedTierProgressExpiry(value);
     }
-
-    const toggleEntryMethod = useCallback(() => setOpenEntryMethod((prev) => !prev), [])
-    const toggleTierProgressExpiry = useCallback(() => setOpenTierProgressExpiry((prev) => !prev), [])
     return (
         <div style={{ marginBottom: '30px' }} className="annotatedSection-border">
             <Layout.AnnotatedSection
@@ -57,8 +79,17 @@ const VipTier = () => {
             >
                 <Card>
                     <Box style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-                        <Text variant="headingMd">This feature is Deactivated</Text>
-                        <Button primary>Activate</Button>
+                        <Text variant="headingMd">
+                            {vipStatus ? "This feature is Activated" : "This feature is Deactivated"}
+                        </Text>
+                        <Button
+                            primary={!vipStatus}
+                            destructive={vipStatus}
+                            onClick={UpdateVipTierAPI}
+                            loading={loading}
+                        >
+                            {vipStatus ? "Deactivate" : "Activate"}
+                        </Button>
                     </Box>
                 </Card>
             </Layout.AnnotatedSection>
@@ -78,7 +109,6 @@ const VipTier = () => {
                 <Card padding='0'>
                     <Box style={{ backgroundColor: "#F5F5F5", padding: "16px", display: "flex", justifyContent: "space-between", alignItems: "center" }}>
                         <Text variant="headingMd">Referral Rewards</Text>
-                        {/* <Button variant="plain">Change Rewards</Button> */}
                     </Box>
 
                     <ResourceList
@@ -89,15 +119,15 @@ const VipTier = () => {
                                 <ResourceItem key={item.id}>
                                     <Box style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
                                         <Box>
-                                            <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
-                                                <Icon tone='subdued' source={RewardIcon} />
+                                            <div className='icon-size' style={{ display: "flex", alignItems: "center", gap: "10px" }}>
+                                                <Icon source={RewardIcon} />
                                                 <Box>
                                                     <Text variant="bodyMd">{item?.title}</Text>
                                                     <Text variant="bodyMd">Achieve on {item?.points_needed} points  |  {item?.points_multiply} points multiplier</Text>
                                                 </Box>
                                             </div>
                                         </Box>
-                                        <Button icon={<Icon source={EditIcon} />} onClick={() => navigate(`/loyaltyProgram/tierview`, { state: { rule: item, edit: true } })} primary>Edit</Button>
+                                        <Button icon={<Icon source={EditIcon} />} onClick={() => navigate(`/loyaltyProgram/tierview`, { state: { rule: item, edit: true, navigateTo: 3 } })} primary>Edit</Button>
                                     </Box>
                                 </ResourceItem>
                             )
@@ -108,102 +138,68 @@ const VipTier = () => {
 
             <Layout.AnnotatedSection
                 title={'Program Settings'}
-                description={
-                    'We will recalculate your customers tiers after changing any of the following settings.'
-                }
+                description='We will recalculate your customers tiers after changing any of the following settings.'
             >
                 <BlockStack gap={300}>
-                    <Card padding='0'>
-                        <Box style={{ backgroundColor: "#F5F5F5", padding: "16px", display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                    <Card>
+                        <Box>
                             <Text variant="headingMd">Entry Method</Text>
-                            <Button variant="plain" onClick={toggleEntryMethod}>
-                                Edit
-                            </Button>
                         </Box>
-                        <Box style={{ padding: '10px 16px' }}>
+                        <Box style={{ paddingTop: '10px' }}>
                             <Text>
                                 Customers are placed onto VIP Tiers based upon their total number of orders placed.
                             </Text>
+                            <BlockStack >
+                                <RadioButton
+                                    label="Points Earned"
+                                    checked={selectedEntry === 1}
+                                    id="points-earned"
+                                    name="entry-method"
+                                    onChange={() => handleSelectedEntry(1)}
+                                />
+                                <RadioButton
+                                    label="Orders Placed"
+                                    checked={selectedEntry === 2}
+                                    id="orders-placed"
+                                    name="entry-method"
+                                    onChange={() => handleSelectedEntry(2)}
+                                />
+                                <RadioButton
+                                    label="Amount Spent"
+                                    checked={selectedEntry === 3}
+                                    id="amount-spent"
+                                    name="entry-method"
+                                    onChange={() => handleSelectedEntry(3)}
+                                />
+                            </BlockStack>
                         </Box>
-
-                        <Collapsible
-                            open={openEntryMethod}
-                            transition={{ duration: '500ms', timingFunction: 'ease-in-out' }}
-                            expandOnPrint
-                        >
-                            <Box style={{ padding: '0px 16px 10px 16px' }}>
-                                <BlockStack >
-                                    <RadioButton
-                                        label="Points Earned"
-                                        checked={selectedEntry === 'points-earned'}
-                                        id="points-earned"
-                                        name="entry-method"
-                                        onChange={() => handleSelectedEntry('points-earned')}
-                                    />
-                                    <RadioButton
-                                        label="Orders Placed"
-                                        checked={selectedEntry === 'orders-placed'}
-                                        id="orders-placed"
-                                        name="entry-method"
-                                        onChange={() => handleSelectedEntry('orders-placed')}
-                                    />
-                                    <RadioButton
-                                        label="Amount Spent"
-                                        checked={selectedEntry === 'amount-spent'}
-                                        id="amount-spent"
-                                        name="entry-method"
-                                        onChange={() => handleSelectedEntry('amount-spent')}
-                                    />
-                                    <Box style={{ display: 'flex', gap: '10px', marginTop: '10px' }}>
-                                        <Button onClick={() => setOpenEntryMethod(false)} variant="primary">Cancel</Button>
-                                        <Button variant="secondary">Save</Button>
-                                    </Box>
-                                </BlockStack>
-                            </Box>
-                        </Collapsible>
                     </Card>
 
-                    <Card padding='0'>
-                        <Box style={{ backgroundColor: "#F5F5F5", padding: "16px", display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                    <Card>
+                        <Box>
                             <Text variant="headingMd">Tier Progress Expiry</Text>
-                            <Button variant="plain" onClick={toggleTierProgressExpiry}>
-                                Edit
-                            </Button>
                         </Box>
-                        <Box style={{ padding: '10px 16px' }}>
+                        <Box style={{ paddingTop: "10px" }}>
                             <Text>A customer has a Lifetime to successfully achieve a VIP tier.</Text>
+                            <Text>Set how long you will allow customers to take to achieve a VIP Tier:</Text>
+                            <BlockStack >
+                                <RadioButton
+                                    label="A lifetime, once they are a loyalty program member"
+                                    checked={selectedTierProgressExpiry === 1}
+                                    onChange={() => handleSelectedTierProgressExpiry(1)}
+                                />
+                                <RadioButton
+                                    label="A full calendar year"
+                                    checked={selectedTierProgressExpiry === 2}
+                                    onChange={() => handleSelectedTierProgressExpiry(2)}
+                                />
+                                <RadioButton
+                                    label="A rolling year"
+                                    checked={selectedTierProgressExpiry === 3}
+                                    onChange={() => handleSelectedTierProgressExpiry(3)}
+                                />
+                            </BlockStack>
                         </Box>
-
-                        <Collapsible
-                            open={openTierProgressExpiry}
-                            transition={{ duration: '500ms', timingFunction: 'ease-in-out' }}
-                            expandOnPrint
-                        >
-                            <Box style={{ padding: '0px 16px 10px 16px', display: 'flex', flexDirection: 'column', gap: '10px' }}>
-                                <Text>Set how long you will allow customers to take to achieve a VIP Tier:</Text>
-                                <BlockStack >
-                                    <RadioButton
-                                        label="A lifetime, once they are a loyalty program member"
-                                        checked={selectedTierProgressExpiry === 'lifetime'}
-                                        onChange={() => handleSelectedTierProgressExpiry('lifetime')}
-                                    />
-                                    <RadioButton
-                                        label="A full calendar year"
-                                        checked={selectedTierProgressExpiry === 'calendar-year'}
-                                        onChange={() => handleSelectedTierProgressExpiry('calendar-year')}
-                                    />
-                                    <RadioButton
-                                        label="A rolling year"
-                                        checked={selectedTierProgressExpiry === 'rolling-year'}
-                                        onChange={() => handleSelectedTierProgressExpiry('rolling-year')}
-                                    />
-                                    <Box style={{ display: 'flex', gap: '10px', marginTop: '10px' }}>
-                                        <Button onClick={() => setOpenTierProgressExpiry(false)} variant="primary">Cancel</Button>
-                                        <Button variant="secondary">Save</Button>
-                                    </Box>
-                                </BlockStack>
-                            </Box>
-                        </Collapsible>
                     </Card>
                 </BlockStack>
             </Layout.AnnotatedSection>
