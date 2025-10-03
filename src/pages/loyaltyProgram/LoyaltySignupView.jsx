@@ -3,6 +3,7 @@ import { useEffect, useState } from "react";
 import { Badge, BlockStack, Box, Card, Grid, Layout, Page, Text, TextField, SkeletonBodyText, SkeletonDisplayText, Button } from "@shopify/polaris";
 import { fetchData } from "../../action";
 import { DeleteIcon } from "@shopify/polaris-icons";
+import ConfirmationModal from "../../components/ConfirmationModal";
 
 const LoyaltySignupView = () => {
     const navigate = useNavigate();
@@ -21,6 +22,8 @@ const LoyaltySignupView = () => {
         birthday_updated_waiting_threshold_days: 1
     });
     const [birthdayError, setBirthdayError] = useState("");
+    const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
+    const [deleteLoading, setDeleteLoading] = useState(false);
 
     const getRuleByIdAPI = async (ruleId) => {
         const formData = new FormData();
@@ -65,9 +68,12 @@ const LoyaltySignupView = () => {
 
     const deleteEarningRuleAPI = async (ruleId) => {
         try {
+            setDeleteLoading(true);
             const formData = new FormData();
             formData.append("rule_id", ruleId);
             const response = await fetchData("/delete-merchant-earning-rules", formData);
+            setDeleteLoading(false);
+            setIsDeleteModalOpen(false);
             console.log('Delete Earning Rule Response', response);
             if (response.status) {
                 navigate('/loyaltyProgram');
@@ -217,7 +223,7 @@ const LoyaltySignupView = () => {
                 </Box>
             }
             primaryAction={{ content: edit ? "Update" : "Save", onAction: handleSave }}
-            secondaryActions={(getdatabyID?.default_rules === '0' && edit) ? <Button variant='secondary' tone='critical' icon={DeleteIcon} onClick={() => { deleteEarningRuleAPI(rule.rule_id) }}>Delete</Button> : undefined}
+            secondaryActions={(getdatabyID?.default_rules === '0' && edit) ? <Button variant='secondary' tone='critical' icon={DeleteIcon} onClick={() => { setIsDeleteModalOpen(true) }}>Delete</Button> : undefined}
         >
             <Layout>
                 <Layout.Section>
@@ -309,6 +315,16 @@ const LoyaltySignupView = () => {
                     </Grid>
                 </Layout.Section>
             </Layout>
+            <ConfirmationModal
+                isOpen={isDeleteModalOpen}
+                setIsOpen={setIsDeleteModalOpen}
+                text={'Are you sure you want to delete this rule?'}
+                title={'Delete Rule'}
+                buttonText={'Delete'}
+                buttonAction={() => { deleteEarningRuleAPI(rule.rule_id) }}
+                destructive={true}
+                buttonLoader={deleteLoading}
+            />
         </Page>
     );
 };

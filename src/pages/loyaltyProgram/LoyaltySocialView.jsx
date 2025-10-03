@@ -3,6 +3,7 @@ import { DeleteIcon } from '@shopify/polaris-icons';
 import { useState, useEffect } from 'react'
 import { useNavigate, useLocation } from 'react-router-dom';
 import { fetchData } from '../../action';
+import ConfirmationModal from '../../components/ConfirmationModal';
 
 
 const LoyaltySocialView = () => {
@@ -25,16 +26,18 @@ const LoyaltySocialView = () => {
     const [getdatabyID, setGetdatabyID] = useState();
     const [loading, setLoading] = useState(true);
     const [errors, setErrors] = useState({});
+    const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
+    const [deleteLoading, setDeleteLoading] = useState(false);
 
     // Determine the field name dynamically based on platform
     const getFieldNameForPlatform = () => {
         switch (rule?.display_use_type) {
             case 'social_follow_twitter':
-                return 'follow_twitter_username';
+                return 'follow_twitter_url';
             case 'social_follow_instagram':
                 return 'follow_instagram_username';
             case 'social_follow_tiktok':
-                return 'follow_tiktok_username';
+                return 'follow_tiktok_url';
             case 'social_share_facebook':
                 return 'share_facebook_url';
             case 'social_share_twitter':
@@ -54,7 +57,7 @@ const LoyaltySocialView = () => {
         }
         if (rule) {
             setPageTitle(rule.title || 'Social Rule');
-            setStatus(rule.status ?? 'inactive');
+            setStatus(rule.status ?? false);
         }
     }, [edit, rule]);
 
@@ -70,16 +73,19 @@ const LoyaltySocialView = () => {
                 });
             }
 
-            setStatus(getdatabyID?.status ?? 'inactive');
+            setStatus(getdatabyID?.status ?? false);
             setLoading(false);
         }
     }, [getdatabyID]);
 
     const deleteEarningRuleAPI = async (ruleId) => {
+        setDeleteLoading(true);
         const formData = new FormData();
         formData.append("setting_id", "ztEfTSMcDejdHNDnDiM5xBPdJdEuyCEkwhxdaL==");
         formData.append("rule_id", ruleId);
         const response = await fetchData("/delete-merchant-earning-rules", formData);
+        setDeleteLoading(false);
+        setIsDeleteModalOpen(false);
         console.log('result delete earning rule', response);
         if (response.status) {
             navigate('/loyaltyProgram');
@@ -166,7 +172,7 @@ const LoyaltySocialView = () => {
     }
 
     const handleStatusChange = () => {
-        setStatus(prevStatus => prevStatus === 'active' ? 'inactive' : 'active');
+        setStatus(prevStatus => prevStatus === true ? false : true);
     };
 
     const fieldName = getFieldNameForPlatform();
@@ -177,12 +183,12 @@ const LoyaltySocialView = () => {
             title={
                 <Box style={{ display: "flex", justifyContent: "space-between", alignItems: "center", gap: "10px" }}>
                     <Text as='h1' variant='headingLg'>{pageTitle}</Text>
-                    <Badge tone={status === "active" ? "success" : "critical"}>
-                        {status.charAt(0).toUpperCase() + status.slice(1)}
+                    <Badge tone={status === true ? "success" : "critical"}>
+                        {status ? "Active" : "Inactive"}
                     </Badge>
                 </Box>
             }
-            secondaryActions={edit ? <Button variant='secondary' tone='critical' icon={DeleteIcon} onClick={() => { deleteEarningRuleAPI(rule.rule_id) }}>Delete</Button> : undefined}
+            secondaryActions={edit ? <Button variant='secondary' tone='critical' icon={DeleteIcon} onClick={() => { setIsDeleteModalOpen(true) }}>Delete</Button> : undefined}
             primaryAction={{ content: 'Save', onAction: handleSave }}
         >
             <Layout>
@@ -246,8 +252,8 @@ const LoyaltySocialView = () => {
                                     <BlockStack gap={200}>
                                         <Box style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
                                             <Text variant='headingMd' as="h2">Status</Text>
-                                            <Badge tone={status === "active" ? "success" : "critical"}>
-                                                {status.charAt(0).toUpperCase() + status.slice(1)}
+                                            <Badge tone={status === true ? "success" : "critical"}>
+                                                {status ? "Active" : "Inactive"}
                                             </Badge>
                                         </Box>
                                         {loading && edit ? (
@@ -257,7 +263,7 @@ const LoyaltySocialView = () => {
                                                 <label className="switch">
                                                     <input
                                                         type="checkbox"
-                                                        checked={status === "active"}
+                                                        checked={status === true}
                                                         onChange={handleStatusChange}
                                                     />
                                                     <span className="slider"></span>
@@ -271,6 +277,16 @@ const LoyaltySocialView = () => {
                     </Grid>
                 </Layout.Section>
             </Layout>
+            <ConfirmationModal
+                isOpen={isDeleteModalOpen}
+                setIsOpen={setIsDeleteModalOpen}
+                text={'Are you sure you want to delete this rule?'}
+                title={'Delete Rule'}
+                buttonText={'Delete'}
+                buttonAction={() => { deleteEarningRuleAPI(rule.rule_id) }}
+                destructive={true}
+                buttonLoader={deleteLoading}
+            />
         </Page>
     );
 }

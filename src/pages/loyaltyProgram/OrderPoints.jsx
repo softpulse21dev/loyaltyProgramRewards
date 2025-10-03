@@ -7,15 +7,13 @@ const OrderPoints = () => {
     const navigate = useNavigate();
     const location = useLocation();
     const { rule, edit } = location.state || {};
-    console.log('rule', rule)
-
-    const [pageTitle, setPageTitle] = useState("Order Points");
-    const [orderPointsMethod, setOrderPointsMethod] = useState('incremented');
-    const [earningPoints, setEarningPoints] = useState();
-    const [moneySpent, setMoneySpent] = useState();
-    const [status, setStatus] = useState("inactive");
-
     const [getdatabyID, setGetdatabyID] = useState();
+    const [orderPointsMethod, setOrderPointsMethod] = useState('incremented');
+    const [earningPoints, setEarningPoints] = useState("");
+    const [moneySpent, setMoneySpent] = useState("");
+    const [status, setStatus] = useState(false);
+    const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
+    const [deleteLoading, setDeleteLoading] = useState(false);
 
     const getRuleByIdAPI = async (ruleId) => {
         const formData = new FormData();
@@ -23,41 +21,62 @@ const OrderPoints = () => {
         const response = await fetchData("/get-merchant-earning-rules-by-id", formData);
         if (response?.data) {
             setGetdatabyID(response.data);
-            console.log('Get Rule ID by order points', response);
+            setEarningPoints(response.data.points ?? response.data.default_points ?? 0);
+            setStatus(response.data.status ?? false);
+            console.log("Rule Details", response.data);
         }
     };
+
     useEffect(() => {
-        getRuleByIdAPI(rule.rule_id);
-        if (rule) {
-            setPageTitle(rule.title || "Order Points");
-            const pointsValue = rule.points ?? rule.default_points ?? 0;
-            setEarningPoints(pointsValue);
-            setStatus(rule.status ?? "inactive");
+        if (rule?.rule_id) {
+            getRuleByIdAPI(rule.rule_id);
         }
     }, [rule]);
 
     const handleStatusChange = () => {
-        setStatus(prevStatus => prevStatus === true ? false : true);
+        setStatus(prev => prev === true ? false : true);
     };
+
+    const handleUpdateRule = async () => {
+        const formData = new FormData();
+        formData.append("rule_id", rule.rule_id);
+        formData.append("master_rule_id", rule.master_rule_id);
+        formData.append("points", earningPoints || 0);
+        formData.append("condition_json", null);
+        formData.append("status", status);
+
+        const response = await fetchData("/update-merchant-earning-rules", formData);
+        if (response?.status) {
+            navigate('/loyaltyProgram');
+            shopify.toast.show(response?.message, { duration: 2000 });
+        } else {
+            shopify.toast.show(response?.message, { duration: 2000 });
+        }
+    };
+
 
     return (
         <Page
             backAction={{ content: 'Back', onAction: () => navigate('/loyaltyProgram') }}
             title={
                 <Box style={{ display: "flex", justifyContent: "space-between", alignItems: "center", gap: "10px" }}>
-                    <Text as='h1' variant='headingLg'>{pageTitle}</Text>
+                    <Text as='h1' variant='headingLg'>{getdatabyID?.title || "Order Points"}</Text>
                     <Badge tone={status === true ? "success" : "critical"}>
-                        {status ? "Active" : "Inactive"}
+                        {status === true ? "Active" : "Inactive"}
                     </Badge>
                 </Box>
             }
-            primaryAction={{ content: edit ? "Update" : "Save", onAction: () => { } }}
+            primaryAction={{
+                content: edit ? "Update" : "Save",
+                onAction: handleUpdateRule
+            }}
         >
             <Layout>
                 <Layout.Section>
                     <Grid>
                         <Grid.Cell columnSpan={{ xs: 6, sm: 4, md: 4, lg: 8, xl: 8 }}>
                             <BlockStack gap={400}>
+                                {/* Earning Method */}
                                 <Card>
                                     <Text variant="headingMd">Earning Method</Text>
                                     <BlockStack>
@@ -74,6 +93,7 @@ const OrderPoints = () => {
                                     </BlockStack>
                                 </Card>
 
+                                {/* Points Config */}
                                 <Card>
                                     <BlockStack gap={400}>
                                         <Text variant="headingMd">Earning Points</Text>
@@ -109,6 +129,7 @@ const OrderPoints = () => {
                             </BlockStack>
                         </Grid.Cell>
 
+                        {/* Summary & Status */}
                         <Grid.Cell columnSpan={{ xs: 6, sm: 2, md: 2, lg: 4, xl: 4 }}>
                             <BlockStack gap={400}>
                                 <Card>
@@ -123,7 +144,7 @@ const OrderPoints = () => {
                                         <Box style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
                                             <Text variant='headingMd' as="span">Status</Text>
                                             <Badge tone={status === true ? "success" : "critical"}>
-                                                {status ? "Active" : "Inactive"}
+                                                {status === true ? "Active" : "Inactive"}
                                             </Badge>
                                         </Box>
                                         <Box>
@@ -149,4 +170,4 @@ const OrderPoints = () => {
     )
 }
 
-export default OrderPoints
+export default OrderPoints;

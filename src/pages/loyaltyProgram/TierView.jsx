@@ -3,17 +3,19 @@ import { CashDollarIcon, CheckIcon, CurrencyConvertIcon, DeleteIcon, GiftCardIco
 import React, { useCallback, useState } from 'react'
 import { useLocation, useNavigate } from 'react-router-dom';
 import RedeemModal from '../../components/RedeemModal';
+import { fetchData } from '../../action';
 
 const TierView = () => {
     const navigate = useNavigate();
     const location = useLocation();
-    const { rule, edit, masterRewardsList } = location.state || {};
+    const { rule, edit, masterRewardsList, navigateTo } = location.state || {};
     console.log('rule', rule)
     console.log('edit', edit)
+const [vipTierData, setVipTierData] = useState([]);
     const [tierName, setTierName] = useState('');
     const [goalValue, setGoalValue] = useState('');
     const [pointsMultiplier, setPointsMultiplier] = useState('');
-    const [selected, setSelected] = useState("default");
+    const [selectedIcon, setSelectedIcon] = useState("default");
     const [active, setActive] = useState(false);
     const [files, setFiles] = useState([]);
 
@@ -63,22 +65,14 @@ const TierView = () => {
         }
     }
 
-    const handleBackAction = () => {
-        // Also clear storage if the user abandons the creation
-        sessionStorage.removeItem(SESSION_STORAGE_KEY);
-        navigate('/loyaltyProgram');
-    };
-
     const handleDropZoneDrop = useCallback(
         (_droppedFiles, acceptedFiles, rejectedFiles) => {
             // Log the accepted files to the console
             console.log('Accepted Files on Drop:', acceptedFiles);
-
             if (rejectedFiles.length > 0) {
                 // Show an error toast if any files were rejected
                 shopify.toast.show('Only .gif, .jpg, and .png files are accepted.', { duration: 3000, isError: true });
             }
-
             // Set the state with the valid, accepted files
             setFiles(acceptedFiles);
         },
@@ -135,10 +129,10 @@ const TierView = () => {
 
     return (
         <Page
-            backAction={{ content: 'Back', onAction: () => navigate('/loyaltyProgram') }}
+            backAction={{ content: 'Back', onAction: () => navigate('/loyaltyProgram', { state: { navigateTo: navigateTo } }) }}
             title="VIP Tier"
             secondaryActions={edit ? <Button tone='critical' icon={DeleteIcon} onClick={() => { DeleteVipTierAPI(rule?.uid) }}>Delete</Button> : ''}
-            primaryAction={{ content: 'Save', onAction: () => { AddVipTierAPI(), navigate('/loyaltyProgram') } }}
+            primaryAction={{ content: 'Save', onAction: () => { AddVipTierAPI(), navigate('/loyaltyProgram', { state: { navigateTo: navigateTo } }) } }}
         >
             <Layout>
                 <Layout.Section>
@@ -222,16 +216,16 @@ const TierView = () => {
                                     >
                                         <RadioButton
                                             label={'Default Icon'}
-                                            checked={selected === "default"}
-                                            onChange={() => setSelected("default")}
+                                            checked={selectedIcon === "default"}
+                                            onChange={() => setSelectedIcon("default")}
                                         />
                                         <div className='icon-size' style={{ display: "flex", maxWidth: "15%", alignItems: "flex-start", justifyContent: "center" }}>
                                             <Icon source={RewardIcon} />
                                         </div>
                                         <RadioButton
                                             label='Custom Icon'
-                                            checked={selected === "custom"}
-                                            onChange={() => setSelected("custom")}
+                                            checked={selectedIcon === "custom"}
+                                            onChange={() => setSelectedIcon("custom")}
                                         />
                                         <DropZone onDrop={handleDropZoneDrop} variableHeight allowMultiple={false} accept="image/png, image/gif, image/jpeg">
                                             {uploadedFiles}
@@ -247,7 +241,7 @@ const TierView = () => {
                 </Layout.Section>
             </Layout>
 
-            <RedeemModal active={active} setActive={setActive} data={masterRewardsList} />
+            <RedeemModal localSave={true} navigateTo={3} active={active} setActive={setActive} data={masterRewardsList} />
         </Page>
     )
 }

@@ -4,7 +4,7 @@ import React from 'react'
 import { iconsMap } from '../utils'
 import { useNavigate } from 'react-router-dom'
 
-const RedeemModal = ({ active, setActive, data, referralRule, navigateTo }) => {
+const RedeemModal = ({ active, setActive, data, referralRule, navigateTo, localSave }) => {
     console.log('data', data)
     const navigate = useNavigate();
 
@@ -30,7 +30,7 @@ const RedeemModal = ({ active, setActive, data, referralRule, navigateTo }) => {
                                 </Box>
                                 <Button
                                     onClick={() =>
-                                        navigate(`/loyaltyProgram/CouponPage`, { state: { rule: item, referralRule: referralRule, navigateTo: navigateTo } })
+                                        navigate(`/loyaltyProgram/CouponPage`, { state: { rule: item, referralRule: referralRule, navigateTo: navigateTo, localSave: localSave } })
                                     }
                                 > ADD
                                 </Button>
