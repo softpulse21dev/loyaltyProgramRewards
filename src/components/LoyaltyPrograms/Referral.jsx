@@ -125,7 +125,7 @@ const Referral = () => {
                             (<ResourceList
                                 items={referralData?.referred_friend_reward?.added || []}
                                 renderItem={(item) => {
-                                    const { id, title, icon, redeemed_count, referral_rule_id, status, points } = item;
+                                    const { id, title, icon, redeemed_so_far, referral_rule_id, status, points } = item;
                                     const IconSource = iconsMap[icon] || GiftCardIcon;
                                     return (
                                         <ResourceItem key={id}>
@@ -138,7 +138,7 @@ const Referral = () => {
                                                             <InlineStack gap="100" align="center">
                                                                 <Text variant="bodyMd">{points} points</Text>
                                                                 <Text variant="bodyMd" fontWeight="bold">|</Text>
-                                                                <Text variant="bodyMd">{redeemed_count || 0} redeemed so far</Text>
+                                                                <Text variant="bodyMd">{redeemed_so_far || 0} redeemed so far</Text>
                                                             </InlineStack>
                                                         </Box>
                                                     </div>
@@ -185,7 +185,7 @@ const Referral = () => {
                                     (<ResourceList
                                         items={referralData?.advocate_reward?.added || []}
                                         renderItem={(item) => {
-                                            const { id, title, icon, redeemed_count, referral_rule_id, status, points } = item;
+                                            const { id, title, icon, redeemed_so_far, referral_rule_id, status, points } = item;
                                             const IconSource = iconsMap[icon] || GiftCardIcon;
                                             return (
                                                 <ResourceItem key={id}>
@@ -198,7 +198,7 @@ const Referral = () => {
                                                                     <InlineStack gap="100" align="center">
                                                                         <Text variant="bodyMd">{points} points</Text>
                                                                         <Text variant="bodyMd" fontWeight="bold">|</Text>
-                                                                        <Text variant="bodyMd">{redeemed_count || 0} redeemed so far</Text>
+                                                                        <Text variant="bodyMd">{redeemed_so_far || 0} redeemed so far</Text>
                                                                     </InlineStack>
                                                                 </Box>
                                                             </div>

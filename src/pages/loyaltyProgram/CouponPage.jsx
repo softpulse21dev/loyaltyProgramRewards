@@ -6,15 +6,15 @@ import CollectionModal from '../../components/CollectionModal';
 import { fetchData } from '../../action';
 import ProductModal from '../../components/ProductModal';
 import { useDispatch } from 'react-redux';
-import { addData } from '../../redux/action';
+import { addData, UpdateData } from '../../redux/action';
 
 const CouponPage = () => {
     const navigate = useNavigate();
     const location = useLocation();
-    const { rule, edit, referralRule, navigateTo, localSave } = location.state || {};
+    const { rule, edit, referralRule, navigateTo, localSave, isTierRewardEdit } = location.state || {};
     console.log('localSave', localSave)
     console.log('navigateTo coupons', navigateTo)
-    console.log('rule', rule)
+    console.log('rule local', rule)
     const [rewardTitle, setRewardTitle] = useState('');
     const [pointsAmount, setPointsAmount] = useState(100);
     const [rewardExpiration, setRewardExpiration] = useState(0);
@@ -24,6 +24,7 @@ const CouponPage = () => {
     const [loading, setLoading] = useState(true);
     const [ruleId, setRuleId] = useState('');
     const [ruleType, setRuleType] = useState('');
+    const [clientId, setClientId] = useState(null);
     const dispatch = useDispatch();
 
     const [settings_json, setSettingsJson] = useState({
@@ -45,31 +46,65 @@ const CouponPage = () => {
     });
 
     useEffect(() => {
-        if (localSave) {
-            return;
+        // --- LOCAL EDIT MODE ---
+        // If we are editing a reward for a VIP Tier, populate state from the 'rule' object
+        if (edit && isTierRewardEdit && rule) {
+            setRewardTitle(rule.title || '');
+            setPointsAmount(rule.points || 100);
+            setRewardExpiration(rule.expiration_days || 0);
+            setStatus(rule.status === true);
+            setSettingsJson(rule.settings_json || {}); // Use settings from rule
+            setClientId(rule.clientId); // IMPORTANT: Store the client-side ID
+            setRuleType(rule.type);
+            setLoading(false);
+            return; // Exit early to prevent API calls
         }
+
+        // --- API-BASED EDIT MODE ---
+        // Keep this logic for editing rules from other parts of your app
         if (edit) {
+            setLoading(true);
             if (referralRule) {
                 GetReferralRuleByIdAPI();
             } else {
                 GetRedeemRuleByIdAPI();
             }
+        } else {
+            setLoading(false);
         }
-    }, [edit, rule, referralRule, localSave]);
 
-    const addDatas = {
+    }, [edit, rule, referralRule, isTierRewardEdit]);
+
+    const addDatas = [{
         master_rule_id: rule.master_rule_id,
+        icon: rule.icon,
         status: status,
         points: pointsAmount,
         title: rewardTitle,
         settings_json: settings_json,
         expiration_days: rewardExpiration,
-    }
+        type: rule.type,
+    }]
 
     const handleAddLocalData = () => {
         dispatch(addData(addDatas));
-        navigate('/loyaltyProgram/tierview');
+        navigate('/loyaltyProgram/tierview', { state: { navigateTo: navigateTo } });
     }
+
+    const handleUpdateLocalData = () => {
+        const updatedData = {
+            ...rule,
+            clientId: clientId, // The unique client-side identifier
+            // Overwrite with values from the form state
+            status: status,
+            points: pointsAmount,
+            title: rewardTitle,
+            settings_json: settings_json,
+            expiration_days: rewardExpiration,
+        };
+        dispatch(UpdateData(updatedData));
+        navigate('/loyaltyProgram/tierview', { state: { navigateTo: navigateTo } });
+    };
 
     // Redeem API
 
@@ -256,10 +291,28 @@ const CouponPage = () => {
 
     return (
         <Page
-            backAction={{ content: 'Back', onAction: () => navigate('/loyaltyProgram', { state: { navigateTo: navigateTo } }) }}
-            title={rule?.title || "Coupon"}
+            backAction={{ content: 'Back', onAction: () => navigate(localSave ? '/loyaltyProgram/tierview' : '/loyaltyProgram', { state: { navigateTo: navigateTo } }) }}
+            title={
+                <Box style={{ display: "flex", justifyContent: "space-between", alignItems: "center", gap: "10px" }}>
+                    <Text as='h1' variant='headingLg'>{rule?.title || "Coupon"}</Text>
+                    <Badge tone={status === true ? "success" : "critical"}>
+                        {status === true ? "Active" : "Inactive"}
+                    </Badge>
+                </Box>
+            }
             secondaryActions={edit ? <Button tone='critical' icon={DeleteIcon} onClick={() => { referralRule ? DeleteReferralRuleAPI(ruleId) : DeleteRedeemRuleAPI(ruleId) }}>Delete</Button> : ''}
-            primaryAction={{ content: edit ? "Update" : "Save", onAction: () => { if (edit) { referralRule ? UpdateReferralRuleAPI() : UpdateRedeemRuleAPI() } else { localSave ? handleAddLocalData() : referralRule ? AddReferralRuleAPI() : AddRedeemRuleAPI() } } }}
+            primaryAction={{
+                content: edit ? "Update" : "Save",
+                onAction: () => {
+                    if (edit && isTierRewardEdit) {
+                        handleUpdateLocalData();
+                    } else if (edit) {
+                        referralRule ? UpdateReferralRuleAPI() : UpdateRedeemRuleAPI();
+                    } else {
+                        localSave ? handleAddLocalData() : referralRule ? AddReferralRuleAPI() : AddRedeemRuleAPI();
+                    }
+                }
+            }}
         >
             <Layout>
                 <Layout.Section>
@@ -491,6 +544,35 @@ const CouponPage = () => {
                                     </Card>
                                 )}
 
+                                <Card>
+                                    <Box style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+                                        <Text variant='headingMd' as="span">Minimum Cart Requirement</Text>
+                                        <BlockStack gap={10}>
+                                            <RadioButton
+                                                label="None"
+                                                checked={settings_json.min_requirement === 'none'}
+                                                onChange={() => setSettingsJson({ ...settings_json, min_requirement: 'none' })}
+                                            />
+                                            <RadioButton
+                                                label="Minimum cart Requirement"
+                                                checked={settings_json.min_requirement === 'min_purchase_amount'}
+                                                onChange={() => setSettingsJson({ ...settings_json, min_requirement: 'min_purchase_amount' })}
+                                            />
+                                            <TextField
+                                                type="number"
+                                                value={settings_json.min_order_value_in_cents}
+                                                onChange={(value) => setSettingsJson({ ...settings_json, min_order_value_in_cents: value })}
+                                                helpText="Value in cents. Eg: $20 = 2000"
+                                            />
+                                            {/* <Checkbox
+                                                label="Exclude free product from minimum order value"
+                                                checked={settings_json.min_points_to_redeem}
+                                                onChange={() => setSettingsJson({ ...settings_json, min_points_to_redeem: !settings_json.min_points_to_redeem })}
+                                            /> */}
+                                        </BlockStack>
+                                    </Box>
+                                </Card>
+
                                 {(rule.type !== "store_credit") && (
                                     <Card>
                                         <Box style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
@@ -564,9 +646,9 @@ const CouponPage = () => {
                                 <Card>
                                     <BlockStack gap={300}>
                                         <Box style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-                                            <Text variant='headingMd' as="span">Status</Text>
-                                            <Badge tone="critical">
-                                                active
+                                            <Text variant='headingMd'>Status</Text>
+                                            <Badge tone={status === true ? "success" : "critical"}>
+                                                {status === true ? "Active" : "Inactive"}
                                             </Badge>
                                         </Box>
                                         <Box>
@@ -587,7 +669,7 @@ const CouponPage = () => {
                         </Grid.Cell>
                     </Grid>
                 </Layout.Section>
-            </Layout>
+            </Layout >
 
             <CollectionModal
                 open={collectionModalOpen}
@@ -615,7 +697,7 @@ const CouponPage = () => {
                     })
                 }}
             />
-        </Page>
+        </Page >
     )
 }
 

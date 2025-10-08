@@ -4,15 +4,20 @@ import React, { useEffect, useState } from 'react'
 import { useNavigate } from 'react-router-dom';
 import { fetchData } from '../../action';
 import { iconsMap } from '../../utils';
+import { useDispatch, useSelector } from 'react-redux';
+import { ClearTierFormData, GetVipTierData, MasterRewardsList, removeData, RemoveTierId, TierId } from '../../redux/action';
 
 const VipTier = () => {
     const navigate = useNavigate();
     const [selectedEntry, setSelectedEntry] = useState(1);
     const [selectedTierProgressExpiry, setSelectedTierProgressExpiry] = useState(1);
-    const [vipTierData, setVipTierData] = useState([]);
-    const [masterRewardsList, setMasterRewardsList] = useState([]);
     const [vipStatus, setVipStatus] = useState(false);
     const [loading, setLoading] = useState(false);
+
+    const vipTierData = useSelector((state) => state.merchantSettings.vipTierData);
+    console.log('vipTierData', vipTierData)
+
+    const dispatch = useDispatch();
 
     const GetVipTierAPI = async () => {
         try {
@@ -20,8 +25,9 @@ const VipTier = () => {
             const response = await fetchData("/get-tiers", formData);
             console.log('response vip Tier', response);
             if (response.status) {
-                setVipTierData(response);
-                setMasterRewardsList(response?.master_rewards);
+                // setVipTierData(response);
+                dispatch(GetVipTierData(response?.data?.tier_settings));
+                dispatch(MasterRewardsList(response?.master_rewards));
             } else {
                 shopify.toast.show(response?.message, { duration: 2000, isError: true });
             }
@@ -33,6 +39,10 @@ const VipTier = () => {
 
     useEffect(() => {
         GetVipTierAPI();
+        dispatch(RemoveTierId());
+        dispatch(removeData());
+        dispatch(ClearTierFormData());
+        console.log('removed tierid')
     }, []);
 
     const UpdateVipTierAPI = async () => {
@@ -61,7 +71,7 @@ const VipTier = () => {
     };
 
     const handleAddTierClick = () => {
-        navigate(`/loyaltyProgram/tierview`, { state: { masterRewardsList: masterRewardsList, navigateTo: 3 } });
+        navigate(`/loyaltyProgram/tierview`, { state: { navigateTo: 3 } });
     };
 
     const handleSelectedEntry = (value) => {
@@ -112,7 +122,7 @@ const VipTier = () => {
                     </Box>
 
                     <ResourceList
-                        items={vipTierData?.data?.tier_settings || []}
+                        items={vipTierData || []}
                         renderItem={(item) => {
                             const IconSource = iconsMap[item?.icon];
                             return (
@@ -127,7 +137,7 @@ const VipTier = () => {
                                                 </Box>
                                             </div>
                                         </Box>
-                                        <Button icon={<Icon source={EditIcon} />} onClick={() => navigate(`/loyaltyProgram/tierview`, { state: { rule: item, edit: true, navigateTo: 3 } })} primary>Edit</Button>
+                                        <Button icon={<Icon source={EditIcon} />} onClick={() => navigate(`/loyaltyProgram/tierview`, { state: { rule: item, edit: true, navigateTo: 3 } }, dispatch(TierId(item.uid)))} primary>Edit</Button>
                                     </Box>
                                 </ResourceItem>
                             )

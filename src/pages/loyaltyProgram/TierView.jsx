@@ -1,29 +1,91 @@
-import { BlockStack, Box, Button, Card, DropZone, Grid, Icon, Layout, LegacyStack, Page, RadioButton, Text, TextField, Thumbnail } from '@shopify/polaris'
+import { BlockStack, Box, Button, Card, DropZone, Grid, Icon, Layout, LegacyStack, Page, RadioButton, ResourceItem, ResourceList, Text, TextField, Thumbnail } from '@shopify/polaris'
 import { CashDollarIcon, CheckIcon, CurrencyConvertIcon, DeleteIcon, GiftCardIcon, HeartIcon, NoteIcon, RewardIcon, SaveIcon, StarIcon } from '@shopify/polaris-icons';
-import React, { useCallback, useState } from 'react'
+import React, { useCallback, useEffect, useState } from 'react'
 import { useLocation, useNavigate } from 'react-router-dom';
 import RedeemModal from '../../components/RedeemModal';
 import { fetchData } from '../../action';
 import { useDispatch, useSelector } from 'react-redux';
-import { removeData } from '../../redux/action';
+import { ClearTierFormData, SetData, UpdateData, UpdateTierFormData } from '../../redux/action';
+import { iconsMap } from '../../utils';
 
 const TierView = () => {
     const navigate = useNavigate();
     const location = useLocation();
     const dispatch = useDispatch();
+
+    const tierFormData = useSelector((state) => state.merchantSettings.tierFormData);
+    const { uid, tierName, goalValue, pointsMultiplier, selectedIcon, files, status } = tierFormData;
     const Data = useSelector((state) => state.merchantSettings.Data);
+    const masterRewardsList = useSelector((state) => state.merchantSettings.masterRewardsList);
+    const vipTierData = useSelector((state) => state.merchantSettings.vipTierData);
+    console.log('vipTierData tierview', vipTierData)
+
     console.log('Data', Data)
-    const { rule, edit, masterRewardsList, navigateTo } = location.state || {};
+    const { rule, edit, navigateTo } = location.state || {};
     console.log('rule', rule)
     console.log('edit', edit)
-    const [vipTierData, setVipTierData] = useState([]);
-    const [tierName, setTierName] = useState('');
-    const [goalValue, setGoalValue] = useState('');
-    const [pointsMultiplier, setPointsMultiplier] = useState('');
-    const [selectedIcon, setSelectedIcon] = useState("default");
     const [active, setActive] = useState(false);
-    const [files, setFiles] = useState([]);
+    const tierId = useSelector((state) => state.merchantSettings.tierId);
+    console.log('tierId', tierId)
 
+    // useEffect(() => {
+    //     if (tierId) {
+    //         const currentTier = vipTierData?.find((item) => item.uid === tierId);
+    //         if (currentTier) {
+    //             setTierName(currentTier.title);
+    //             setGoalValue(currentTier.points_needed);
+    //             setPointsMultiplier(currentTier.points_multiply);
+    //             setSelectedIcon(currentTier.icon_type);
+
+    //             const iconData = currentTier.icon;
+    //             // Check if the icon object with a URL exists
+    //             if (iconData && typeof iconData === 'object' && iconData.url) {
+    //                 // Create a "mock file" object and wrap it in an ARRAY
+    //                 setFiles([{
+    //                     name: iconData.file_name,
+    //                     preview: iconData.url
+    //                 }]);
+    //             } else {
+    //                 setFiles([]);
+    //             }
+    //         }
+    //     }
+    // }, [tierId, vipTierData]); // Make sure vipTierData is in the dependency array
+
+
+    // 3. Initialize the form data on load
+    useEffect(() => {
+        const currentTier = tierId ? vipTierData?.find((item) => item.uid === tierId) : null;
+
+        // Condition: Only initialize the form IF:
+        // 1. We are in edit mode (currentTier exists)
+        // 2. AND the form data in Redux is NOT for the current tier (uid mismatch)
+        if (currentTier && currentTier.uid !== uid) {
+            const iconData = currentTier.icon;
+            const initialFiles = (iconData && typeof iconData === 'object' && iconData.url)
+                ? [{ name: iconData.file_name, preview: iconData.url }]
+                : [];
+
+            // Dispatch the form data, INCLUDING the uid
+            dispatch(UpdateTierFormData({
+                uid: currentTier.uid, // <-- Store the ID in the form state
+                tierName: currentTier.title || '',
+                goalValue: currentTier.points_needed || '',
+                pointsMultiplier: currentTier.points_multiply || '',
+                selectedIcon: currentTier.icon_type || 'default',
+                files: initialFiles,
+            }));
+            console.log('currentTier.benefits', currentTier.benefits)
+            // Also, initialize the rewards list for this tier
+            // NOTE: You'll need a 'setData' action that REPLACES the 'Data' array.
+            dispatch(SetData(currentTier.benefits || []));
+        }
+    }, [tierId, vipTierData, dispatch, uid]); // <-- Add 'uid' to the dependency array
+
+    const handleBackAction = () => {
+        dispatch(ClearTierFormData());
+        navigate('/loyaltyProgram', { state: { navigateTo: navigateTo } });
+    };
 
     const AddVipTierAPI = async () => {
         try {
@@ -31,15 +93,19 @@ const TierView = () => {
             formData.append("title", tierName);
             formData.append("points", goalValue);
             formData.append("multiplier", pointsMultiplier);
-            formData.append("edit", '');
             formData.append("icon", files[0]);
             formData.append("icon_type", selectedIcon);
-            formData.append("benefits", '');
-            const response = await fetchData("/add-vip-tier", formData);
+            formData.append("benefits", JSON.stringify(Data));
+            if (tierId) {
+                formData.append("edit", tierId);
+            } else {
+                formData.append("edit", '');
+            }
+            const response = await fetchData("/tier-add", formData);
             console.log('response', response);
-            if (response.status && response.data) {
-                setVipTierData(response.data);
-                shopify.toast.show(response?.message, { duration: 2000 });
+            if (response.status) {
+                handleBackAction();
+                // shopify.toast.show(response?.message, { duration: 2000 });
             }
             else {
                 shopify.toast.show(response?.message, { duration: 2000, isError: true });
@@ -58,7 +124,7 @@ const TierView = () => {
             const response = await fetchData("/delete-tier", formData);
             console.log('response', response);
             if (response.status) {
-                navigate('/loyaltyProgram', { state: { navigateTo: 3 } });
+                handleBackAction();
                 shopify.toast.show(response?.message, { duration: 2000 });
             } else {
                 shopify.toast.show(response?.message, { duration: 2000, isError: true });
@@ -71,74 +137,73 @@ const TierView = () => {
         }
     }
 
+    const handleRewardStatusChange = useCallback((reward, newStatus) => {
+        const updatedReward = { ...reward, status: newStatus };
+        dispatch(UpdateData(updatedReward));
+    }, [dispatch]);
+
     const handleDropZoneDrop = useCallback(
-        (_droppedFiles, acceptedFiles, rejectedFiles) => {
-            // Log the accepted files to the console
-            console.log('Accepted Files on Drop:', acceptedFiles);
-            if (rejectedFiles.length > 0) {
-                // Show an error toast if any files were rejected
-                shopify.toast.show('Only .gif, .jpg, and .png files are accepted.', { duration: 3000, isError: true });
+        (_droppedFiles, acceptedFiles, _rejectedFiles) => {
+            console.log('acceptedFiles', acceptedFiles[0])
+            if (_rejectedFiles.length > 0) {
+                shopify.toast.show('Only .gif, .jpg, and .png files are accepted.', { duration: 2000, isError: true });
             }
-            // Set the state with the valid, accepted files
-            setFiles(acceptedFiles);
+            // Dispatch update to Redux, not local state
+            dispatch(UpdateTierFormData({ ...tierFormData, files: acceptedFiles }));
         },
-        [],
+        [tierFormData, dispatch], // Add tierFormData and dispatch to dependencies
     );
     const validImageTypes = ['image/gif', 'image/jpeg', 'image/png'];
 
-    const uploadedFiles = files.length > 0 && (
+    const uploadedFiles = files && files.length > 0 && (
         <div style={{ padding: '1rem' }}>
             <LegacyStack vertical>
-                {files.map((file, index) => (
-                    <>
-                        {console.log(`File object from state at index ${index}:`, file)}
-                        <LegacyStack alignment="center" key={index} distribution="equalSpacing">
-                            <Box alignment="center" style={{ width: '90%', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                                <Thumbnail
-                                    size="small"
-                                    alt={file.name}
-                                    source={
-                                        validImageTypes.includes(file.type)
-                                            ? window.URL.createObjectURL(file)
-                                            : NoteIcon
-                                    }
-                                />
-                                <Box style={{ gap: 10, marginLeft: 10, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                                    <Box>
-                                        {file.name}{' '}
-                                        <Text variant="bodySm" as="p">
-                                            {file.size} bytes
-                                        </Text>
-                                    </Box>
-                                    <Button
-                                        variant="plain"
-                                        icon={DeleteIcon}
-                                        accessibilityLabel="Remove file"
-                                        onClick={(event) => {
-                                            // Stop the click from bubbling up to the DropZone
-                                            event.stopPropagation();
-                                            setFiles([]);
-                                        }}
-                                    />
-                                </Box>
+                {files.map((file) => {
+                    const isRealFile = file instanceof File;
+                    const imageUrl = isRealFile
+                        ? window.URL.createObjectURL(file)
+                        : file.preview;
+
+                    const thumbnailSource = isRealFile && !validImageTypes.includes(file.type)
+                        ? NoteIcon
+                        : imageUrl;
+
+                    return (
+                        <Box alignment="center" style={{ width: '100%', display: 'flex', justifyContent: 'flex-start', alignItems: 'center' }}>
+                            <Thumbnail size="small" alt={file.name} source={thumbnailSource} />
+                            <Box style={{ width: '100%', marginLeft: 10, wordBreak: 'break-word' }}>
+                                <Text variant="bodyMd" as="span">{file.name}{' '}</Text>
+                                {isRealFile && (
+                                    <Text variant="bodySm" as="p">{file.size} bytes</Text>
+                                )}
                             </Box>
-                        </LegacyStack >
-                    </>
-                ))}
+                            <Box style={{ gap: 10, marginLeft: 10, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                                <Button
+                                    variant="plain"
+                                    icon={DeleteIcon}
+                                    accessibilityLabel="Remove file"
+                                    onClick={(event) => {
+                                        event.stopPropagation();
+                                        dispatch(UpdateTierFormData({ ...tierFormData, files: [] }));
+                                    }}
+                                />
+                            </Box>
+                        </Box>
+                    );
+                })}
             </LegacyStack>
         </div>
     );
-
     const fileUpload = !files.length && (
         <DropZone.FileUpload actionHint="Accepts .gif, .jpg, and .png" />
     )
 
     return (
         <Page
-            backAction={{ content: 'Back', onAction: () => { dispatch(removeData()); navigate('/loyaltyProgram', { state: { navigateTo: navigateTo } }) } }}
+            backAction={{ content: 'Back', onAction: () => { handleBackAction() } }}
             title="VIP Tier"
             secondaryActions={edit ? <Button tone='critical' icon={DeleteIcon} onClick={() => { DeleteVipTierAPI(rule?.uid) }}>Delete</Button> : ''}
-            primaryAction={{ content: 'Save', onAction: () => { AddVipTierAPI(), navigate('/loyaltyProgram', { state: { navigateTo: navigateTo } }) } }}
+            primaryAction={{ content: 'Save', onAction: () => { AddVipTierAPI() } }}
         >
             <Layout>
                 <Layout.Section>
@@ -150,7 +215,7 @@ const TierView = () => {
                                         <Text variant='headingMd' as="span">Tier Name</Text>
                                         <TextField
                                             value={tierName}
-                                            onChange={(value) => setTierName(value)}
+                                            onChange={(value) => dispatch(UpdateTierFormData({ ...tierFormData, tierName: value }))}
                                             maxLength={255}
                                         />
                                     </BlockStack>
@@ -165,7 +230,7 @@ const TierView = () => {
                                                 type='number'
                                                 label='Amount spent since start date'
                                                 requiredIndicator={true}
-                                                onChange={(value) => setGoalValue(value)}
+                                                onChange={(value) => dispatch(UpdateTierFormData({ ...tierFormData, goalValue: value }))}
                                             />
                                         </Box>
                                     </Box>
@@ -180,7 +245,7 @@ const TierView = () => {
                                                 type='number'
                                                 label='Points earned will be multiplied by this value'
                                                 requiredIndicator={true}
-                                                onChange={(value) => setPointsMultiplier(value)}
+                                                onChange={(value) => dispatch(UpdateTierFormData({ ...tierFormData, pointsMultiplier: value }))}
                                             />
                                         </Box>
                                     </Box>
@@ -189,6 +254,44 @@ const TierView = () => {
                                 <Card>
                                     <BlockStack gap={400}>
                                         <Text variant='headingMd' >Rewards to unlock tier</Text>
+                                        <div className='icon-size'>
+                                            <ResourceList
+                                                resourceName={{ singular: "rule", plural: "rules" }}
+                                                items={Data || []}
+                                                renderItem={(item) => {
+                                                    const { clientId, title, points, icon, status } = item;
+                                                    const IconSource = iconsMap[icon];
+                                                    return (
+                                                        <ResourceItem key={clientId}>
+                                                            <Box style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+                                                                <Box style={{ display: "flex", alignItems: "center", gap: "15px" }}>
+                                                                    <Icon source={IconSource} />
+                                                                    <Box>
+                                                                        <Text variant="bodyMd">{title}</Text>
+                                                                        <Text variant="bodyMd">{points} points</Text>
+                                                                    </Box>
+                                                                </Box>
+                                                                <Box style={{ display: "flex", alignItems: "center", gap: "15px" }}>
+                                                                    <Button variant="plain" onClick={() => navigate(`/loyaltyProgram/CouponPage`, { state: { rule: item, edit: true, localSave: true, isTierRewardEdit: true } })}>Edit</Button>
+                                                                    <div className="toggle-container" style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                                                                        <label className="switch">
+                                                                            <input
+                                                                                type="checkbox"
+                                                                                checked={status === true}
+                                                                                onChange={(e) =>
+                                                                                    handleRewardStatusChange(item, e.target.checked)
+                                                                                }
+                                                                            />
+                                                                            <span className="slider"></span>
+                                                                        </label>
+                                                                    </div>
+                                                                </Box>
+                                                            </Box>
+                                                        </ResourceItem>
+                                                    );
+                                                }}
+                                            />
+                                        </div>
                                         <Box>
                                             <Button onClick={() => setActive(true)}>Add Reward</Button>
                                         </Box>
@@ -223,7 +326,7 @@ const TierView = () => {
                                         <RadioButton
                                             label={'Default Icon'}
                                             checked={selectedIcon === "default"}
-                                            onChange={() => setSelectedIcon("default")}
+                                            onChange={() => dispatch(UpdateTierFormData({ ...tierFormData, selectedIcon: 'default' }))}
                                         />
                                         <div className='icon-size' style={{ display: "flex", maxWidth: "15%", alignItems: "flex-start", justifyContent: "center" }}>
                                             <Icon source={RewardIcon} />
@@ -231,7 +334,7 @@ const TierView = () => {
                                         <RadioButton
                                             label='Custom Icon'
                                             checked={selectedIcon === "custom"}
-                                            onChange={() => setSelectedIcon("custom")}
+                                            onChange={() => dispatch(UpdateTierFormData({ ...tierFormData, selectedIcon: 'custom' }))}
                                         />
                                         <DropZone onDrop={handleDropZoneDrop} variableHeight allowMultiple={false} accept="image/png, image/gif, image/jpeg">
                                             {uploadedFiles}
@@ -239,8 +342,6 @@ const TierView = () => {
                                         </DropZone>
                                     </Box>
                                 </Card>
-
-
                             </BlockStack>
                         </Grid.Cell>
                     </Grid>
