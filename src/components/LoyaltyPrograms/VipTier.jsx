@@ -13,7 +13,6 @@ const VipTier = () => {
     const [selectedTierProgressExpiry, setSelectedTierProgressExpiry] = useState(1);
     const [vipStatus, setVipStatus] = useState(false);
     const [loading, setLoading] = useState(false);
-
     const vipTierData = useSelector((state) => state.merchantSettings.vipTierData);
     console.log('vipTierData', vipTierData)
 
@@ -129,8 +128,16 @@ const VipTier = () => {
                                 <ResourceItem key={item.id}>
                                     <Box style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
                                         <Box>
+                                            {console.log('item?.icon?.url', item?.icon?.url)}
                                             <div className='icon-size' style={{ display: "flex", alignItems: "center", gap: "10px" }}>
-                                                <Icon source={RewardIcon} />
+                                                {item?.icon_type === 'default' ?
+                                                    <Icon source={RewardIcon} />
+                                                    :
+                                                    <img
+                                                        src={item.icon.url}
+                                                        alt={item.title || 'Tier Icon'} // Add alt text for accessibility
+                                                        style={{ width: '24px', height: '24px', objectFit: 'contain' }} // Style to match Polaris Icon size
+                                                    />}
                                                 <Box>
                                                     <Text variant="bodyMd">{item?.title}</Text>
                                                     <Text variant="bodyMd">Achieve on {item?.points_needed} points  |  {item?.points_multiply} points multiplier</Text>

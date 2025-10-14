@@ -7,6 +7,7 @@ import { fetchData } from '../../action';
 import { useDispatch, useSelector } from 'react-redux';
 import { ClearTierFormData, SetData, UpdateData, UpdateTierFormData } from '../../redux/action';
 import { iconsMap } from '../../utils';
+import SvgPreview from '../../components/SvgPreview';
 
 const TierView = () => {
     const navigate = useNavigate();
@@ -18,6 +19,13 @@ const TierView = () => {
     const Data = useSelector((state) => state.merchantSettings.Data);
     const masterRewardsList = useSelector((state) => state.merchantSettings.masterRewardsList);
     const vipTierData = useSelector((state) => state.merchantSettings.vipTierData);
+    const [validation, setValidation] = useState({
+        tierName: '',
+        goalValue: '',
+        pointsMultiplier: '',
+        files: '',
+        iconType: '',
+    });
     console.log('vipTierData tierview', vipTierData)
 
     console.log('Data', Data)
@@ -27,31 +35,6 @@ const TierView = () => {
     const [active, setActive] = useState(false);
     const tierId = useSelector((state) => state.merchantSettings.tierId);
     console.log('tierId', tierId)
-
-    // useEffect(() => {
-    //     if (tierId) {
-    //         const currentTier = vipTierData?.find((item) => item.uid === tierId);
-    //         if (currentTier) {
-    //             setTierName(currentTier.title);
-    //             setGoalValue(currentTier.points_needed);
-    //             setPointsMultiplier(currentTier.points_multiply);
-    //             setSelectedIcon(currentTier.icon_type);
-
-    //             const iconData = currentTier.icon;
-    //             // Check if the icon object with a URL exists
-    //             if (iconData && typeof iconData === 'object' && iconData.url) {
-    //                 // Create a "mock file" object and wrap it in an ARRAY
-    //                 setFiles([{
-    //                     name: iconData.file_name,
-    //                     preview: iconData.url
-    //                 }]);
-    //             } else {
-    //                 setFiles([]);
-    //             }
-    //         }
-    //     }
-    // }, [tierId, vipTierData]); // Make sure vipTierData is in the dependency array
-
 
     // 3. Initialize the form data on load
     useEffect(() => {
@@ -65,6 +48,7 @@ const TierView = () => {
             const initialFiles = (iconData && typeof iconData === 'object' && iconData.url)
                 ? [{ name: iconData.file_name, preview: iconData.url }]
                 : [];
+            console.log('initialFiles', initialFiles)
 
             // Dispatch the form data, INCLUDING the uid
             dispatch(UpdateTierFormData({
@@ -87,15 +71,52 @@ const TierView = () => {
         navigate('/loyaltyProgram', { state: { navigateTo: navigateTo } });
     };
 
+    const handleValidation = () => {
+        // Create a new object to hold this validation pass's errors
+        const newErrors = {};
+        let isError = false;
+
+        if (!tierFormData?.tierName) {
+            newErrors.tierName = 'Tier name is required';
+            isError = true;
+        }
+        if (!tierFormData?.goalValue) {
+            newErrors.goalValue = 'Goal value is required';
+            isError = true;
+        }
+        if (!tierFormData?.pointsMultiplier) {
+            newErrors.pointsMultiplier = 'Points multiplier is required';
+            isError = true;
+        }
+        console.log('tierFormData?.selectedIcon', tierFormData?.selectedIcon)
+        console.log('tierFormData?.files', tierFormData?.files)
+        if (tierFormData?.selectedIcon === 'custom') {
+            if (tierFormData?.files.length === 0) {
+                newErrors.files = 'Please upload an icon before proceeding.';
+                isError = true;
+            }
+        }
+
+        // Call setValidation only ONCE with the complete error object
+        setValidation(newErrors);
+        return isError;
+    };
+
+
     const AddVipTierAPI = async () => {
+        if (handleValidation()) {
+            return;
+        }
         try {
             const formData = new FormData();
             formData.append("title", tierName);
             formData.append("points", goalValue);
             formData.append("multiplier", pointsMultiplier);
-            formData.append("icon", files[0]);
             formData.append("icon_type", selectedIcon);
             formData.append("benefits", JSON.stringify(Data));
+            if (files && files.length > 0 && files[0] instanceof File) {
+                formData.append("icon", files[0]);
+            }
             if (tierId) {
                 formData.append("edit", tierId);
             } else {
@@ -146,31 +167,44 @@ const TierView = () => {
         (_droppedFiles, acceptedFiles, _rejectedFiles) => {
             console.log('acceptedFiles', acceptedFiles[0])
             if (_rejectedFiles.length > 0) {
-                shopify.toast.show('Only .gif, .jpg, and .png files are accepted.', { duration: 2000, isError: true });
+                shopify.toast.show('Only .svg, .jpg, and .png files are accepted.', { duration: 2000, isError: true });
             }
             // Dispatch update to Redux, not local state
             dispatch(UpdateTierFormData({ ...tierFormData, files: acceptedFiles }));
         },
         [tierFormData, dispatch], // Add tierFormData and dispatch to dependencies
     );
-    const validImageTypes = ['image/gif', 'image/jpeg', 'image/png'];
+    const validImageTypes = ['image/svg', 'image/jpeg', 'image/png'];
 
     const uploadedFiles = files && files.length > 0 && (
         <div style={{ padding: '1rem' }}>
             <LegacyStack vertical>
-                {files.map((file) => {
+                {files.map((file, index) => {
                     const isRealFile = file instanceof File;
-                    const imageUrl = isRealFile
-                        ? window.URL.createObjectURL(file)
-                        : file.preview;
 
-                    const thumbnailSource = isRealFile && !validImageTypes.includes(file.type)
-                        ? NoteIcon
-                        : imageUrl;
+                    // --- START OF FIX ---
+                    // For newly uploaded files, determine how to render the thumbnail
+                    let thumbnail;
+                    if (isRealFile) {
+                        if (file.type === 'image/svg+xml') {
+                            // Use our special component for SVG previews
+                            thumbnail = <SvgPreview file={file} />;
+                        } else if (validImageTypes.includes(file.type)) {
+                            // For PNG/JPG, createObjectURL is fine
+                            const imageUrl = window.URL.createObjectURL(file);
+                            thumbnail = <Thumbnail size="small" alt={file.name} source={imageUrl} />;
+                        } else {
+                            // For other file types, use the note icon
+                            thumbnail = <Thumbnail size="small" alt={file.name} source={NoteIcon} />;
+                        }
+                    } else {
+                        // For files already saved (not a File object), use the provided URL
+                        thumbnail = <Thumbnail size="small" alt={file.name} source={file.preview} />;
+                    }
 
                     return (
                         <Box alignment="center" style={{ width: '100%', display: 'flex', justifyContent: 'flex-start', alignItems: 'center' }}>
-                            <Thumbnail size="small" alt={file.name} source={thumbnailSource} />
+                            {thumbnail}
                             <Box style={{ width: '100%', marginLeft: 10, wordBreak: 'break-word' }}>
                                 <Text variant="bodyMd" as="span">{file.name}{' '}</Text>
                                 {isRealFile && (
@@ -195,7 +229,7 @@ const TierView = () => {
         </div>
     );
     const fileUpload = !files.length && (
-        <DropZone.FileUpload actionHint="Accepts .gif, .jpg, and .png" />
+        <DropZone.FileUpload actionHint="Accepts .svg, .jpg, and .png" />
     )
 
     return (
@@ -215,8 +249,9 @@ const TierView = () => {
                                         <Text variant='headingMd' as="span">Tier Name</Text>
                                         <TextField
                                             value={tierName}
-                                            onChange={(value) => dispatch(UpdateTierFormData({ ...tierFormData, tierName: value }))}
+                                            onChange={(value) => dispatch(UpdateTierFormData({ ...tierFormData, tierName: value }), setValidation({ ...validation, tierName: '' }))}
                                             maxLength={255}
+                                            error={validation.tierName}
                                         />
                                     </BlockStack>
                                 </Card>
@@ -230,7 +265,8 @@ const TierView = () => {
                                                 type='number'
                                                 label='Amount spent since start date'
                                                 requiredIndicator={true}
-                                                onChange={(value) => dispatch(UpdateTierFormData({ ...tierFormData, goalValue: value }))}
+                                                onChange={(value) => dispatch(UpdateTierFormData({ ...tierFormData, goalValue: value }), setValidation({ ...validation, goalValue: '' }))}
+                                                error={validation.goalValue}
                                             />
                                         </Box>
                                     </Box>
@@ -245,7 +281,8 @@ const TierView = () => {
                                                 type='number'
                                                 label='Points earned will be multiplied by this value'
                                                 requiredIndicator={true}
-                                                onChange={(value) => dispatch(UpdateTierFormData({ ...tierFormData, pointsMultiplier: value }))}
+                                                onChange={(value) => dispatch(UpdateTierFormData({ ...tierFormData, pointsMultiplier: value }), setValidation({ ...validation, pointsMultiplier: '' }))}
+                                                error={validation.pointsMultiplier}
                                             />
                                         </Box>
                                     </Box>
@@ -253,7 +290,7 @@ const TierView = () => {
 
                                 <Card>
                                     <BlockStack gap={400}>
-                                        <Text variant='headingMd' >Rewards to unlock tier</Text>
+                                        <Text variant='headingMd'>Rewards to unlock tier</Text>
                                         <div className='icon-size'>
                                             <ResourceList
                                                 resourceName={{ singular: "rule", plural: "rules" }}
@@ -272,7 +309,7 @@ const TierView = () => {
                                                                     </Box>
                                                                 </Box>
                                                                 <Box style={{ display: "flex", alignItems: "center", gap: "15px" }}>
-                                                                    <Button variant="plain" onClick={() => navigate(`/loyaltyProgram/CouponPage`, { state: { rule: item, edit: true, localSave: true, isTierRewardEdit: true } })}>Edit</Button>
+                                                                    <Button variant="plain" onClick={() => navigate(`/loyaltyProgram/CouponPage`, { state: { rule: item, edit: true, localSave: true, isTierRewardEdit: true, navigateTo: 3 } })}>Edit</Button>
                                                                     <div className="toggle-container" style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
                                                                         <label className="switch">
                                                                             <input
@@ -336,10 +373,11 @@ const TierView = () => {
                                             checked={selectedIcon === "custom"}
                                             onChange={() => dispatch(UpdateTierFormData({ ...tierFormData, selectedIcon: 'custom' }))}
                                         />
-                                        <DropZone onDrop={handleDropZoneDrop} variableHeight allowMultiple={false} accept="image/png, image/gif, image/jpeg">
+                                        <DropZone onDrop={handleDropZoneDrop} variableHeight allowMultiple={false} accept="image/png, image/jpeg, image/svg+xml">
                                             {uploadedFiles}
                                             {fileUpload}
                                         </DropZone>
+                                        {validation.files && <Text variant="bodySm" as="p" tone="critical">{validation.files}</Text>}
                                     </Box>
                                 </Card>
                             </BlockStack>

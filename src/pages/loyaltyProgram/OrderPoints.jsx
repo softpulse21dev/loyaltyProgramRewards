@@ -12,8 +12,6 @@ const OrderPoints = () => {
     const [earningPoints, setEarningPoints] = useState("");
     const [moneySpent, setMoneySpent] = useState("");
     const [status, setStatus] = useState(false);
-    const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
-    const [deleteLoading, setDeleteLoading] = useState(false);
 
     const getRuleByIdAPI = async (ruleId) => {
         const formData = new FormData();

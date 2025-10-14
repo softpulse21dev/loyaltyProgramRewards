@@ -8,6 +8,7 @@ export const CLEAR_TIER_FORM_DATA = "CLEAR_TIER_FORM_DATA";
 export const SET_DATA = "SET_DATA";
 export const REMOVE_TIER_ID = "REMOVE_TIER_ID";
 export const UPDATE_DATA = "UPDATE_DATA";
+export const DELETE_DATA = "DELETE_DATA";
 
 
 export const SetData = (data) => ({
@@ -27,6 +28,11 @@ export const UpdateData = (data) => ({
 
 export const removeData = () => ({
     type: REMOVE_DATA,
+});
+
+export const DeleteData = (clientId) => ({
+    type: DELETE_DATA,
+    payload: clientId,
 });
 
 export const MasterRewardsList = (data) => ({
