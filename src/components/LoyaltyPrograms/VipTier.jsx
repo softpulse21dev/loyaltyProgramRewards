@@ -130,14 +130,16 @@ const VipTier = () => {
                                         <Box>
                                             {console.log('item?.icon?.url', item?.icon?.url)}
                                             <div className='icon-size' style={{ display: "flex", alignItems: "center", gap: "10px" }}>
-                                                {item?.icon_type === 'default' ?
-                                                    <Icon source={RewardIcon} />
-                                                    :
-                                                    <img
-                                                        src={item.icon.url}
-                                                        alt={item.title || 'Tier Icon'} // Add alt text for accessibility
-                                                        style={{ width: '24px', height: '24px', objectFit: 'contain' }} // Style to match Polaris Icon size
-                                                    />}
+                                                <Box style={{ width: '30px', height: '30px', objectFit: 'contain' ,display: 'flex', alignItems: 'center', justifyContent: 'center'}}>
+                                                    {item?.icon_type === 'default' ?
+                                                        <Icon source={RewardIcon} />
+                                                        :
+                                                        <img
+                                                            src={item.icon.url}
+                                                            alt={item.title || 'Tier Icon'} // Add alt text for accessibility
+                                                            style={{ width: '24px', height: '24px', objectFit: 'contain' }} // Style to match Polaris Icon size
+                                                        />}
+                                                </Box>
                                                 <Box>
                                                     <Text variant="bodyMd">{item?.title}</Text>
                                                     <Text variant="bodyMd">Achieve on {item?.points_needed} points  |  {item?.points_multiply} points multiplier</Text>
