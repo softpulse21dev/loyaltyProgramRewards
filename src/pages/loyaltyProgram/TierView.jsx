@@ -309,7 +309,7 @@ const TierView = () => {
                                                                     </Box>
                                                                 </Box>
                                                                 <Box style={{ display: "flex", alignItems: "center", gap: "15px" }}>
-                                                                    <Button variant="plain" onClick={() => navigate(`/loyaltyProgram/CouponPage`, { state: { rule: item, edit: true, localSave: true, isTierRewardEdit: true, navigateTo: 3 } })}>Edit</Button>
+                                                                    <Button variant="plain" onClick={() => navigate(`/loyaltyProgram/CouponPage`, { state: { rule: item, edit: true, localSave: true, isTierRewardEdit: true, navigateTo: 2 } })}>Edit</Button>
                                                                     <div className="toggle-container" style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
                                                                         <label className="switch">
                                                                             <input
@@ -386,7 +386,7 @@ const TierView = () => {
                 </Layout.Section>
             </Layout>
 
-            <RedeemModal localSave={true} navigateTo={3} active={active} setActive={setActive} data={masterRewardsList} />
+            <RedeemModal localSave={true} navigateTo={2} active={active} setActive={setActive} data={masterRewardsList} />
         </Page>
     )
 }

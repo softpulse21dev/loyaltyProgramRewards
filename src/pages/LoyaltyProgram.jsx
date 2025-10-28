@@ -32,11 +32,6 @@ const LoyaltyProgram = () => {
             panelID: "referral-content",
         },
         {
-            id: "store-credit-tab",
-            content: "Store Credit",
-            panelID: "store-credit-content",
-        },
-        {
             id: "vip-tier-tab",
             content: "VIP Tier",
             panelID: "vip-tier-content",
@@ -57,9 +52,6 @@ const LoyaltyProgram = () => {
                     <Referral />
                 )}
                 {selectedTab === 2 && (
-                    <StoreCredit />
-                )}
-                {selectedTab === 3 && (
                     <VipTier />
                 )}
             </Tabs>

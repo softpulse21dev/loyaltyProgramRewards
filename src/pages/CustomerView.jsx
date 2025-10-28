@@ -71,7 +71,6 @@ const CustomerView = () => {
     const tabs = [
         { id: 'orders', content: 'Orders' },
         { id: 'points', content: 'Points' },
-        { id: 'credits', content: 'Credits' },
         { id: 'vip', content: 'VIP' },
     ];
     const rows = [];
@@ -271,52 +270,9 @@ const CustomerView = () => {
                                             )
                                         )}
 
-                                        {/* CREDITS SELECTED */}
-                                        {selected === 2 && (
-                                            rows.length === 3 ? (
-                                                <Box padding="600">
-                                                    <BlockStack align="center" inlineAlign='center'>
-                                                        <Box>
-                                                            <Text variant="bodyLg" tone="subdued">
-                                                                No data found
-                                                            </Text>
-                                                        </Box>
-                                                    </BlockStack>
-                                                </Box>
-                                            ) : (
-                                                <IndexTable
-                                                    resourceName={{ singular: 'Referral', plural: 'Referrals' }}
-                                                    itemCount={10}
-                                                    selectedItemsCount={0}
-                                                    bulkActions={[]}
-                                                    promotedBulkActions={[]}
-                                                    onSelectionChange={() => { }}
-                                                    headings={[
-                                                        { title: 'Email' },
-                                                        { title: 'Customer' },
-                                                        { title: 'Status' },
-                                                        { title: 'Amount Spent' },
-                                                        { title: 'Joined at' },
-                                                    ]}
-                                                    selectable={false}
-                                                    pagination={
-                                                        rows.length > 5
-                                                            ? {
-                                                                hasNext: true,
-                                                                onNext: () => {
-                                                                    console.log("Load more");
-                                                                },
-                                                            }
-                                                            : undefined // ✅ hide pagination if less than 5
-                                                    }
-                                                >
-                                                    {/* {rowMarkup} */}
-                                                </IndexTable>
-                                            )
-                                        )}
 
                                         {/* VIP SELECTED */}
-                                        {selected === 3 && (
+                                        {selected === 2 && (
                                             rows.length === 2 ? (
                                                 <Box padding="600">
                                                     <BlockStack align="center" inlineAlign='center'>

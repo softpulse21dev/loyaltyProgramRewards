@@ -70,7 +70,7 @@ const VipTier = () => {
     };
 
     const handleAddTierClick = () => {
-        navigate(`/loyaltyProgram/tierview`, { state: { navigateTo: 3 } });
+        navigate(`/loyaltyProgram/tierview`, { state: { navigateTo: 2 } });
     };
 
     const handleSelectedEntry = (value) => {
@@ -146,7 +146,7 @@ const VipTier = () => {
                                                 </Box>
                                             </div>
                                         </Box>
-                                        <Button icon={<Icon source={EditIcon} />} onClick={() => navigate(`/loyaltyProgram/tierview`, { state: { rule: item, edit: true, navigateTo: 3 } }, dispatch(TierId(item.uid)))} primary>Edit</Button>
+                                        <Button icon={<Icon source={EditIcon} />} onClick={() => navigate(`/loyaltyProgram/tierview`, { state: { rule: item, edit: true, navigateTo: 2 } }, dispatch(TierId(item.uid)))} primary>Edit</Button>
                                     </Box>
                                 </ResourceItem>
                             )

@@ -4,19 +4,14 @@ import {
     TextField,
     RadioButton,
     BlockStack,
+    Box,
 } from '@shopify/polaris'
 import React, { useState, useEffect } from 'react'
 
 const PointsModal = ({ open, onClose, customerPoints, onSave }) => {
-    const [rawPoints, setRawPoints] = useState('0') // always positive input
+    const [rawPoints, setRawPoints] = useState() // always positive input
     const [mode, setMode] = useState('credit') // "credit" or "debit"
-
-    useEffect(() => {
-        if (open) {
-            setRawPoints('0')
-            setMode('credit')
-        }
-    }, [open])
+    const [reason, setReason] = useState('')
 
     const handleSave = () => {
         const value = Number(rawPoints) || 0
@@ -47,30 +42,39 @@ const PointsModal = ({ open, onClose, customerPoints, onSave }) => {
             ]}
         >
             <Modal.Section>
-                <BlockStack gap="400">
-
+                <BlockStack gap="200">
                     {/* Radio buttons */}
-                    <RadioButton
-                        label="Debit"
-                        checked={mode === 'debit'}
-                        onChange={() => setMode('debit')}
-                    />
-
-                    <RadioButton
-                        label="Credit"
-                        checked={mode === 'credit'}
-                        onChange={() => setMode('credit')}
-                    />
+                    <Box style={{ display: 'flex', alignItems: 'column', gap: '10px' }}>
+                        <RadioButton
+                            label="Debit"
+                            checked={mode === 'debit'}
+                            onChange={() => setMode('debit')}
+                        />
+                        <RadioButton
+                            label="Credit"
+                            checked={mode === 'credit'}
+                            onChange={() => setMode('credit')}
+                        />
+                    </Box>
 
                     {/* Raw input (always positive) */}
                     <TextField
                         label="Points Change"
+                        placeholder='e.g. 100'
                         type="number"
                         value={rawPoints}
                         onChange={setRawPoints}
                         autoComplete="off"
                         min="0"
                         helpText={`Points will be ${mode === 'debit' ? 'subtracted from' : 'added to'} the customer's balance.`}
+                    />
+
+                    <TextField
+                        label="Reason for change"
+                        placeholder='e.g. A small gift from us'
+                        value={reason}
+                        onChange={setReason}
+                        helpText='Reason for updating customer points'
                     />
 
                     {/* New Balance */}
