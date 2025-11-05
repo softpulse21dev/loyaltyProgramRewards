@@ -1,6 +1,6 @@
-import { Avatar, Badge, BlockStack, Box, Button, Card, Grid, Icon, IndexTable, InlineStack, Layout, Page, ResourceItem, ResourceList, Tabs, Text, TextField, useCopyToClipboard } from '@shopify/polaris'
-import { ClipboardIcon, DeleteIcon, EditIcon, InfoIcon, PinIcon, PlusIcon, RewardIcon, ViewIcon } from '@shopify/polaris-icons';
-import React, { useCallback, useEffect, useState } from 'react'
+import { Badge, BlockStack, Box, Button, Card, Grid, Icon, IndexTable, Layout, Page, Tabs, Text, TextField } from '@shopify/polaris'
+import { ClipboardIcon, EditIcon, PinIcon, ViewIcon } from '@shopify/polaris-icons';
+import { useCallback, useEffect, useState } from 'react'
 import { useLocation, useNavigate } from 'react-router-dom';
 import { BronzeIcon } from '../assets/svg/svg';
 import TierModal from '../components/TierModal';
@@ -12,22 +12,34 @@ const CustomerView = () => {
     const navigate = useNavigate();
     const location = useLocation();
     const { id } = location.state || {};
-    console.log('id', id)
     const [selected, setSelected] = useState(0);
     const [tierModalOpen, setTierModalOpen] = useState(false);
     const [pointsModalOpen, setPointsModalOpen] = useState(false);
-    const [customerTier, setCustomerTier] = useState("Bronze");
+    const [customerTier, setCustomerTier] = useState();
     const [customerPoints, setCustomerPoints] = useState(0);
     const [customerData, setCustomerData] = useState();
+    const [isLoading, setIsLoading] = useState(false);
 
     const GetCustomerByIdAPI = async () => {
         try {
             const formData = new FormData();
             formData.append("customer", id);
             const response = await fetchData("/get-customer", formData);
-            console.log('Get Customer By Id Response', response);
+            console.log('GetCustomerByIdAPI', response);
             if (response?.status === true) {
                 setCustomerData(response.data);
+                setCustomerPoints(response.data?.points_balance || 0);
+                const currentTierTitle = response.data?.current_tier_info?.title;
+                if (currentTierTitle) {
+                    const currentTierObj = customerData?.tier_titles.find(t => t.content === currentTierTitle);
+                    if (currentTierObj) {
+                        setCustomerTier(currentTierObj.id);
+                    } else {
+                        setCustomerTier(1);
+                    }
+                } else {
+                    setCustomerTier(1);
+                }
             } else {
                 shopify.toast.show(response?.message, { duration: 2000, isError: true });
             }
@@ -40,23 +52,68 @@ const CustomerView = () => {
         GetCustomerByIdAPI();
     }, [id]);
 
+    const handleAdjustPoints = async ({ points, point_type, reason }) => {
+        if (!points || Number(points) <= 0) {
+            shopify.toast.show("Please enter a valid number of points.", { duration: 2000, isError: true });
+            console.log('hey error')
+            return;
+        }
 
-    const handlePointsSave = (newPoints) => {
-        setCustomerPoints(newPoints); // update customer points when modal saves
-        setPointsModalOpen(false);  // close modal
+        setIsLoading(true);
+        const formData = new FormData();
+        formData.append("customer_id", id);
+        formData.append("point_type", point_type);
+        formData.append("points", points);
+        if (reason) formData.append("reason", reason);
+
+        try {
+            const response = await fetchData("/manage-customer-points", formData);
+            console.log('response', response);
+            const result = await response.json();
+
+            if (result?.status === true) {
+                if (result.data?.updated_balance !== undefined) {
+                    setCustomerPoints(result.data.updated_balance);
+                } else {
+                    await GetCustomerByIdAPI();
+                }
+                setPointsModalOpen(false);
+                shopify.toast.show(result.message || "Points updated successfully!", { duration: 2000 });
+            } else {
+                shopify.toast.show(result?.message || "Failed to update points.", { duration: 2000, isError: true });
+            }
+        } catch (error) {
+            console.error('Adjust Customer Points Error', error);
+            shopify.toast.show("An error occurred while adjusting points.", { duration: 2000, isError: true });
+        } finally {
+            setIsLoading(false);
+        }
     };
 
-    const handleTierSave = (newTier) => {
-        setCustomerTier(newTier); // update customer tier when modal saves
-        setTierModalOpen(false);  // close modal
-    };
+    const handleTierSave = async (newTierId, reason) => {
+        setIsLoading(true);
+        const formData = new FormData();
+        formData.append("customer_id", id);
+        formData.append("new_tier", newTierId);
+        if (reason) formData.append("reason", reason);
 
-    const Tiers = [
-        { id: 'bronze', content: 'Bronze' },
-        { id: 'silver', content: 'Silver' },
-        { id: 'gold', content: 'Gold' },
-        { id: 'platinum', content: 'Platinum' },
-    ];
+        try {
+            const response = await fetchData("/manage-customer-tier", formData);
+            const result = await response.json();
+
+            if (result?.status === true) {
+                await GetCustomerByIdAPI();
+                shopify.toast.show(result.message || "Tier updated successfully!", { duration: 2000 });
+            } else {
+                shopify.toast.show(result?.message || "Failed to update tier.", { duration: 2000, isError: true });
+            }
+        } catch (error) {
+            console.error('Update Customer Tier Error', error);
+        } finally {
+            setIsLoading(false);
+            setTierModalOpen(false);
+        }
+    };
 
     const handleTabChange = useCallback(
         (selected) => setSelected(selected),
@@ -84,8 +141,6 @@ const CustomerView = () => {
                 backAction={{ content: 'Back', onAction: () => navigate('/Customer') }}
                 secondaryActions={[
                     {
-                        // destructive: true,
-                        // tone: 'critical',
                         icon: EditIcon,
                         content: 'Exclude from Program',
                         accessibilityLabel: 'Secondary action label',
@@ -163,14 +218,12 @@ const CustomerView = () => {
                                                                 console.log("Load more");
                                                             },
                                                         }
-                                                        : undefined // ✅ hide pagination if less than 5
+                                                        : undefined
                                                 }
                                             >
-                                                {/* {rowMarkup} */}
                                             </IndexTable>
                                         )}
                                     </Card>
-
 
                                     <Card padding='0'>
                                         <Box style={{ padding: '16px 16px 0px 16px' }}>
@@ -180,9 +233,6 @@ const CustomerView = () => {
                                         <Box style={{ display: 'flex', alignItems: 'center', gap: '10px', padding: '16px 16px 16px 8px' }} tone="subdued">
                                             <Tabs tabs={tabs} selected={selected} onSelect={handleTabChange}></Tabs>
                                         </Box>
-                                        {console.log('selected', selected)}
-
-                                        {/* ORDERS SELECTED */}
                                         {selected === 0 && (
                                             rows.length === 0 ? (
                                                 <Box padding="600">
@@ -218,15 +268,12 @@ const CustomerView = () => {
                                                                     console.log("Load more");
                                                                 },
                                                             }
-                                                            : undefined // ✅ hide pagination if less than 5
+                                                            : undefined
                                                     }
                                                 >
-                                                    {/* {rowMarkup} */}
                                                 </IndexTable>
                                             )
                                         )}
-
-                                        {/* POINTS SELECTED */}
                                         {selected === 1 && (
                                             rows.length === 2 ? (
                                                 <Box padding="600">
@@ -262,16 +309,13 @@ const CustomerView = () => {
                                                                     console.log("Load more");
                                                                 },
                                                             }
-                                                            : undefined // ✅ hide pagination if less than 5
+                                                            : undefined
                                                     }
                                                 >
-                                                    {/* {rowMarkup} */}
                                                 </IndexTable>
                                             )
                                         )}
 
-
-                                        {/* VIP SELECTED */}
                                         {selected === 2 && (
                                             rows.length === 2 ? (
                                                 <Box padding="600">
@@ -307,10 +351,9 @@ const CustomerView = () => {
                                                                     console.log("Load more");
                                                                 },
                                                             }
-                                                            : undefined // ✅ hide pagination if less than 5
+                                                            : undefined
                                                     }
                                                 >
-                                                    {/* {rowMarkup} */}
                                                 </IndexTable>
                                             )
                                         )}
@@ -320,7 +363,6 @@ const CustomerView = () => {
 
                             <Grid.Cell columnSpan={{ xs: 6, sm: 2, md: 2, lg: 4, xl: 4 }}>
                                 <BlockStack gap={400}>
-                                    {/* DETAILS */}
                                     <Card>
                                         <BlockStack>
                                             <Box style={{ margin: '0px 0px 16px 0px' }}>
@@ -331,8 +373,6 @@ const CustomerView = () => {
                                             <Text variant='bodyMd' as="span">Diamond World, Mini - Bazzar</Text>
                                         </BlockStack>
                                     </Card>
-
-                                    {/* VIP TIER */}
                                     <Card>
                                         <BlockStack>
                                             <Text variant='headingMd' as="span">VIP Tier</Text>
@@ -344,21 +384,17 @@ const CustomerView = () => {
                                                     {customerData?.current_tier_info?.title}
                                                 </Text>
                                             </Box>
-                                            <Button variant='primary' tone='success' size='medium' onClick={() => setTierModalOpen(true)} icon={EditIcon}>Change Tier</Button>
+                                            <Button
+                                                variant='primary'
+                                                tone='success'
+                                                size='medium'
+                                                onClick={() => setTierModalOpen(true)}
+                                                icon={EditIcon}
+                                            >
+                                                Change Tier
+                                            </Button>
                                         </BlockStack>
                                     </Card>
-
-                                    {/* POINTS */}
-                                    {/* <Card>
-                                        <BlockStack>
-                                            <Text variant='headingMd' as="span">Points</Text>
-                                            <Box style={{ margin: '15px 0px 10px 0px' }}>
-                                                <Text variant='headingLg' fontWeight='bold'>4456 points</Text>
-                                            </Box>
-                                            <Button variant='secondary' size='medium' icon={EditIcon}>Adjust Points</Button>
-                                        </BlockStack>
-                                    </Card> */}
-
                                     <Card>
                                         <BlockStack>
                                             <Text variant='headingMd' as="span">Points</Text>
@@ -375,7 +411,6 @@ const CustomerView = () => {
                                             </Button>
                                         </BlockStack>
                                     </Card>
-
                                 </BlockStack>
                             </Grid.Cell>
                         </Grid>
@@ -385,16 +420,17 @@ const CustomerView = () => {
                 <TierModal
                     open={tierModalOpen}
                     onClose={() => setTierModalOpen(false)}
-                    tiers={Tiers}
-                    customerTier={customerTier}
+                    tiers={customerData?.tier_titles}
+                    selectedTier={customerTier}
                     onSave={handleTierSave}
+                    isLoading={isLoading}
                 />
-
                 <PointsModal
                     open={pointsModalOpen}
                     onClose={() => setPointsModalOpen(false)}
                     customerPoints={customerPoints}
-                    onSave={handlePointsSave}
+                    onSave={handleAdjustPoints}
+                    isLoading={isLoading}
                 />
             </Page>
         </div >

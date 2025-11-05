@@ -6,44 +6,52 @@ import {
     BlockStack,
     Box,
 } from '@shopify/polaris'
-import React, { useState, useEffect } from 'react'
+import { useState } from 'react'
 
-const PointsModal = ({ open, onClose, customerPoints, onSave }) => {
-    const [rawPoints, setRawPoints] = useState() // always positive input
-    const [mode, setMode] = useState('credit') // "credit" or "debit"
+const PointsModal = ({ open, onClose, customerPoints, onSave, isLoading }) => {
+    const [rawPoints, setRawPoints] = useState('')
+    const [mode, setMode] = useState('credit')
     const [reason, setReason] = useState('')
 
     const handleSave = () => {
-        const value = Number(rawPoints) || 0
-        const signedValue = mode === 'debit' ? -Math.abs(value) : Math.abs(value)
-        const newBalance = customerPoints + signedValue
-        onSave(newBalance)
+        onSave({
+            points: rawPoints || '0',
+            point_type: mode,
+            reason: reason
+        });
     }
 
-    // preview balance with selected mode
     const previewBalance =
         customerPoints +
         (mode === 'debit' ? -Math.abs(Number(rawPoints) || 0) : Math.abs(Number(rawPoints) || 0))
 
+    const handleClose = () => {
+        setRawPoints('');
+        setReason('');
+        setMode('credit');
+        onClose();
+    }
+
     return (
         <Modal
             open={open}
-            onClose={onClose}
+            onClose={handleClose}
             title="Adjust Points Balance for Customer"
             primaryAction={{
                 content: 'Adjust Points Balance',
                 onAction: handleSave,
+                loading: isLoading,
             }}
             secondaryActions={[
                 {
                     content: 'Cancel',
-                    onAction: onClose,
+                    onAction: handleClose,
+                    disabled: isLoading,
                 },
             ]}
         >
             <Modal.Section>
                 <BlockStack gap="200">
-                    {/* Radio buttons */}
                     <Box style={{ display: 'flex', alignItems: 'column', gap: '10px' }}>
                         <RadioButton
                             label="Debit"
@@ -56,8 +64,6 @@ const PointsModal = ({ open, onClose, customerPoints, onSave }) => {
                             onChange={() => setMode('credit')}
                         />
                     </Box>
-
-                    {/* Raw input (always positive) */}
                     <TextField
                         label="Points Change"
                         placeholder='e.g. 100'
@@ -66,9 +72,9 @@ const PointsModal = ({ open, onClose, customerPoints, onSave }) => {
                         onChange={setRawPoints}
                         autoComplete="off"
                         min="0"
+                        step="1"
                         helpText={`Points will be ${mode === 'debit' ? 'subtracted from' : 'added to'} the customer's balance.`}
                     />
-
                     <TextField
                         label="Reason for change"
                         placeholder='e.g. A small gift from us'
@@ -76,8 +82,6 @@ const PointsModal = ({ open, onClose, customerPoints, onSave }) => {
                         onChange={setReason}
                         helpText='Reason for updating customer points'
                     />
-
-                    {/* New Balance */}
                     <Text variant="bodyMd" fontWeight="bold">
                         New Balance: {previewBalance} points
                     </Text>

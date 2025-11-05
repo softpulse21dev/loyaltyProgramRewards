@@ -1,16 +1,19 @@
 import { BlockStack, Box, Modal, Select, Text, TextField } from '@shopify/polaris'
 import React, { useState, useEffect } from 'react'
 
-const TierModal = ({ open, onClose, tiers, selectedTier, onSave }) => {
+const TierModal = ({ open, onClose, tiers, selectedTier, onSave, isLoading }) => {
     const [selected, setSelected] = useState(selectedTier);
     const [reason, setReason] = useState('');
-    // sync when prop changes
+
     useEffect(() => {
         setSelected(selectedTier);
-    }, [selectedTier]);
+        if (open) {
+            setReason('');
+        }
+    }, [selectedTier, open]);
 
     const handleChange = (value) => {
-        setSelected(value);
+        setSelected(Number(value));
     };
 
     return (
@@ -20,12 +23,14 @@ const TierModal = ({ open, onClose, tiers, selectedTier, onSave }) => {
             title="Change Customer Tier"
             primaryAction={{
                 content: 'Save',
-                onAction: () => onSave(selected), // send value to parent
+                onAction: () => onSave(selected, reason),
+                loading: isLoading,
             }}
             secondaryActions={[
                 {
                     content: 'Cancel',
                     onAction: onClose,
+                    disabled: isLoading,
                 },
             ]}
         >
@@ -34,7 +39,7 @@ const TierModal = ({ open, onClose, tiers, selectedTier, onSave }) => {
                     <Select
                         label="New VIP tier"
                         helpText="Customers can only be placed into higher tiers."
-                        options={tiers.map(tier => ({
+                        options={tiers?.map(tier => ({
                             label: tier.content,
                             value: tier.id
                         }))}
