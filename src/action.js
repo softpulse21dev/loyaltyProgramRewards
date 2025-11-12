@@ -9,8 +9,14 @@ export const getCurrentShop = () => {
     window.location.hostname === "localhost" ||
     window.location.hostname === "127.0.0.1";
 
+  if (shop) {
+    localStorage.setItem("shop", shop);
+  } else {
+    shop = localStorage.getItem("shop");
+  }
+
   if (!shop && isLocalDevelopment) {
-    shop = LOCAL_SHOP; // fallback local ke liye
+    shop = LOCAL_SHOP;
   }
 
   return shop || null;

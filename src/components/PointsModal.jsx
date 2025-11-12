@@ -1,36 +1,64 @@
-import {
-    Modal,
-    Text,
-    TextField,
-    RadioButton,
-    BlockStack,
-    Box,
-} from '@shopify/polaris'
-import { useState } from 'react'
+import { Modal, Text, TextField, RadioButton, BlockStack, InlineStack, } from '@shopify/polaris'
+import { useState, useEffect } from 'react'
 
 const PointsModal = ({ open, onClose, customerPoints, onSave, isLoading }) => {
-    const [rawPoints, setRawPoints] = useState('')
+    const [pointsAmount, setPointsAmount] = useState('')
     const [mode, setMode] = useState('credit')
     const [reason, setReason] = useState('')
+    const [pointsAmountError, setPointsAmountError] = useState('')
 
-    const handleSave = () => {
-        onSave({
-            points: rawPoints || '0',
-            point_type: mode,
-            reason: reason
-        });
-    }
-
-    const previewBalance =
-        customerPoints +
-        (mode === 'debit' ? -Math.abs(Number(rawPoints) || 0) : Math.abs(Number(rawPoints) || 0))
+    useEffect(() => {
+        if (open) {
+            setPointsAmount('');
+            setReason('');
+            setMode('credit');
+            setPointsAmountError('');
+        }
+    }, [open])
 
     const handleClose = () => {
-        setRawPoints('');
-        setReason('');
-        setMode('credit');
-        onClose();
+        onClose()
     }
+
+    const handleValidation = () => {
+        const value = pointsAmount.trim();
+        const num = Number(value);
+        if (!value || isNaN(num) || num <= 0) {
+            setPointsAmountError('Points must be a number greater than 0');
+            return true;
+        }
+        setPointsAmountError('');
+        return false;
+    };
+
+    const handleSave = async () => {
+        if (handleValidation()) {
+            return;
+        }
+        try {
+            await onSave({
+                points: pointsAmount.trim() || '0',
+                point_type: mode,
+                reason: reason
+            });
+            onClose();
+        } catch (error) {
+            console.error('Failed to adjust points:', error);
+        }
+    }
+
+    const handlePointsChange = (value) => {
+        const regex = /^[0-9]*(\.[0-9]{0,2})?$/;
+        if (value === '' || regex.test(value)) {
+            setPointsAmount(value);
+        }
+        if (pointsAmountError) {
+            setPointsAmountError('');
+        }
+    }
+
+    // After (Fixed)
+    const previewBalance = (Number(customerPoints) + (mode === 'debit' ? -(Number(pointsAmount) || 0) : (Number(pointsAmount) || 0))).toFixed(2);
 
     return (
         <Modal
@@ -51,39 +79,42 @@ const PointsModal = ({ open, onClose, customerPoints, onSave, isLoading }) => {
             ]}
         >
             <Modal.Section>
-                <BlockStack gap="200">
-                    <Box style={{ display: 'flex', alignItems: 'column', gap: '10px' }}>
-                        <RadioButton
-                            label="Debit"
-                            checked={mode === 'debit'}
-                            onChange={() => setMode('debit')}
-                        />
+                <BlockStack gap="400">
+                    <InlineStack gap="400">
                         <RadioButton
                             label="Credit"
                             checked={mode === 'credit'}
                             onChange={() => setMode('credit')}
                         />
-                    </Box>
+                        <RadioButton
+                            label="Debit"
+                            checked={mode === 'debit'}
+                            onChange={() => setMode('debit')}
+                        />
+                    </InlineStack>
+
                     <TextField
                         label="Points Change"
                         placeholder='e.g. 100'
-                        type="number"
-                        value={rawPoints}
-                        onChange={setRawPoints}
+                        type="text"
+                        inputMode="decimal"
+                        value={pointsAmount}
+                        onChange={handlePointsChange}
                         autoComplete="off"
-                        min="0"
-                        step="1"
                         helpText={`Points will be ${mode === 'debit' ? 'subtracted from' : 'added to'} the customer's balance.`}
+                        error={pointsAmountError}
                     />
+
                     <TextField
                         label="Reason for change"
                         placeholder='e.g. A small gift from us'
                         value={reason}
                         onChange={setReason}
+                        autoComplete="off"
                         helpText='Reason for updating customer points'
                     />
                     <Text variant="bodyMd" fontWeight="bold">
-                        New Balance: {previewBalance} points
+                        New Balance: {Number(previewBalance).toFixed(2)} points
                     </Text>
                 </BlockStack>
             </Modal.Section>

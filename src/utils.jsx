@@ -61,4 +61,9 @@ export const formatShortDate = (dateString) => {
     }
 };
 
+export const capitalizeFirst = (str) => {
+    if (!str) return str;
+    return str.charAt(0).toUpperCase() + str.slice(1);
+}
+
 // https://docs.google.com/document/d/11SHYSidCKFvxceiOE4-DTzvc3UthlGxb2JsLCY6i5rc/edit?hl=en-GB&forcehl=1&tab=t.sxv4ttgt6n4c

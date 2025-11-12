@@ -1,23 +1,4 @@
-import {
-    Card,
-    Text,
-    Page,
-    IndexFilters,
-    IndexTable,
-    useSetIndexFiltersMode,
-    ChoiceList,
-    TextField,
-    Tooltip,
-    IndexFiltersMode,
-    Layout,
-    LegacyCard,
-    BlockStack,
-    Box,
-    InlineStack,
-    Pagination,
-    Select,
-    Button
-} from "@shopify/polaris";
+import { Card, Text, Page, IndexFilters, IndexTable, useSetIndexFiltersMode, ChoiceList, TextField, Tooltip, IndexFiltersMode, Layout, LegacyCard, BlockStack, Box, InlineStack, Pagination, Select, Button } from "@shopify/polaris";
 import React, { useState, useCallback, useMemo, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { fetchData } from "../action";
@@ -35,6 +16,7 @@ const Customer = () => {
 
     const [customers, setCustomers] = useState([]);
     const [customerType, setCustomerType] = useState('');
+    const [limit, setLimit] = useState('15');
 
     const GetCustomersAPI = async () => {
         try {
@@ -43,6 +25,7 @@ const Customer = () => {
             formData.append("search", queryValue);
             formData.append("next", "");
             formData.append("previous", "");
+            formData.append("limit", limit);
             const response = await fetchData("/list-customer", formData);
             console.log('Get Customers Response', response);
             if (response?.status === true) {
@@ -58,13 +41,19 @@ const Customer = () => {
     }
     useEffect(() => {
         GetCustomersAPI();
-    }, [customerType]);
+    }, [customerType, limit]);
 
     const customerTypeOptions = [
         { label: 'All', value: '' },
         { label: 'Guest', value: 'guest' },
         { label: 'Member', value: 'member' },
     ]
+
+    const options = [
+        { label: '15', value: '15' },
+        { label: '30', value: '30' },
+        { label: '50', value: '50' },
+    ];
 
     // --- Filter Handlers ---
 
@@ -175,9 +164,6 @@ const Customer = () => {
             position={index}
             onClick={() => navigate(`/customerView/`, { state: { id: val.shopify_cust_id } })}
         >
-            {/* <IndexTable.Cell>
-                <Text variant='bodyMd' as="span">{val.shopify_cust_id}</Text>
-            // </IndexTable.Cell> */}
             <IndexTable.Cell>
                 <Text variant='bodyMd' as="span">{val.email}</Text>
             </IndexTable.Cell>
@@ -188,7 +174,7 @@ const Customer = () => {
                 <Text variant='bodyMd' as="span">{val.source}</Text>
             </IndexTable.Cell>
             <IndexTable.Cell>
-                <Text variant='bodyMd' as="span">{val.referrals}</Text>
+                <Text variant='bodyMd' as="span">{val.referral_used}</Text>
             </IndexTable.Cell>
             <IndexTable.Cell>
                 <Text variant='bodyMd' as="span">{val.points_balance}</Text>
@@ -237,9 +223,8 @@ const Customer = () => {
                     sortable={[false, false, false, false, true, true, true, true, true]}
                     resourceName={{ singular: 'customer', plural: 'customers' }}
                     itemCount={filteredCustomers.length}
-                    selectable={false} // Set to true if you want checkboxes
+                    selectable={false}
                     headings={[
-                        // { title: 'Customer ID' },
                         { title: 'Email' },
                         { title: 'Name' },
                         { title: 'Status' },
@@ -265,9 +250,9 @@ const Customer = () => {
                         <InlineStack gap="300" blockAlign="center">
                             <Text>Show</Text>
                             <Select
-                            // options={ITEMS_PER_PAGE_OPTIONS}
-                            // onChange={handleItemsPerPageChange}
-                            // value={String(itemsPerPage)}
+                                options={options}
+                                onChange={(selectedOption) => { setLimit(selectedOption), console.log(selectedOption) }}
+                                value={limit}
                             />
                             <Text>Entries</Text>
                         </InlineStack>

@@ -24,7 +24,7 @@ const VipTier = () => {
             const response = await fetchData("/get-tiers", formData);
             console.log('response vip Tier', response);
             if (response.status) {
-                // setVipTierData(response);
+                setVipStatus(response?.data?.status === '1' ? true : false);
                 dispatch(GetVipTierData(response?.data?.tier_settings));
                 dispatch(MasterRewardsList(response?.master_rewards));
             } else {
@@ -130,7 +130,7 @@ const VipTier = () => {
                                         <Box>
                                             {console.log('item?.icon?.url', item?.icon?.url)}
                                             <div className='icon-size' style={{ display: "flex", alignItems: "center", gap: "10px" }}>
-                                                <Box style={{ width: '30px', height: '30px', objectFit: 'contain' ,display: 'flex', alignItems: 'center', justifyContent: 'center'}}>
+                                                <Box style={{ width: '30px', height: '30px', objectFit: 'contain', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
                                                     {item?.icon_type === 'default' ?
                                                         <Icon source={RewardIcon} />
                                                         :

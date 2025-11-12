@@ -8,7 +8,7 @@ const OrderPoints = () => {
     const location = useLocation();
     const { rule, edit } = location.state || {};
     const [getdatabyID, setGetdatabyID] = useState();
-    const [orderPointsMethod, setOrderPointsMethod] = useState('incremented');
+    const [orderPointsMethod, setOrderPointsMethod] = useState('multiplier');
     const [earningPoints, setEarningPoints] = useState("");
     const [moneySpent, setMoneySpent] = useState("");
     const [status, setStatus] = useState(false);
@@ -35,13 +35,18 @@ const OrderPoints = () => {
         setStatus(prev => prev === true ? false : true);
     };
 
-    const handleUpdateRule = async () => {
+    // UPDATED FUNCTION
+    const handleUpdateRuleAPI = async () => {
         const formData = new FormData();
         formData.append("rule_id", rule.rule_id);
         formData.append("master_rule_id", rule.master_rule_id);
         formData.append("points", earningPoints || 0);
-        formData.append("condition_json", null);
         formData.append("status", status);
+        const conditionalData = {
+            order_earning_method: orderPointsMethod,
+            order_spent: moneySpent,
+        };
+        formData.append("condition_json", JSON.stringify(conditionalData));
 
         const response = await fetchData("/update-merchant-earning-rules", formData);
         if (response?.status) {
@@ -66,7 +71,7 @@ const OrderPoints = () => {
             }
             primaryAction={{
                 content: edit ? "Update" : "Save",
-                onAction: handleUpdateRule
+                onAction: handleUpdateRuleAPI
             }}
         >
             <Layout>
@@ -80,8 +85,8 @@ const OrderPoints = () => {
                                     <BlockStack>
                                         <RadioButton
                                             label="Incremented points"
-                                            checked={orderPointsMethod === 'incremented'}
-                                            onChange={() => setOrderPointsMethod('incremented')}
+                                            checked={orderPointsMethod === 'multiplier'}
+                                            onChange={() => setOrderPointsMethod('multiplier')}
                                         />
                                         <RadioButton
                                             label="Fixed points"
@@ -95,29 +100,29 @@ const OrderPoints = () => {
                                 <Card>
                                     <BlockStack gap={400}>
                                         <Text variant="headingMd">Earning Points</Text>
-                                        <Box style={{ display: orderPointsMethod === 'incremented' ? 'flex' : 'block', alignItems: 'center', justifyContent: 'space-between' }}>
+                                        <Box style={{ display: orderPointsMethod === 'multiplier' ? 'flex' : 'block', alignItems: 'center', justifyContent: 'space-between' }}>
                                             <TextField
                                                 label=""
                                                 type="number"
                                                 value={earningPoints}
-                                                onChange={setEarningPoints}
+                                                onChange={(value) => setEarningPoints(value)}
                                                 suffix="Points"
                                             />
-                                            {orderPointsMethod === 'incremented' && (
+                                            {orderPointsMethod === 'multiplier' && (
                                                 <>
                                                     <Text variant="headingMd">=</Text>
                                                     <TextField
                                                         label=""
                                                         type="number"
                                                         value={moneySpent}
-                                                        onChange={setMoneySpent}
+                                                        onChange={(value) => setMoneySpent(value)}
                                                         prefix="₹"
                                                         suffix="spent"
                                                     />
                                                 </>
                                             )}
                                         </Box>
-                                        {orderPointsMethod === 'incremented' && (
+                                        {orderPointsMethod === 'multiplier' && (
                                             <Text alignment="center" variant="bodyMd">
                                                 Configure how customers earn points
                                             </Text>

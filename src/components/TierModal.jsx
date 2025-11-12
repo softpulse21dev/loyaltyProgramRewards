@@ -2,18 +2,18 @@ import { BlockStack, Box, Modal, Select, Text, TextField } from '@shopify/polari
 import React, { useState, useEffect } from 'react'
 
 const TierModal = ({ open, onClose, tiers, selectedTier, onSave, isLoading }) => {
-    const [selected, setSelected] = useState(selectedTier);
+    const [selected, setSelected] = useState(String(selectedTier));
     const [reason, setReason] = useState('');
 
     useEffect(() => {
-        setSelected(selectedTier);
+        setSelected(String(selectedTier));
         if (open) {
             setReason('');
         }
     }, [selectedTier, open]);
 
     const handleChange = (value) => {
-        setSelected(Number(value));
+        setSelected(String(value));
     };
 
     return (
@@ -41,7 +41,7 @@ const TierModal = ({ open, onClose, tiers, selectedTier, onSave, isLoading }) =>
                         helpText="Customers can only be placed into higher tiers."
                         options={tiers?.map(tier => ({
                             label: tier.content,
-                            value: tier.id
+                            value: String(tier.id)
                         }))}
                         onChange={handleChange}
                         value={selected}
