@@ -1,5 +1,5 @@
 import { NavMenu } from "@shopify/app-bridge-react";
-import { BrowserRouter, Link } from "react-router-dom";
+import { BrowserRouter, Link, useLocation } from "react-router-dom";
 import Routes from "./routes";
 import { PolarisProvider } from "./components/provider/PolarisProvider";
 import { Provider } from "react-redux";
@@ -12,28 +12,34 @@ function App() {
   });
   return (
     <>
-      <BrowserRouter>
+      <BrowserRouter basename="/loyalty">
         <Provider store={store}>
-          <PolarisProvider>
-            <>
-              <NavMenu>
-                <Link to={`/dashboard${window.location.search}`} rel="home">
-                  dashboard
-                </Link>
-                <Link to={`/loyaltyProgram${window.location.search}`}>loyaltyProgram</Link>
-                <Link to={`/customer${window.location.search}`}>
-                  customer
-                </Link>
-                <Link to={`/settings${window.location.search}`}>settings</Link>
-              </NavMenu>
-            </>
-            <Box paddingBlockEnd="1000">
-              <Routes pages={pages} />
-            </Box>
-          </PolarisProvider>
+          <AppLayout pages={pages} />
         </Provider>
       </BrowserRouter>
     </>
+  );
+}
+
+function AppLayout({ pages }) {
+  // Now you can safely use the hook here!
+  const location = useLocation();
+
+  return (
+    <PolarisProvider>
+      <>
+        <NavMenu>
+          {/* Use location.search instead of window.location.search */}
+          <Link to={`/dashboard${location.search}`} rel="home">dashboard</Link>
+          <Link to={`/loyaltyProgram${location.search}`}>loyaltyProgram</Link>
+          <Link to={`/customer${location.search}`}>customer</Link>
+          <Link to={`/settings${location.search}`}>settings</Link>
+        </NavMenu>
+      </>
+      <Box paddingBlockEnd="1000">
+        <Routes pages={pages} />
+      </Box>
+    </PolarisProvider>
   );
 }
 

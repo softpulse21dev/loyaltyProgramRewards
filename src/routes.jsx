@@ -4,6 +4,7 @@ import {
     Navigate,
     useLocation,
 } from "react-router-dom";
+import CustomerView from "./pages/customer/CustomerView";
 
 /**
  * File-based routing.
@@ -30,6 +31,7 @@ export default function Routes({ pages }) {
                 path="/"
                 element={<Navigate to={`/dashboard${location.search}`} replace />}
             />
+            <Route path="/customer/customerView" element={<CustomerView />} />
 
             {routeComponents}
 

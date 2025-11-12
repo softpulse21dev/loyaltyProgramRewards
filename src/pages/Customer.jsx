@@ -1,4 +1,4 @@
-import { Card, Text, Page, IndexFilters, IndexTable, useSetIndexFiltersMode, ChoiceList, TextField, Tooltip, IndexFiltersMode, Layout, LegacyCard, BlockStack, Box, InlineStack, Pagination, Select, Button } from "@shopify/polaris";
+import { Card, Text, Page, IndexFilters, IndexTable, useSetIndexFiltersMode, ChoiceList, TextField, Tooltip, IndexFiltersMode, Layout, LegacyCard, BlockStack, Box, InlineStack, Pagination, Select, Button, SkeletonBodyText } from "@shopify/polaris";
 import React, { useState, useCallback, useMemo, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { fetchData } from "../action";
@@ -7,36 +7,36 @@ import { formatShortDate } from "../utils";
 const Customer = () => {
     const [queryValue, setQueryValue] = useState('');
 
-    // State for specific filters
     const [nameFilter, setNameFilter] = useState('');
     const [statusFilter, setStatusFilter] = useState(undefined); // Use `undefined` for ChoiceList
-
-    // Polaris hook to manage filter UI mode
-    // const { mode, setMode } = useSetIndexFiltersMode();
-
     const [customers, setCustomers] = useState([]);
+    const [paginationData, setPaginationData] = useState({});
     const [customerType, setCustomerType] = useState('');
     const [limit, setLimit] = useState('15');
+    const [loading, setLoading] = useState(false);
 
-    const GetCustomersAPI = async () => {
+    const GetCustomersAPI = async (endCursor = '', startCursor = '', type) => {
+        setLoading(true);
         try {
             const formData = new FormData();
             formData.append("customer_type", customerType);
             formData.append("search", queryValue);
-            formData.append("next", "");
-            formData.append("previous", "");
+            formData.append("next", endCursor);
+            formData.append("previous", startCursor);
             formData.append("limit", limit);
+            formData.append("type", type);
             const response = await fetchData("/list-customer", formData);
             console.log('Get Customers Response', response);
             if (response?.status === true) {
                 setCustomers(response.data);
+                setPaginationData(response.pagination);
             } else {
                 shopify.toast.show(response?.message, { duration: 2000, isError: true });
             }
         } catch (error) {
             console.error('Error fetching customers:', error);
         } finally {
-            // setLoading(false);
+            setLoading(false);
         }
     }
     useEffect(() => {
@@ -162,7 +162,7 @@ const Customer = () => {
             id={val.shopify_cust_id}
             key={val.shopify_cust_id}
             position={index}
-            onClick={() => navigate(`/customerView/`, { state: { id: val.shopify_cust_id } })}
+            onClick={() => navigate(`/customer/customerView`, { state: { id: val.shopify_cust_id } })}
         >
             <IndexTable.Cell>
                 <Text variant='bodyMd' as="span">{val.email}</Text>
@@ -235,8 +235,20 @@ const Customer = () => {
                         { title: 'Date Joined' },
                     ]}
                 >
-                    {rowMarkup}
+                    {loading ? [...Array(10)].map((_, index) => (
+                        <IndexTable.Row key={index} position={index}>
+                            <IndexTable.Cell><SkeletonBodyText lines={1} /></IndexTable.Cell>
+                            <IndexTable.Cell><SkeletonBodyText lines={1} /></IndexTable.Cell>
+                            <IndexTable.Cell><SkeletonBodyText lines={1} /></IndexTable.Cell>
+                            <IndexTable.Cell><SkeletonBodyText lines={1} /></IndexTable.Cell>
+                            <IndexTable.Cell><SkeletonBodyText lines={1} /></IndexTable.Cell>
+                            <IndexTable.Cell><SkeletonBodyText lines={1} /></IndexTable.Cell>
+                            <IndexTable.Cell><SkeletonBodyText lines={1} /></IndexTable.Cell>
+                            <IndexTable.Cell><SkeletonBodyText lines={1} /></IndexTable.Cell>
+                        </IndexTable.Row>
+                    )) : rowMarkup}
                 </IndexTable>
+
                 <BlockStack
                     style={{
                         display: "flex",
@@ -262,12 +274,16 @@ const Customer = () => {
                             {/* {labels?.default?.showing} {currentPage} of{" "}
                             {Math.ceil(activeReturnData.length / itemsPerPage)} {labels?.default?.entries} */} showing 1 to 10 of 100 entries
                         </Text>
+                        {console.log('paginationData', paginationData)}
                         <Pagination
-                        // label={currentPage}
-                        // hasPrevious={currentPage > 1}
-                        // onPrevious={() => setCurrentPage((prev) => prev - 1)}
-                        // hasNext={currentPage * itemsPerPage < activeReturnData.length}
-                        // onNext={() => setCurrentPage((prev) => prev + 1)}
+                            hasNext={paginationData?.hasNextPage}
+                            hasPrevious={paginationData?.hasPreviousPage}
+                            onNext={() => {
+                                GetCustomersAPI(paginationData?.endCursor, '', 'first');
+                            }}
+                            onPrevious={() => {
+                                GetCustomersAPI('', paginationData?.startCursor, 'last');
+                            }}
                         />
                     </InlineStack>
                     <InlineStack gap="300">

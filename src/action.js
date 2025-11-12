@@ -1,25 +1,38 @@
-// Get shop param from URL (e.g. ?shop=kg-store-demo.myshopify.com)
 const LOCAL_SHOP = "kg-store-demo.myshopify.com";
+const SHOP_STORAGE_KEY = "current_shopify_shop"; // Key to store the shop in localStorage
 
 export const getCurrentShop = () => {
   const urlParams = new URLSearchParams(window.location.search);
-  let shop = urlParams.get("shop");
+  const urlShop = urlParams.get("shop");
 
+  // 1. If 'shop' is in the URL (on initial load):
+  //    Save it to localStorage and return it.
+  if (urlShop) {
+    localStorage.setItem(SHOP_STORAGE_KEY, urlShop);
+    return urlShop;
+  }
+
+  // 2. If 'shop' is NOT in the URL (e.g., after navigating):
+  //    Try to get it from localStorage.
+  const storedShop = localStorage.getItem(SHOP_STORAGE_KEY);
+  if (storedShop) {
+    return storedShop;
+  }
+
+  // 3. Fallback for local development (if nothing in URL or storage):
   const isLocalDevelopment =
     window.location.hostname === "localhost" ||
     window.location.hostname === "127.0.0.1";
 
-  if (shop) {
-    localStorage.setItem("shop", shop);
-  } else {
-    shop = localStorage.getItem("shop");
+  if (isLocalDevelopment) {
+    // Optional: Also save the local shop to storage for consistency
+    localStorage.setItem(SHOP_STORAGE_KEY, LOCAL_SHOP);
+    return LOCAL_SHOP;
   }
 
-  if (!shop && isLocalDevelopment) {
-    shop = LOCAL_SHOP;
-  }
-
-  return shop || null;
+  // 4. If live and still no shop, we have a problem.
+  console.error("Could not determine shop origin.");
+  return null;
 };
 
 // Base URL for APIs
