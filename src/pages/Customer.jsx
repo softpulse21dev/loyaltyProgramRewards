@@ -270,11 +270,6 @@ const Customer = () => {
                         </InlineStack>
                     </Box>
                     <InlineStack gap="300" blockAlign="center">
-                        <Text>
-                            {/* {labels?.default?.showing} {currentPage} of{" "}
-                            {Math.ceil(activeReturnData.length / itemsPerPage)} {labels?.default?.entries} */} showing 1 to 10 of 100 entries
-                        </Text>
-                        {console.log('paginationData', paginationData)}
                         <Pagination
                             hasNext={paginationData?.hasNextPage}
                             hasPrevious={paginationData?.hasPreviousPage}

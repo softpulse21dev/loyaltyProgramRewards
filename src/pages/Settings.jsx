@@ -5,6 +5,7 @@ import General from "../components/Settings/General";
 import Language from "../components/Settings/Language";
 import CustomerEmail from "../components/Settings/CustomerEmail";
 import Theme from "../components/Settings/Theme";
+import Orders from "../components/Settings/Orders";
 
 const Settings = () => {
     const location = useLocation();
@@ -34,9 +35,9 @@ const Settings = () => {
             panelID: "customer-emails-content",
         },
         {
-            id: "theme",
-            content: "Theme",
-            panelID: "Theme-content",
+            id: "orders",
+            content: "Orders",
+            panelID: "orders-content",
         },
     ];
 
@@ -57,7 +58,7 @@ const Settings = () => {
                     <CustomerEmail />
                 )}
                 {selectedTab === 3 && (
-                    <Theme />
+                    <Orders />
                 )}
             </Tabs>
         </Page >
