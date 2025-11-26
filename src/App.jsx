@@ -34,6 +34,8 @@ function AppLayout({ pages }) {
           <Link to={`/loyaltyProgram${location.search}`}>loyaltyProgram</Link>
           <Link to={`/customer${location.search}`}>customer</Link>
           <Link to={`/settings${location.search}`}>settings</Link>
+          <Link to={`/analytics${location.search}`}>analytics</Link>
+          <Link to={`/onsite${location.search}`}>onsite</Link>
         </NavMenu>
       </>
       <Box paddingBlockEnd="1000">

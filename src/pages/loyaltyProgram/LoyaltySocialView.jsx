@@ -5,6 +5,12 @@ import { useNavigate, useLocation } from 'react-router-dom';
 import { fetchData } from '../../action';
 import ConfirmationModal from '../../components/ConfirmationModal';
 
+const PREFIXES = {
+    social_share_facebook: "https://www.facebook.com/sharer/sharer.php?u=",
+    social_share_twitter: "https://twitter.com/intent/tweet?url=",
+    // TikTok does not support a web "Share Link". We leave it empty so it saves the raw profile URL.
+    social_share_tiktok: "",
+};
 
 const LoyaltySocialView = () => {
     const navigate = useNavigate();
@@ -49,6 +55,36 @@ const LoyaltySocialView = () => {
         }
     };
 
+    const fieldName = getFieldNameForPlatform();
+
+    // --- HELPER 1: REMOVE PREFIX (For Displaying in Input) ---
+    const cleanUrlForDisplay = (fullUrl, type) => {
+        if (!fullUrl) return '';
+        const prefix = PREFIXES[type];
+
+        // If this type has a prefix and the URL starts with it, strip it off
+        if (prefix && fullUrl.startsWith(prefix)) {
+            return fullUrl.replace(prefix, '');
+        }
+        return fullUrl;
+    };
+
+    // --- HELPER 2: ADD PREFIX (For Saving to DB) ---
+    const formatUrlForSaving = (cleanUrl, type) => {
+        if (!cleanUrl) return '';
+        const prefix = PREFIXES[type];
+
+        // If this type has a prefix, add it. Otherwise return raw URL.
+        if (prefix) {
+            // We encode the URL so special characters don't break the share link
+            // e.g. "https://myshop.com" -> "https%3A%2F%2Fmyshop.com"
+            // Note: If you want to support manual params, be careful with encoding, 
+            // but for simple URLs, this is safer.
+            return prefix + cleanUrl;
+        }
+        return cleanUrl;
+    };
+
     useEffect(() => {
         if (edit) {
             getRuleByIdAPI(rule.rule_id);
@@ -68,8 +104,11 @@ const LoyaltySocialView = () => {
 
             const platformField = getFieldNameForPlatform();
             if (platformField) {
+                const rawUrl = getdatabyID?.condition_json?.[platformField] || '';
+                const displayUrl = cleanUrlForDisplay(rawUrl, rule?.display_use_type);
+
                 setConditionalJson({
-                    [platformField]: getdatabyID?.condition_json?.[platformField] || '',
+                    [platformField]: displayUrl,
                 });
             }
 
@@ -94,14 +133,30 @@ const LoyaltySocialView = () => {
         }
     }
 
+    // --- PREPARE DATA FOR API ---
+    // This creates a copy of the json with the URL transformed
+    const prepareDataForSave = () => {
+        const platformField = getFieldNameForPlatform();
+        const cleanValue = conditionalJson[platformField];
+
+        // Format the URL (Add Facebook/Twitter logic)
+        const formattedValue = formatUrlForSaving(cleanValue, rule?.display_use_type);
+
+        return {
+            ...conditionalJson,
+            [platformField]: formattedValue
+        };
+    };
+
     const AddRuleAPI = async () => {
+        const formattedJson = prepareDataForSave(); // Get formatted JSON
         const formData = new FormData();
         formData.append("master_rule_id", rule.master_rule_id);
         formData.append("type", rule.type);
         formData.append("platform", rule.platform);
         formData.append("points", earningpoints);
         formData.append("status", status);
-        formData.append("condition_json", JSON.stringify(conditionalJson));
+        formData.append("condition_json", JSON.stringify(formattedJson));
         const response = await fetchData("/add-merchant-earning-rules", formData);
         console.log('Add Url Response', response);
         if (response.status) {
@@ -123,11 +178,12 @@ const LoyaltySocialView = () => {
     }
 
     const updateRuleAPI = async (ruleId) => {
+        const formattedJson = prepareDataForSave();
         const formData = new FormData();
         formData.append("rule_id", ruleId);
         formData.append("points", earningpoints);
         formData.append("status", status);
-        formData.append("condition_json", JSON.stringify(conditionalJson));
+        formData.append("condition_json", JSON.stringify(formattedJson));
         const response = await fetchData("/update-merchant-earning-rules", formData);
         console.log('Update Rule By Id Response', response);
         if (response.status) {
@@ -175,8 +231,6 @@ const LoyaltySocialView = () => {
         setStatus(prevStatus => prevStatus === true ? false : true);
     };
 
-    const fieldName = getFieldNameForPlatform();
-
     return (
         <Page
             backAction={{ content: 'Back', onAction: () => navigate('/loyaltyProgram') }}
@@ -212,7 +266,6 @@ const LoyaltySocialView = () => {
                                                     });
                                                     if (errors.url) setErrors(prev => ({ ...prev, url: undefined }));
                                                 }}
-                                                maxLength={255}
                                                 autoComplete="off"
                                                 error={errors.url}
                                             />

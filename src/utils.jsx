@@ -66,4 +66,51 @@ export const capitalizeFirst = (str) => {
     return str.charAt(0).toUpperCase() + str.slice(1);
 }
 
+export const openSocialShare = (platform, urlToShare) => {
+    if (!urlToShare) return;
+
+    // Encode the URL to ensure special characters don't break the link
+    const encodedUrl = encodeURIComponent(urlToShare);
+    let shareUrl = '';
+    let windowName = 'Share';
+
+    switch (platform) {
+        case 'social_share_facebook':
+        case 'facebook':
+            // Facebook Sharer URL
+            shareUrl = `https://www.facebook.com/sharer/sharer.php?u=${encodedUrl}`;
+            windowName = 'FacebookShare';
+            break;
+
+        case 'social_share_twitter':
+        case 'twitter':
+        case 'x':
+            // X (Twitter) Intent URL
+            shareUrl = `https://twitter.com/intent/tweet?url=${encodedUrl}&text=${encodeURIComponent("Check this out!")}`;
+            windowName = 'TwitterShare';
+            break;
+
+        case 'social_share_tiktok':
+        case 'tiktok':
+            // TIKTOK WARNING: 
+            // TikTok DOES NOT support a web-based "Share Link" API like FB/Twitter.
+            // You cannot open a window to "Post this link" on TikTok.
+            // Best Practice: Copy link to clipboard and open TikTok home.
+            navigator.clipboard.writeText(urlToShare);
+            alert("Link copied! Open TikTok to paste it in your bio or message.");
+            shareUrl = `https://www.tiktok.com/`;
+            break;
+
+        default:
+            // Fallback: just open the link if platform is unknown
+            shareUrl = urlToShare;
+            break;
+    }
+
+    // Open a popup window instead of a new tab for better UX
+    if (shareUrl) {
+        window.open(shareUrl, windowName, 'width=600,height=500,scrollbars=yes,resizable=yes');
+    }
+};
+
 // https://docs.google.com/document/d/11SHYSidCKFvxceiOE4-DTzvc3UthlGxb2JsLCY6i5rc/edit?hl=en-GB&forcehl=1&tab=t.sxv4ttgt6n4c

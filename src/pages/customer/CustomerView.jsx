@@ -22,12 +22,16 @@ const CustomerView = () => {
     const [customerPointsData, setCustomerPointsData] = useState({ data: [], pagination: {} });
     const [customerTiersData, setCustomerTiersData] = useState({ data: [], pagination: {} });
     const [customerReferralsData, setCustomerReferralsData] = useState({ data: [], pagination: {} });
+    const [customerRedeemData, setCustomerRedeemData] = useState({ data: [], pagination: {} });
+    const [customerRewardsData, setCustomerRewardsData] = useState({ data: [], pagination: {} });
     const [isLoading, setIsLoading] = useState(false);
     const [loadingMore, setLoadingMore] = useState({
         orders: false,
         points: false,
         vip_tier: false,
         referrals: false,
+        redeem: false,
+        rewards: false,
     });
 
     const GetCustomerByIdAPI = async () => {
@@ -44,6 +48,8 @@ const CustomerView = () => {
                 setCustomerPointsData(response.data?.points_history || []);
                 setCustomerTiersData(response.data?.vip_tier_history || []);
                 setCustomerReferralsData(response.data?.referrals || []);
+                setCustomerRedeemData(response.data?.redeem_history || []);
+                setCustomerRewardsData(response.data?.rewards_history || []);
                 const currentTierTitle = response.data?.current_tier_info?.title;
 
                 if (currentTierTitle) {
@@ -81,6 +87,10 @@ const CustomerView = () => {
                     setCustomerTiersData(response.data?.vip_tier_history || []);
                 } else if (type === 'referrals') {
                     setCustomerReferralsData(response.data?.referrals || []);
+                } else if (type === 'redeem') {
+                    setCustomerRedeemData(response.data?.redeem_history || []);
+                } else if (type === 'rewards') {
+                    setCustomerRewardsData(response.data?.rewards_history || []);
                 }
             } else {
                 shopify.toast.show(response?.message, { duration: 2000, isError: true });
@@ -159,6 +169,8 @@ const CustomerView = () => {
         { id: 'points', content: 'Points' },
         { id: 'vip', content: 'VIP' },
         { id: 'referrals', content: 'Referrals' },
+        { id: 'redeem', content: 'Redeem' },
+        { id: 'rewards', content: 'Rewards' },
     ];
 
     const orderRows = useMemo(() => customerOrdersData?.data?.map((order) => (
@@ -220,6 +232,41 @@ const CustomerView = () => {
             </IndexTable.Cell>
         </IndexTable.Row>
     )), [customerReferralsData]);
+
+    const redeemRows = useMemo(() => customerRedeemData?.data?.map((redeem) => (
+        <IndexTable.Row key={redeem?.id}>
+            <IndexTable.Cell>
+                <Text variant='bodyMd' as="span">{redeem?.email}</Text>
+            </IndexTable.Cell>
+            <IndexTable.Cell>
+                <Text variant='bodyMd' as="span">{redeem?.total_orders}</Text>
+            </IndexTable.Cell>
+            <IndexTable.Cell>
+                <Text variant='bodyMd' as="span">{formatShortDate(redeem?.created_at)}</Text>
+            </IndexTable.Cell>
+        </IndexTable.Row>
+    )))
+
+    const rewardRows = useMemo(() => customerRewardsData?.data?.map((reward) => (
+        <IndexTable.Row key={reward?.id}>
+            <IndexTable.Cell>
+                <Text variant='bodyMd' as="span">{reward?.source}</Text>
+            </IndexTable.Cell>
+            <IndexTable.Cell>
+                <Text variant='bodyMd' as="span">{reward?.points_cost}</Text>
+            </IndexTable.Cell>
+            <IndexTable.Cell>
+                <Text variant='bodyMd' as="span">{reward?.code}</Text>
+            </IndexTable.Cell>
+            <IndexTable.Cell>
+                <Badge tone={reward?.status === 'active' ? 'success' : 'critical'}>{capitalizeFirst(reward?.status)}</Badge>
+            </IndexTable.Cell>
+            <IndexTable.Cell>
+                <Text variant='bodyMd' as="span">{formatShortDate(reward?.created_at)}</Text>
+            </IndexTable.Cell>
+        </IndexTable.Row>
+    )));
+
 
     return (
         <div>
@@ -480,6 +527,110 @@ const CustomerView = () => {
                                                         ))
                                                     ) : (
                                                         referralRows
+                                                    )}
+                                                </IndexTable>
+                                            )
+                                        )}
+                                        {selected === 3 && (
+                                            redeemRows?.length === 0 || redeemRows?.length === undefined ? (
+                                                <Box padding="600">
+                                                    <BlockStack align="center" inlineAlign='center'>
+                                                        <Box>
+                                                            <Text variant="bodyLg" tone="subdued">
+                                                                No data found
+                                                            </Text>
+                                                        </Box>
+                                                    </BlockStack>
+                                                </Box>
+                                            ) : (
+                                                <IndexTable
+                                                    resourceName={{ singular: 'Redeem', plural: 'Redeems' }}
+                                                    itemCount={loadingMore.redeem ? 5 : (customerRedeemData.data?.length || 0)}
+                                                    selectable={false}
+                                                    headings={[
+                                                        { title: 'Order Total' },
+                                                        { title: 'Points' },
+                                                        { title: 'Code' },
+                                                        { title: 'Status' },
+                                                        { title: 'Date' },
+                                                    ]}
+                                                    pagination={(!loadingMore.redeem && (customerRedeemData?.pagination?.has_next || customerRedeemData?.pagination?.has_previous)) ? (
+                                                        {
+                                                            hasNext: Boolean(customerRedeemData?.pagination?.has_next),
+                                                            hasPrevious: Boolean(customerRedeemData?.pagination?.has_previous),
+                                                            onNext: () => {
+                                                                const page = customerRedeemData?.pagination?.page + 1;
+                                                                handleLoadMoreAPI(page, 'redeem');
+                                                            },
+                                                            onPrevious: () => {
+                                                                const page = customerRedeemData?.pagination?.page - 1;
+                                                                handleLoadMoreAPI(page, 'redeem');
+                                                            },
+                                                        }
+                                                    ) : undefined}
+                                                >
+                                                    {loadingMore.redeem ? (
+                                                        [...Array(5)].map((_, index) => (
+                                                            <IndexTable.Row key={index} position={index}>
+                                                                <IndexTable.Cell><SkeletonBodyText lines={1} /></IndexTable.Cell>
+                                                                <IndexTable.Cell><SkeletonBodyText lines={1} /></IndexTable.Cell>
+                                                                <IndexTable.Cell><SkeletonBodyText lines={1} /></IndexTable.Cell>
+                                                            </IndexTable.Row>
+                                                        ))
+                                                    ) : (
+                                                        redeemRows
+                                                    )}
+                                                </IndexTable>
+                                            )
+                                        )}
+                                        {selected === 4 && (
+                                            rewardRows?.length === 0 || rewardRows?.length === undefined ? (
+                                                <Box padding="600">
+                                                    <BlockStack align="center" inlineAlign='center'>
+                                                        <Box>
+                                                            <Text variant="bodyLg" tone="subdued">
+                                                                No data found
+                                                            </Text>
+                                                        </Box>
+                                                    </BlockStack>
+                                                </Box>
+                                            ) : (
+                                                <IndexTable
+                                                    resourceName={{ singular: 'Reward', plural: 'Rewards' }}
+                                                    itemCount={loadingMore.rewards ? 5 : (customerRewardsData.data?.length || 0)}
+                                                    selectable={false}
+                                                    headings={[
+                                                        { title: 'Order Total' },
+                                                        { title: 'Points' },
+                                                        { title: 'Code' },
+                                                        { title: 'Status' },
+                                                        { title: 'Date' },
+                                                    ]}
+                                                    pagination={(!loadingMore.rewards && (customerRewardsData?.pagination?.has_next || customerRewardsData?.pagination?.has_previous)) ? (
+                                                        {
+                                                            hasNext: Boolean(customerRewardsData?.pagination?.has_next),
+                                                            hasPrevious: Boolean(customerRewardsData?.pagination?.has_previous),
+                                                            onNext: () => {
+                                                                const page = customerRewardsData?.pagination?.page + 1;
+                                                                handleLoadMoreAPI(page, 'rewards');
+                                                            },
+                                                            onPrevious: () => {
+                                                                const page = customerRewardsData?.pagination?.page - 1;
+                                                                handleLoadMoreAPI(page, 'rewards');
+                                                            },
+                                                        }
+                                                    ) : undefined}
+                                                >
+                                                    {loadingMore.rewards ? (
+                                                        [...Array(5)].map((_, index) => (
+                                                            <IndexTable.Row key={index} position={index}>
+                                                                <IndexTable.Cell><SkeletonBodyText lines={1} /></IndexTable.Cell>
+                                                                <IndexTable.Cell><SkeletonBodyText lines={1} /></IndexTable.Cell>
+                                                                <IndexTable.Cell><SkeletonBodyText lines={1} /></IndexTable.Cell>
+                                                            </IndexTable.Row>
+                                                        ))
+                                                    ) : (
+                                                        rewardRows
                                                     )}
                                                 </IndexTable>
                                             )
