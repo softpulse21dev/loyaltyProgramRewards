@@ -15,7 +15,7 @@ const LoyaltySignupView = () => {
     const [earningPointsError, setEarningPointsError] = useState("");
 
     const [pageTitle, setPageTitle] = useState("Sign Up");
-    const [status, setStatus] = useState("inactive");
+    const [status, setStatus] = useState("false");
     const [loading, setLoading] = useState(true);
     const [getdatabyID, setGetdatabyID] = useState();
     const [conditionalJson, setConditionalJson] = useState({
@@ -41,7 +41,7 @@ const LoyaltySignupView = () => {
         formData.append("type", rule.type);
         formData.append("points", earningpoints);
         formData.append("status", status);
-        formData.append("condition_json", JSON.stringify(conditionalJson));
+        // formData.append("condition_json", JSON.stringify(conditionalJson));
         const response = await fetchData("/add-merchant-earning-rules", formData);
         console.log('Add Rule Response', response);
         if (response.status) {
@@ -95,7 +95,7 @@ const LoyaltySignupView = () => {
             if (rule) {
                 const pointsValue = rule.points ?? rule.default_points ?? 1;
                 setEarningpoints(pointsValue);
-                setStatus(rule.status ?? "inactive");
+                setStatus(rule.status ?? "false");
             }
         }
         if (rule) {
@@ -107,7 +107,7 @@ const LoyaltySignupView = () => {
         if (getdatabyID) {
             const pointsValue = getdatabyID?.points ?? getdatabyID?.default_points ?? 1;
             setEarningpoints(pointsValue);
-            setStatus(getdatabyID?.status ?? "inactive");
+            setStatus(getdatabyID?.status ?? "false");
             setConditionalJson(getdatabyID?.condition_json);
             setLoading(false);
         }
@@ -272,7 +272,7 @@ const LoyaltySignupView = () => {
                                     </Text>
                                     <ul style={{ listStyle: "inherit", paddingInline: 20 }}>
                                         <li>
-                                            <p>Customers earn points by {rule?.display_use_type}</p>
+                                            <p>Customers will automatically earn points each year on the anniversary of the date they joined the loyalty program.</p>
                                         </li>
                                     </ul>
                                 </Card>

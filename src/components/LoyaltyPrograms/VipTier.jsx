@@ -1,4 +1,4 @@
-import { BlockStack, Box, Button, Card, Collapsible, Icon, Layout, RadioButton, ResourceItem, ResourceList, Text } from '@shopify/polaris'
+import { BlockStack, Box, Button, Card, Collapsible, Icon, Layout, RadioButton, ResourceItem, ResourceList, SkeletonBodyText, Text } from '@shopify/polaris'
 import { CheckIcon, EditIcon, RewardIcon, XIcon } from '@shopify/polaris-icons'
 import React, { useEffect, useState } from 'react'
 import { useNavigate } from 'react-router-dom';
@@ -13,12 +13,14 @@ const VipTier = () => {
     const [selectedTierProgressExpiry, setSelectedTierProgressExpiry] = useState(1);
     const [vipStatus, setVipStatus] = useState(false);
     const [loading, setLoading] = useState(false);
+    const [loadingTiers, setLoadingTiers] = useState(false);
     const vipTierData = useSelector((state) => state.merchantSettings.vipTierData);
     console.log('vipTierData', vipTierData)
 
     const dispatch = useDispatch();
 
     const GetVipTierAPI = async () => {
+        setLoadingTiers(true);
         try {
             const formData = new FormData();
             const response = await fetchData("/get-tiers", formData);
@@ -27,12 +29,15 @@ const VipTier = () => {
                 setVipStatus(response?.data?.status === '1' ? true : false);
                 dispatch(GetVipTierData(response?.data?.tier_settings));
                 dispatch(MasterRewardsList(response?.master_rewards));
+                setLoadingTiers(false);
             } else {
                 shopify.toast.show(response?.message, { duration: 2000, isError: true });
+                setLoadingTiers(false);
             }
         } catch (error) {
             console.error('Error fetching VIP tiers:', error);
             shopify.toast.show(error?.message, { duration: 2000, isError: true });
+            setLoadingTiers(false);
         }
     }
 
@@ -87,19 +92,21 @@ const VipTier = () => {
                 description={'Activate/Deactivate your VIP Tier program'}
             >
                 <Card>
-                    <Box style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-                        <Text variant="headingMd">
-                            {vipStatus ? "This feature is Activated" : "This feature is Deactivated"}
-                        </Text>
-                        <Button
-                            primary={!vipStatus}
-                            destructive={vipStatus}
-                            onClick={UpdateVipTierAPI}
-                            loading={loading}
-                        >
-                            {vipStatus ? "Deactivate" : "Activate"}
-                        </Button>
-                    </Box>
+                    {loadingTiers ? <SkeletonBodyText lines={2} /> : (
+                        <Box style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+                            <Text variant="headingMd">
+                                {vipStatus ? "This feature is Activated" : "This feature is Deactivated"}
+                            </Text>
+                            <Button
+                                primary={!vipStatus}
+                                destructive={vipStatus}
+                                onClick={UpdateVipTierAPI}
+                                loading={loading}
+                            >
+                                {vipStatus ? "Deactivate" : "Activate"}
+                            </Button>
+                        </Box>
+                    )}
                 </Card>
             </Layout.AnnotatedSection>
 
@@ -120,38 +127,42 @@ const VipTier = () => {
                         <Text variant="headingMd">Referral Rewards</Text>
                     </Box>
 
-                    <ResourceList
-                        items={vipTierData || []}
-                        renderItem={(item) => {
-                            const IconSource = iconsMap[item?.icon];
-                            return (
-                                <ResourceItem key={item.id}>
-                                    <Box style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-                                        <Box>
-                                            {console.log('item?.icon?.url', item?.icon?.url)}
-                                            <div className='icon-size' style={{ display: "flex", alignItems: "center", gap: "10px" }}>
-                                                <Box style={{ width: '30px', height: '30px', objectFit: 'contain', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                                                    {item?.icon_type === 'default' ?
-                                                        <Icon source={RewardIcon} />
-                                                        :
-                                                        <img
-                                                            src={item.icon.url}
-                                                            alt={item.title || 'Tier Icon'} // Add alt text for accessibility
-                                                            style={{ width: '24px', height: '24px', objectFit: 'contain' }} // Style to match Polaris Icon size
-                                                        />}
-                                                </Box>
-                                                <Box>
-                                                    <Text variant="bodyMd">{item?.title}</Text>
-                                                    <Text variant="bodyMd">Achieve on {item?.points_needed} points  |  {item?.points_multiply} points multiplier</Text>
-                                                </Box>
-                                            </div>
+                    {loadingTiers ? <Box style={{ padding: '16px' }}>
+                        <SkeletonBodyText lines={10} />
+                    </Box> : (
+                        <ResourceList
+                            items={vipTierData || []}
+                            renderItem={(item) => {
+                                const IconSource = iconsMap[item?.icon];
+                                return (
+                                    <ResourceItem key={item.id}>
+                                        <Box style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+                                            <Box>
+                                                {console.log('item?.icon?.url', item?.icon?.url)}
+                                                <div className='icon-size' style={{ display: "flex", alignItems: "center", gap: "10px" }}>
+                                                    <Box style={{ width: '30px', height: '30px', objectFit: 'contain', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                                                        {item?.icon_type === 'default' ?
+                                                            <Icon source={RewardIcon} />
+                                                            :
+                                                            <img
+                                                                src={item.icon.url}
+                                                                alt={item.title || 'Tier Icon'} // Add alt text for accessibility
+                                                                style={{ width: '24px', height: '24px', objectFit: 'contain' }} // Style to match Polaris Icon size
+                                                            />}
+                                                    </Box>
+                                                    <Box>
+                                                        <Text variant="bodyMd">{item?.title}</Text>
+                                                        <Text variant="bodyMd">Achieve on {item?.points_needed} points  |  {item?.points_multiply} points multiplier</Text>
+                                                    </Box>
+                                                </div>
+                                            </Box>
+                                            <Button icon={<Icon source={EditIcon} />} onClick={() => navigate(`/loyaltyProgram/tierview`, { state: { rule: item, edit: true, navigateTo: 2 } }, dispatch(TierId(item.uid)))} primary>Edit</Button>
                                         </Box>
-                                        <Button icon={<Icon source={EditIcon} />} onClick={() => navigate(`/loyaltyProgram/tierview`, { state: { rule: item, edit: true, navigateTo: 2 } }, dispatch(TierId(item.uid)))} primary>Edit</Button>
-                                    </Box>
-                                </ResourceItem>
-                            )
-                        }}
-                    />
+                                    </ResourceItem>
+                                )
+                            }}
+                        />
+                    )}
                 </Card>
             </Layout.AnnotatedSection>
 

@@ -30,12 +30,12 @@ function AppLayout({ pages }) {
       <>
         <NavMenu>
           {/* Use location.search instead of window.location.search */}
-          <Link to={`/dashboard${location.search}`} rel="home">dashboard</Link>
-          <Link to={`/loyaltyProgram${location.search}`}>loyaltyProgram</Link>
-          <Link to={`/customer${location.search}`}>customer</Link>
-          <Link to={`/settings${location.search}`}>settings</Link>
-          <Link to={`/analytics${location.search}`}>analytics</Link>
-          <Link to={`/onsite${location.search}`}>onsite</Link>
+          <Link to={`/dashboard${location.search}`} rel="home">Dashboard</Link>
+          <Link to={`/loyaltyProgram${location.search}`}>Loyalty Program</Link>
+          <Link to={`/customer${location.search}`}>Customer</Link>
+          <Link to={`/settings${location.search}`}>Settings</Link>
+          <Link to={`/analytics${location.search}`}>Analytics</Link>
+          <Link to={`/onsite${location.search}`}>Onsite</Link>
         </NavMenu>
       </>
       <Box paddingBlockEnd="1000">

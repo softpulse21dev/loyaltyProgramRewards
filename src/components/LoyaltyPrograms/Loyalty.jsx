@@ -1,16 +1,4 @@
-import {
-    Card,
-    Layout,
-    Button,
-    ResourceList,
-    ResourceItem,
-    Text,
-    Box,
-    Modal,
-    InlineStack,
-    Icon,
-    TextField,
-} from "@shopify/polaris";
+import { Card, Layout, Button, ResourceList, ResourceItem, Text, Box, Modal, InlineStack, Icon, TextField, SkeletonBodyText, } from "@shopify/polaris";
 import { RewardIcon } from "@shopify/polaris-icons";
 import { useCallback, useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
@@ -21,6 +9,7 @@ import RedeemModal from "../RedeemModal";
 const Loyalty = () => {
     const [status, setStatus] = useState(null);
     const [loading, setLoading] = useState(false);
+    const [loadingMasterRules, setLoadingMasterRules] = useState(false);
     const [loyaltyData, setLoyaltyData] = useState([]);
     const [modalActive, setModalActive] = useState(false);
     const [redeemModalActive, setRedeemModalActive] = useState(false);
@@ -28,13 +17,16 @@ const Loyalty = () => {
     const toggleModal = useCallback(() => setModalActive((active) => !active), []);
 
     const fetchSettingsAPI = async () => {
+        setLoadingMasterRules(true);
         const response = await fetchData("/get-merchant-settings", new FormData());
         console.log('response', response);
         if (response.status && response.data) {
             setStatus(response.data.status);
             setLoyaltyData(response.data);
+            setLoadingMasterRules(false);
         } else {
             shopify.toast.show(response?.message, { duration: 2000, isError: true });
+            setLoadingMasterRules(false);
         }
     };
 
@@ -77,22 +69,22 @@ const Loyalty = () => {
             >
                 <Card>
                     <Box style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-                        <Text variant="headingMd">
-                            {status === null
-                                ? "Loading..."
-                                : status
-                                    ? "This feature is Activated"
-                                    : "This feature is Deactivated"}
-                        </Text>
-                        <Button
-                            primary={status === false}
-                            tone={status ? "critical" : "success"}
-                            onClick={handleToggleStatus}
-                            loading={loading}
-                            disabled={status === null}
-                        >
-                            {status ? "Deactivate" : "Activate"}
-                        </Button>
+                        {loadingMasterRules ? <SkeletonBodyText lines={2} /> : (
+                            <>
+                                <Text variant="headingMd">
+                                    {status ? "This feature is Activated" : "This feature is Deactivated"}
+                                </Text>
+                                <Button
+                                    primary={status === false}
+                                    tone={status ? "critical" : "success"}
+                                    onClick={handleToggleStatus}
+                                    loading={loading}
+                                    disabled={status === null}
+                                >
+                                    {status ? "Deactivate" : "Activate"}
+                                </Button>
+                            </>
+                        )}
                     </Box>
                 </Card>
             </Layout.AnnotatedSection>
@@ -105,9 +97,9 @@ const Loyalty = () => {
                             <p>Customize how your customers will earn points</p>
                         </Box>
                         {loyaltyData?.earning_rules?.master_rules?.length > 0 && (
-                        <Box style={{ marginTop: 7, marginLeft: 0 }}>
-                            <Button variant="primary" onClick={toggleModal}>Add Another Way to Earn</Button>
-                        </Box>
+                            <Box style={{ marginTop: 7, marginLeft: 0 }}>
+                                <Button variant="primary" onClick={toggleModal}>Add Another Way to Earn</Button>
+                            </Box>
                         )}
                     </>
                 }
@@ -117,90 +109,96 @@ const Loyalty = () => {
                         <Box style={{ padding: '16px 16px 16px 16px', backgroundColor: "#F5F5F5" }}>
                             <Text variant="headingMd" as="h6">Customers will earn points through the actions below</Text>
                         </Box>
-                        <ResourceList
-                            resourceName={{ singular: "earning", plural: "earnings" }}
-                            items={loyaltyData?.earning_rules?.active_rules?.other_rules || []}
-                            renderItem={(item) => {
-                                const { title, points, icon, rule_id, status: itemStatus } = item;
-                                const IconSource = iconsMap[icon];
-                                return (
-                                    <ResourceItem key={rule_id}>
-                                        <Box style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-                                            <Box style={{ display: "flex", alignItems: "center", gap: "15px" }}>
-                                                <Icon source={IconSource} />
-                                                <Box>
-                                                    <Text variant="bodyMd">{title}</Text>
-                                                    <Text variant="bodyMd">{points} points</Text>
+                        {loadingMasterRules ? <Box style={{ padding: '16px' }}>
+                            <SkeletonBodyText lines={15} />
+                        </Box> : (
+                            <>
+                                <ResourceList
+                                    resourceName={{ singular: "earning", plural: "earnings" }}
+                                    items={loyaltyData?.earning_rules?.active_rules?.other_rules || []}
+                                    renderItem={(item) => {
+                                        const { title, points, icon, rule_id, status: itemStatus } = item;
+                                        const IconSource = iconsMap[icon];
+                                        return (
+                                            <ResourceItem key={rule_id}>
+                                                <Box style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+                                                    <Box style={{ display: "flex", alignItems: "center", gap: "15px" }}>
+                                                        <Icon source={IconSource} />
+                                                        <Box>
+                                                            <Text variant="bodyMd">{title}</Text>
+                                                            <Text variant="bodyMd">{points} points</Text>
+                                                        </Box>
+                                                    </Box>
+                                                    <Box style={{ display: "flex", alignItems: "center", gap: "15px" }}>
+                                                        <Button onClick={() =>
+                                                            navigate(NavigateMap[item.display_use_type], {
+                                                                state: { rule: item, edit: true },
+                                                            })
+                                                        } variant="plain">Edit</Button>
+                                                        <div className="toggle-container" style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                                                            <label className="switch">
+                                                                <input
+                                                                    type="checkbox"
+                                                                    checked={itemStatus === true}
+                                                                    id={`switch-${rule_id}`}
+                                                                    onChange={(e) =>
+                                                                        handleRuleStatusChangeAPI(item.rule_id, e.target.checked)
+                                                                    }
+                                                                />
+                                                                <span className="slider"></span>
+                                                            </label>
+                                                        </div>
+                                                    </Box>
                                                 </Box>
-                                            </Box>
-                                            <Box style={{ display: "flex", alignItems: "center", gap: "15px" }}>
-                                                <Button onClick={() =>
-                                                    navigate(NavigateMap[item.display_use_type], {
-                                                        state: { rule: item, edit: true },
-                                                    })
-                                                } variant="plain">Edit</Button>
-                                                <div className="toggle-container" style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                                                    <label className="switch">
-                                                        <input
-                                                            type="checkbox"
-                                                            checked={itemStatus === true}
-                                                            id={`switch-${rule_id}`}
-                                                            onChange={(e) =>
-                                                                handleRuleStatusChangeAPI(item.rule_id, e.target.checked)
-                                                            }
-                                                        />
-                                                        <span className="slider"></span>
-                                                    </label>
-                                                </div>
-                                            </Box>
-                                        </Box>
-                                    </ResourceItem>
-                                );
-                            }}
-                        />
-                        <ResourceList
-                            resourceName={{ singular: "earning", plural: "earnings" }}
-                            items={loyaltyData?.earning_rules?.active_rules?.social_rules || []}
-                            headerContent={<Text variant="headingMd" as="h6">Social Rules</Text>}
-                            showHeader={true}
-                            renderItem={(item) => {
-                                const { title, points, icon, rule_id, status: itemStatus } = item;
-                                const IconSource = iconsMap[icon];
-                                return (
-                                    <ResourceItem key={rule_id}>
-                                        <Box style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-                                            <Box style={{ display: "flex", alignItems: "center", gap: "15px" }}>
-                                                <Icon source={IconSource} />
-                                                <Box>
-                                                    <Text variant="bodyMd">{title}</Text>
-                                                    <Text variant="bodyMd">{points} points</Text>
+                                            </ResourceItem>
+                                        );
+                                    }}
+                                />
+                                <ResourceList
+                                    resourceName={{ singular: "earning", plural: "earnings" }}
+                                    items={loyaltyData?.earning_rules?.active_rules?.social_rules || []}
+                                    headerContent={<Text variant="headingMd" as="h6">Social Rules</Text>}
+                                    showHeader={true}
+                                    renderItem={(item) => {
+                                        const { title, points, icon, rule_id, status: itemStatus } = item;
+                                        const IconSource = iconsMap[icon];
+                                        return (
+                                            <ResourceItem key={rule_id}>
+                                                <Box style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+                                                    <Box style={{ display: "flex", alignItems: "center", gap: "15px" }}>
+                                                        <Icon source={IconSource} />
+                                                        <Box>
+                                                            <Text variant="bodyMd">{title}</Text>
+                                                            <Text variant="bodyMd">{points} points</Text>
+                                                        </Box>
+                                                    </Box>
+                                                    <Box style={{ display: "flex", alignItems: "center", gap: "15px" }}>
+                                                        <Button onClick={() =>
+                                                            navigate(NavigateMap[item.display_use_type], {
+                                                                state: { rule: item, edit: true },
+                                                            })
+                                                        } variant="plain">Edit</Button>
+                                                        <div className="toggle-container" style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                                                            <label className="switch">
+                                                                <input
+                                                                    type="checkbox"
+                                                                    checked={itemStatus === true}
+                                                                    id={`switch-${rule_id}`}
+                                                                    onChange={(e) =>
+                                                                        handleRuleStatusChangeAPI(item.rule_id, e.target.checked)
+                                                                    }
+                                                                />
+                                                                <span className="slider"></span>
+                                                            </label>
+                                                        </div>
+                                                    </Box>
                                                 </Box>
-                                            </Box>
-                                            <Box style={{ display: "flex", alignItems: "center", gap: "15px" }}>
-                                                <Button onClick={() =>
-                                                    navigate(NavigateMap[item.display_use_type], {
-                                                        state: { rule: item, edit: true },
-                                                    })
-                                                } variant="plain">Edit</Button>
-                                                <div className="toggle-container" style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                                                    <label className="switch">
-                                                        <input
-                                                            type="checkbox"
-                                                            checked={itemStatus === true}
-                                                            id={`switch-${rule_id}`}
-                                                            onChange={(e) =>
-                                                                handleRuleStatusChangeAPI(item.rule_id, e.target.checked)
-                                                            }
-                                                        />
-                                                        <span className="slider"></span>
-                                                    </label>
-                                                </div>
-                                            </Box>
-                                        </Box>
-                                    </ResourceItem>
-                                );
-                            }}
-                        />
+                                            </ResourceItem>
+                                        );
+                                    }}
+                                />
+                            </>
+                        )}
                     </Card>
                 </div>
             </Layout.AnnotatedSection>
@@ -223,42 +221,46 @@ const Loyalty = () => {
                         <Box style={{ padding: '16px 16px 16px 16px' }}>
                             <Text variant="headingMd" as="h6">Customers can redeem these rewards using their points</Text>
                         </Box>
-                        <ResourceList
-                            resourceName={{ singular: "rule", plural: "rules" }}
-                            items={loyaltyData?.redeeming_rules?.active_rules || []}
-                            renderItem={(item) => {
-                                const { id, title, points, icon, status: itemStatus } = item;
-                                const IconSource = iconsMap[icon];
-                                return (
-                                    <ResourceItem key={id}>
-                                        <Box style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-                                            <Box style={{ display: "flex", alignItems: "center", gap: "15px" }}>
-                                                <Icon source={IconSource} />
-                                                <Box>
-                                                    <Text variant="bodyMd">{title}</Text>
-                                                    <Text variant="bodyMd">{points} points</Text>
+                        {loadingMasterRules ? <Box style={{ padding: '16px' }}>
+                            <SkeletonBodyText lines={15} />
+                        </Box> : (
+                            <ResourceList
+                                resourceName={{ singular: "rule", plural: "rules" }}
+                                items={loyaltyData?.redeeming_rules?.active_rules || []}
+                                renderItem={(item) => {
+                                    const { id, title, points, icon, status: itemStatus } = item;
+                                    const IconSource = iconsMap[icon];
+                                    return (
+                                        <ResourceItem key={id}>
+                                            <Box style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+                                                <Box style={{ display: "flex", alignItems: "center", gap: "15px" }}>
+                                                    <Icon source={IconSource} />
+                                                    <Box>
+                                                        <Text variant="bodyMd">{title}</Text>
+                                                        <Text variant="bodyMd">{points} points</Text>
+                                                    </Box>
+                                                </Box>
+                                                <Box style={{ display: "flex", alignItems: "center", gap: "15px" }}>
+                                                    <Button variant="plain" onClick={() => navigate(`/loyaltyProgram/CouponPage`, { state: { rule: item, edit: true } })}>Edit</Button>
+                                                    <div className="toggle-container" style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                                                        <label className="switch">
+                                                            <input
+                                                                type="checkbox"
+                                                                checked={itemStatus === true}
+                                                                onChange={(e) =>
+                                                                    handleRuleStatusChangeAPI(item.id, e.target.checked, false)
+                                                                }
+                                                            />
+                                                            <span className="slider"></span>
+                                                        </label>
+                                                    </div>
                                                 </Box>
                                             </Box>
-                                            <Box style={{ display: "flex", alignItems: "center", gap: "15px" }}>
-                                                <Button variant="plain" onClick={() => navigate(`/loyaltyProgram/CouponPage`, { state: { rule: item, edit: true } })}>Edit</Button>
-                                                <div className="toggle-container" style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                                                    <label className="switch">
-                                                        <input
-                                                            type="checkbox"
-                                                            checked={itemStatus === true}
-                                                            onChange={(e) =>
-                                                                handleRuleStatusChangeAPI(item.id, e.target.checked, false)
-                                                            }
-                                                        />
-                                                        <span className="slider"></span>
-                                                    </label>
-                                                </div>
-                                            </Box>
-                                        </Box>
-                                    </ResourceItem>
-                                );
-                            }}
-                        />
+                                        </ResourceItem>
+                                    );
+                                }}
+                            />
+                        )}
                     </Card>
                 </div>
             </Layout.AnnotatedSection>
@@ -286,34 +288,38 @@ const Loyalty = () => {
                 title="Ways to Earn"
                 large
             >
-                {/* <Modal.Section> */}
-                <ResourceList
-                    items={loyaltyData?.earning_rules?.master_rules || []}
-                    renderItem={(item) => {
-                        const { id, title, type } = item;
-                        const route = NavigateMap[type] || `/loyaltyProgram/loyaltysocialview${window.location.search}`;
+                {loadingMasterRules ? (
+                    <Box style={{ padding: '16px' }}>
+                        <SkeletonBodyText lines={8} />
+                    </Box>
+                ) : (
+                    <ResourceList
+                        items={loyaltyData?.earning_rules?.master_rules || []}
+                        renderItem={(item) => {
+                            const { id, title, type } = item;
+                            const route = NavigateMap[type] || `/loyaltyProgram/loyaltysocialview${window.location.search}`;
 
-                        return (
-                            <ResourceItem id={id}>
-                                <InlineStack align="space-between" blockAlign="center">
-                                    <Box style={{ display: "flex", alignItems: "center", gap: "10px" }}>
-                                        <Box>
-                                            <Icon source={RewardIcon} />
+                            return (
+                                <ResourceItem id={id}>
+                                    <InlineStack align="space-between" blockAlign="center">
+                                        <Box style={{ display: "flex", alignItems: "center", gap: "10px" }}>
+                                            <Box>
+                                                <Icon source={RewardIcon} />
+                                            </Box>
+                                            <Text>{title}</Text>
                                         </Box>
-                                        <Text>{title}</Text>
-                                    </Box>
-                                    <Button onClick={() =>
-                                        navigate(route, { state: { rule: item } })
-                                    } >ADD</Button>
-                                </InlineStack>
-                            </ResourceItem>
-                        );
-                    }}
-                />
-                {/* </Modal.Section> */}
+                                        <Button onClick={() =>
+                                            navigate(route, { state: { rule: item } })
+                                        } >ADD</Button>
+                                    </InlineStack>
+                                </ResourceItem>
+                            );
+                        }}
+                    />
+                )}
             </Modal>
 
-            <RedeemModal active={redeemModalActive} setActive={setRedeemModalActive} data={loyaltyData?.redeeming_rules?.master_rules} />
+            <RedeemModal active={redeemModalActive} setActive={setRedeemModalActive} data={loyaltyData?.redeeming_rules?.master_rules} loading={loadingMasterRules} />
 
         </div>
     );

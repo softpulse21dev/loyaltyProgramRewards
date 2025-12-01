@@ -1,4 +1,4 @@
-import { Card, Layout, Button, Text, Box, Icon, BlockStack, TextField, ResourceList, ResourceItem, InlineStack, } from "@shopify/polaris";
+import { Card, Layout, Button, Text, Box, Icon, BlockStack, TextField, ResourceList, ResourceItem, InlineStack, SkeletonBodyText, } from "@shopify/polaris";
 import { EditIcon, GiftCardIcon } from "@shopify/polaris-icons";
 import { fetchData } from "../../action";
 import { useEffect, useState } from "react";
@@ -14,11 +14,13 @@ const Referral = () => {
     const [isCustomerAccountStatus, setIsCustomerAccountStatus] = useState(false);
     const [isReferalRule, setIsReferalRule] = useState(false);
     const [activateLoading, setActivateLoading] = useState(false);
+    const [loadingReferralRules, setLoadingReferralRules] = useState(false);
     const [requireAccountLoading, setRequireAccountLoading] = useState(false);
     const [navigateTo, setNavigateTo] = useState(0);
     const navigate = useNavigate();
 
     const GetReferralRulesAPI = async () => {
+        setLoadingReferralRules(true);
         const formData = new FormData();
         const response = await fetchData("/get-referral-setting", formData);
         console.log('Get Redeem Rule By ID Response', response.data);
@@ -27,6 +29,10 @@ const Referral = () => {
             setIsReferalStatus(response?.data?.status);
             setIsCustomerAccountStatus(response?.data?.require_account);
             console.log('referralData', referralData?.data?.referral_setting_id)
+            setLoadingReferralRules(false);
+        } else {
+            shopify.toast.show(response?.message, { duration: 2000, isError: true });
+            setLoadingReferralRules(false);
         }
     }
 
@@ -94,10 +100,12 @@ const Referral = () => {
                 description={'Activate/Deactivate your Referral program'}
             >
                 <Card>
-                    <Box style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-                        <Text variant="headingMd">This feature is {isReferalStatus ? 'Activated' : 'Deactivated'}</Text>
-                        <Button loading={activateLoading} onClick={() => { UpdateReferalStatusAPI(!isReferalStatus, isCustomerAccountStatus, true) }} primary tone={isReferalStatus ? 'critical' : 'success'}>{isReferalStatus ? 'Deactivate' : 'Activate'}</Button>
-                    </Box>
+                    {loadingReferralRules ? <SkeletonBodyText lines={2} /> : (
+                        <Box style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+                            <Text variant="headingMd">This feature is {isReferalStatus ? 'Activated' : 'Deactivated'}</Text>
+                            <Button loading={activateLoading} onClick={() => { UpdateReferalStatusAPI(!isReferalStatus, isCustomerAccountStatus, true) }} primary tone={isReferalStatus ? 'critical' : 'success'}>{isReferalStatus ? 'Deactivate' : 'Activate'}</Button>
+                        </Box>
+                    )}
                 </Card>
             </Layout.AnnotatedSection>
 
@@ -121,69 +129,11 @@ const Referral = () => {
                             )}
                         </Box>
 
-                        {(referralData?.referred_friend_reward?.added?.length > 0) ?
-                            (<ResourceList
-                                items={referralData?.referred_friend_reward?.added || []}
-                                renderItem={(item) => {
-                                    const { id, title, icon, redeemed_so_far, referral_rule_id, status, points } = item;
-                                    const IconSource = iconsMap[icon] || GiftCardIcon;
-                                    return (
-                                        <ResourceItem key={id}>
-                                            <Box style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-                                                <Box>
-                                                    <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
-                                                        <Icon source={IconSource} />
-                                                        <Box>
-                                                            <Text variant="bodyMd">{title}</Text>
-                                                            <InlineStack gap="100" align="center">
-                                                                <Text variant="bodyMd">{points} points</Text>
-                                                                <Text variant="bodyMd" fontWeight="bold">|</Text>
-                                                                <Text variant="bodyMd">{redeemed_so_far || 0} redeemed so far</Text>
-                                                            </InlineStack>
-                                                        </Box>
-                                                    </div>
-                                                </Box>
-                                                <Box style={{ display: "flex", alignItems: "center", gap: "10px" }}>
-                                                    <Button onClick={() => { navigate(`/loyaltyProgram/CouponPage`, { state: { rule: item, referralRule: true, edit: true, navigateTo: 1 } }) }} variant="plain" primary>Edit</Button>
-                                                    <div className="toggle-container" style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                                                        <label className="switch">
-                                                            <input
-                                                                type="checkbox"
-                                                                checked={status}
-                                                                onChange={() => updateReferalRuleStatusAPI(referral_rule_id, status)}
-                                                            />
-                                                            <span className="slider"></span>
-                                                        </label>
-                                                    </div>
-                                                </Box>
-                                            </Box>
-                                        </ResourceItem>
-                                    );
-                                }}
-                            />
-                            ) : (
-                                <Box style={{ padding: "10px 16px" }}>
-                                    <Text variant="bodyMd">Referral Rewards</Text>
-                                </Box>
-                            )
-                        }
-
-                    </Card>
-
-                    {/* advocate rewards */}
-                    <Card padding="0">
-                        <Box style={{ backgroundColor: "#F5F5F5", padding: "16px", display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-                            <Text variant="headingMd">Advocate Rewards</Text>
-                            {referralData?.advocate_reward?.available?.length > 0 && (
-                                <Button variant="plain" onClick={() => { setIsAdvocate(true), setIsReferalRule(true), setReferralModalActive(true); setNavigateTo(1); }}>Add Reward</Button>
-                            )}
-                        </Box>
-
-                        <Box style={{ backgroundColor: "#FFF", }}>
-                            <div >
-                                {(referralData?.advocate_reward?.added?.length > 0) ?
+                        {loadingReferralRules ? <Box style={{ padding: '16px' }}><SkeletonBodyText lines={13} /></Box> : (
+                            <>
+                                {(referralData?.referred_friend_reward?.added?.length > 0) ?
                                     (<ResourceList
-                                        items={referralData?.advocate_reward?.added || []}
+                                        items={referralData?.referred_friend_reward?.added || []}
                                         renderItem={(item) => {
                                             const { id, title, icon, redeemed_so_far, referral_rule_id, status, points } = item;
                                             const IconSource = iconsMap[icon] || GiftCardIcon;
@@ -221,15 +171,83 @@ const Referral = () => {
                                             );
                                         }}
                                     />
-                                    ) :
-                                    (
+                                    ) : (
                                         <Box style={{ padding: "10px 16px" }}>
-                                            <Text variant="bodyMd">Advocate Rewards</Text>
+                                            <Text variant="bodyMd">Referral Rewards</Text>
                                         </Box>
                                     )
                                 }
-                            </div>
+                            </>
+                        )}
+
+                    </Card>
+
+                    {/* advocate rewards */}
+                    <Card padding="0">
+                        <Box style={{ backgroundColor: "#F5F5F5", padding: "16px", display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+                            <Text variant="headingMd">Advocate Rewards</Text>
+                            {referralData?.advocate_reward?.available?.length > 0 && (
+                                <Button variant="plain" onClick={() => { setIsAdvocate(true), setIsReferalRule(true), setReferralModalActive(true); setNavigateTo(1); }}>Add Reward</Button>
+                            )}
                         </Box>
+
+                        {loadingReferralRules ? (
+                            <Box style={{ padding: '16px' }}>
+                                <SkeletonBodyText lines={15} />
+                            </Box>
+                        ) : (
+                            <Box style={{ backgroundColor: "#FFF", }}>
+                                <div >
+                                    {(referralData?.advocate_reward?.added?.length > 0) ?
+                                        (<ResourceList
+                                            items={referralData?.advocate_reward?.added || []}
+                                            renderItem={(item) => {
+                                                const { id, title, icon, redeemed_so_far, referral_rule_id, status, points } = item;
+                                                const IconSource = iconsMap[icon] || GiftCardIcon;
+                                                return (
+                                                    <ResourceItem key={id}>
+                                                        <Box style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+                                                            <Box>
+                                                                <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
+                                                                    <Icon source={IconSource} />
+                                                                    <Box>
+                                                                        <Text variant="bodyMd">{title}</Text>
+                                                                        <InlineStack gap="100" align="center">
+                                                                            <Text variant="bodyMd">{points} points</Text>
+                                                                            <Text variant="bodyMd" fontWeight="bold">|</Text>
+                                                                            <Text variant="bodyMd">{redeemed_so_far || 0} redeemed so far</Text>
+                                                                        </InlineStack>
+                                                                    </Box>
+                                                                </div>
+                                                            </Box>
+                                                            <Box style={{ display: "flex", alignItems: "center", gap: "10px" }}>
+                                                                <Button onClick={() => { navigate(`/loyaltyProgram/CouponPage`, { state: { rule: item, referralRule: true, edit: true, navigateTo: 1 } }) }} variant="plain" primary>Edit</Button>
+                                                                <div className="toggle-container" style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                                                                    <label className="switch">
+                                                                        <input
+                                                                            type="checkbox"
+                                                                            checked={status}
+                                                                            onChange={() => updateReferalRuleStatusAPI(referral_rule_id, status)}
+                                                                        />
+                                                                        <span className="slider"></span>
+                                                                    </label>
+                                                                </div>
+                                                            </Box>
+                                                        </Box>
+                                                    </ResourceItem>
+                                                );
+                                            }}
+                                        />
+                                        ) :
+                                        (
+                                            <Box style={{ padding: "10px 16px" }}>
+                                                <Text variant="bodyMd">Advocate Rewards</Text>
+                                            </Box>
+                                        )
+                                    }
+                                </div>
+                            </Box>
+                        )}
                     </Card>
                 </BlockStack>
             </Layout.AnnotatedSection>
@@ -277,7 +295,7 @@ const Referral = () => {
                 </Card>
             </Layout.AnnotatedSection>
 
-            <RedeemModal navigateTo={navigateTo} active={referralModalActive} setActive={setReferralModalActive} data={isAdvocate ? referralData?.advocate_reward?.available : referralData?.referred_friend_reward?.available} referralRule={isReferalRule} />
+            <RedeemModal navigateTo={navigateTo} active={referralModalActive} setActive={setReferralModalActive} data={isAdvocate ? referralData?.advocate_reward?.available : referralData?.referred_friend_reward?.available} referralRule={isReferalRule} loading={loadingReferralRules} />
         </div >
     );
 }

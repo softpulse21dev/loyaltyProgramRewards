@@ -386,7 +386,7 @@ const TierView = () => {
                 </Layout.Section>
             </Layout>
 
-            <RedeemModal localSave={true} navigateTo={2} active={active} setActive={setActive} data={masterRewardsList} />
+            <RedeemModal localSave={true} navigateTo={2} active={active} setActive={setActive} data={masterRewardsList} loading={!masterRewardsList} />
         </Page>
     )
 }
