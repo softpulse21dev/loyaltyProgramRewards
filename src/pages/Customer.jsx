@@ -14,15 +14,15 @@ const Customer = () => {
     const [paginationData, setPaginationData] = useState({});
     const [customerType, setCustomerType] = useState('');
     const [limit, setLimit] = useState('15');
-    const [loading, setLoading] = useState(false);
+    const [loading, setLoading] = useState(true);
 
     // --- Sorting State ---
     const [sortColumn, setSortColumn] = useState(null);
     const [sortDirection, setSortDirection] = useState('ascending');
-    
+
     // Ref to track sort state for toggle logic (updated when state changes)
     const sortStateRef = useRef({ column: null, direction: 'ascending' });
-    
+
     // Keep ref in sync with state
     useEffect(() => {
         sortStateRef.current = { column: sortColumn, direction: sortDirection };
@@ -77,24 +77,24 @@ const Customer = () => {
             // Validate that maximum is not less than minimum
             const minNum = localMin ? parseFloat(localMin) : null;
             const maxNum = localMax ? parseFloat(localMax) : null;
-            
+
             if (minNum !== null && maxNum !== null && maxNum < minNum) {
                 // Don't apply if max is less than min
                 return;
             }
-            
+
             // Ensure only numeric values are applied
             let minValue = '';
             let maxValue = '';
-            
+
             if (localMin && /^\d+$/.test(localMin)) {
                 minValue = localMin;
             }
-            
+
             if (localMax && /^\d+$/.test(localMax)) {
                 maxValue = localMax;
             }
-            
+
             setRangeState({ min: minValue, max: maxValue });
             // Close the filter popover after applying
             if (onClose) {
@@ -152,7 +152,7 @@ const Customer = () => {
                         autoComplete="off"
                         min={0}
                     />
-                    
+
                     <TextField
                         label="Maximum (Less than)"
                         type="number"
@@ -220,14 +220,14 @@ const Customer = () => {
             6: 'points_spent',
             7: 'registration_date'
         };
-        
+
         // Use id if provided, otherwise use headingIndex mapping
         const columnId = id || columnMap[headingIndex];
-        
+
         if (columnId) {
             // Check if clicking the same column - if so, toggle direction
             let newDirection = 'ascending';
-            
+
             if (sortStateRef.current.column === columnId) {
                 // Same column - toggle direction
                 newDirection = sortStateRef.current.direction === 'ascending' ? 'descending' : 'ascending';
@@ -235,10 +235,10 @@ const Customer = () => {
                 // New column - start with ascending
                 newDirection = 'ascending';
             }
-            
+
             // Update ref
             sortStateRef.current = { column: columnId, direction: newDirection };
-            
+
             // Update state - NOTE: sortColumn and sortDirection are NOT in useEffect dependencies
             // so changing these will NOT trigger API calls - sorting is purely client-side
             setSortColumn(columnId);
@@ -272,17 +272,17 @@ const Customer = () => {
                     // Date comparison - handle various date formats
                     let aDate = 0;
                     let bDate = 0;
-                    
+
                     if (aValue) {
                         const dateA = new Date(aValue);
                         aDate = isNaN(dateA.getTime()) ? 0 : dateA.getTime();
                     }
-                    
+
                     if (bValue) {
                         const dateB = new Date(bValue);
                         bDate = isNaN(dateB.getTime()) ? 0 : dateB.getTime();
                     }
-                    
+
                     const comparison = aDate - bDate;
                     return sortDirection === 'ascending' ? comparison : -comparison;
                 } else {
@@ -334,11 +334,12 @@ const Customer = () => {
                 filterObject.points_max = pointsRange.max || "";
                 filterObject.points_spent_min = pointsSpentRange.min || "";
                 filterObject.points_spent_max = pointsSpentRange.max || "";
-            } else if (customerType === 'guest') {
-                // Guests: hide points_min, points_max, points_spent_min, points_spent_max
-                filterObject.referrals_min = referralsRange.min || "";
-                filterObject.referrals_max = referralsRange.max || "";
             }
+            // else if (customerType === 'guest') {
+            //     Guests: hide points_min, points_max, points_spent_min, points_spent_max
+            //     filterObject.referrals_min = referralsRange.min || "";
+            //     filterObject.referrals_max = referralsRange.max || "";
+            // }
             // If customerType is blank/undefined: only date and orders (already added above)
 
             formData.append("filters", JSON.stringify(filterObject));
@@ -584,7 +585,9 @@ const Customer = () => {
         }
         // If status is guest: hide pointsRange and pointsSpentRange
         if (customerType === 'guest') {
-            return filter.key !== 'pointsRange' && filter.key !== 'pointsSpentRange';
+            return filter.key !== 'pointsRange' &&
+                filter.key !== 'pointsSpentRange' &&
+                filter.key !== 'referralsRange';
         }
         // If status is member: show everything
         return true;
@@ -621,7 +624,7 @@ const Customer = () => {
 
     if (nameFilter) appliedFilters.push({ key: 'nameFilter', label: `Name is "${nameFilter}"`, onRemove: handleNameFilterRemove });
     if (customerType) appliedFilters.push({ key: 'statusFilter', label: `Status is ${customerType}`, onRemove: handleStatusFilterRemove });
-    
+
     // Conditionally show filters based on customerType
     if (customerType === 'member') {
         // Members: show all filters
@@ -631,7 +634,7 @@ const Customer = () => {
         if (pointsSpentRange.min || pointsSpentRange.max) appliedFilters.push({ key: 'pointsSpentRange', label: `Points Spent ${getRangeLabel(pointsSpentRange)}`, onRemove: handlePointsSpentRangeRemove });
     } else if (customerType === 'guest') {
         // Guests: hide points and pointsSpent
-        if (referralsRange.min || referralsRange.max) appliedFilters.push({ key: 'referralsRange', label: `Referrals ${getRangeLabel(referralsRange)}`, onRemove: handleReferralsRangeRemove });
+        // if (referralsRange.min || referralsRange.max) appliedFilters.push({ key: 'referralsRange', label: `Referrals ${getRangeLabel(referralsRange)}`, onRemove: handleReferralsRangeRemove });
         if (ordersRange.min || ordersRange.max) appliedFilters.push({ key: 'ordersRange', label: `Orders ${getRangeLabel(ordersRange)}`, onRemove: handleOrdersRangeRemove });
     } else {
         // Blank/undefined: only show orders
@@ -639,27 +642,31 @@ const Customer = () => {
     }
 
     // --- Table Row Markup ---
-    const rowMarkup = sortedCustomers.map((val, index) => (
-        <IndexTable.Row
-            id={val.shopify_cust_id}
-            key={val.shopify_cust_id}
-            position={index}
-            onClick={() => navigate(`/customer/customerView`, { state: { id: val.shopify_cust_id } })}
-        >
-            <IndexTable.Cell><Text variant='bodyMd' as="span">{val.email}</Text></IndexTable.Cell>
-            <IndexTable.Cell><Text variant='bodyMd' as="span">{val.name}</Text></IndexTable.Cell>
-            <IndexTable.Cell><Text variant='bodyMd' as="span">{val.source}</Text></IndexTable.Cell>
-            <IndexTable.Cell><Text variant='bodyMd' as="span">{val.referral_used}</Text></IndexTable.Cell>
-            <IndexTable.Cell><Text variant='bodyMd' as="span">{val.points_balance}</Text></IndexTable.Cell>
-            <IndexTable.Cell><Text variant='bodyMd' as="span">{val.orders_count}</Text></IndexTable.Cell>
-            <IndexTable.Cell><Text variant='bodyMd' as="span">{val.points_spent}</Text></IndexTable.Cell>
-            <IndexTable.Cell><Text variant='bodyMd' as="span"> {formatShortDate(val.registration_date)}</Text></IndexTable.Cell>
-        </IndexTable.Row >
-    ));
+    const rowMarkup = sortedCustomers.map((val, index) => {
+        const isGuest = val.source && val.source.toLowerCase() === 'guest';
+
+        return (
+            <IndexTable.Row
+                id={val.shopify_cust_id}
+                key={val.shopify_cust_id}
+                position={index} 
+                onClick={isGuest ? undefined : () => navigate(`/customer/customerView`, { state: { id: val.shopify_cust_id } })}
+            >
+                <IndexTable.Cell><Text variant='bodyMd' as="span">{val.email}</Text></IndexTable.Cell>
+                <IndexTable.Cell><Text variant='bodyMd' as="span">{val.name}</Text></IndexTable.Cell>
+                <IndexTable.Cell><Text variant='bodyMd' as="span">{val.source}</Text></IndexTable.Cell>
+                <IndexTable.Cell><Text variant='bodyMd' as="span">{val.referral_used}</Text></IndexTable.Cell>
+                <IndexTable.Cell><Text variant='bodyMd' as="span">{val.points_balance}</Text></IndexTable.Cell>
+                <IndexTable.Cell><Text variant='bodyMd' as="span">{val.orders_count}</Text></IndexTable.Cell>
+                <IndexTable.Cell><Text variant='bodyMd' as="span">{val.points_spent}</Text></IndexTable.Cell>
+                <IndexTable.Cell><Text variant='bodyMd' as="span"> {formatShortDate(val.registration_date)}</Text></IndexTable.Cell>
+            </IndexTable.Row >
+        );
+    });
 
     return (
         <Page title="Customers"
-            // secondaryActions={<Select label="Filter customers by type" options={customerTypeOptions} onChange={setCustomerType} value={customerType} />}
+        // secondaryActions={<Select label="Filter customers by type" options={customerTypeOptions} onChange={setCustomerType} value={customerType} />}
         >
             <Card padding="0">
                 <div>
@@ -682,7 +689,7 @@ const Customer = () => {
                 <IndexTable
                     sortable={[false, true, false, true, true, true, true, true]}
                     resourceName={{ singular: 'customer', plural: 'customers' }}
-                    itemCount={sortedCustomers.length}
+                    itemCount={loading ? 8 : sortedCustomers.length}
                     selectable={false}
                     headings={[
                         { title: 'Email' },

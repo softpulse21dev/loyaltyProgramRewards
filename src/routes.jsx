@@ -5,6 +5,7 @@ import {
     useLocation,
 } from "react-router-dom";
 import CustomerView from "./pages/customer/CustomerView";
+import Widget from "./pages/onsite/Widget";
 
 /**
  * File-based routing.
@@ -32,6 +33,7 @@ export default function Routes({ pages }) {
                 element={<Navigate to={`/dashboard${location.search}`} replace />}
             />
             <Route path="/customer/customerView" element={<CustomerView />} />
+            <Route path="/onsite/widget" element={<Widget />} />
 
             {routeComponents}
 

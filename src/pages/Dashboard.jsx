@@ -1,41 +1,59 @@
 import { ActionList, Banner, BlockStack, Box, Button, Card, Collapsible, Grid, Layout, MediaCard, Page, Popover, Text, VideoThumbnail } from '@shopify/polaris'
 import { PlayCircleIcon } from '@shopify/polaris-icons';
-import { useCallback, useState } from 'react'
+import { useCallback, useEffect, useState } from 'react'
+import { fetchData } from '../action';
+import DateRangePicker from '../components/DateRangePicker';
 
 const Dashboard = () => {
     const [active, setActive] = useState(false);
     const [loyaltyStatus, setLoyaltyStatus] = useState(false);
+    const [dashboardData, setDashboardData] = useState({
+        new_members: 0,
+        orders_from_member: 0,
+        rewards_claimed: 0,
+        points_generated: 0,
+        retention_revenue: 0,
+        total_sales: 0,
+        filters: {
+            start_date: '',
+            end_date: ''
+        }
+    });
+    const today = new Date(new Date().setHours(0, 0, 0, 0));
+    const since = new Date(today);
+    const formatDate = (date) =>
+        `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')}`;
+    const [inputValues, setInputValues] = useState({
+        since: formatDate(since),
+        until: formatDate(today),
+    });
+
     const activator = <Button onClick={() => setActive(!active)} disclosure="down">Open</Button>;
     const toggleActive = () => setActive(!active);
     const handleImportedAction = () => console.log('Imported');
     const handleExportedAction = () => console.log('Exported');
     const [open, setOpen] = useState(true);
     const handleToggle = useCallback(() => setOpen((open) => !open), []);
+
+    const fetchDashboardAPI = useCallback(async () => {
+        const formData = new FormData();
+        formData.append("start_date", inputValues.since);
+        formData.append("end_date", inputValues.until);
+        const response = await fetchData("/get-dashboard-summary", formData);
+        console.log('Dashboardresponse', response);
+        if (response) {
+            setDashboardData(response.data);
+        }
+    }, [inputValues]);
+
+    useEffect(() => {
+        fetchDashboardAPI();
+    }, [fetchDashboardAPI]);
+
     return (
         <Page
             title='Dashboard'
-            primaryAction={
-                <Popover
-                    active={active}
-                    activator={activator}
-                    autofocusTarget="first-node"
-                    onClose={toggleActive}
-                >
-                    <ActionList
-                        actionRole="menuitem"
-                        items={[
-                            {
-                                content: 'Yesterday',
-                                onAction: handleImportedAction,
-                            },
-                            {
-                                content: 'Today',
-                                onAction: handleExportedAction,
-                            },
-                        ]}
-                    />
-                </Popover>
-            }
+            primaryAction={<DateRangePicker inputValues={inputValues} setInputValues={setInputValues} />}
         >
             <Box>
                 <BlockStack gap="500">
@@ -78,7 +96,7 @@ const Dashboard = () => {
                                         <Card>
                                             <Box style={styles.dashboardCardInfo}>
                                                 <Text variant="bodyLg">Total Sales Generated</Text>
-                                                <Text variant="headingLg">₹0.00</Text>
+                                                <Text variant="headingLg">₹{dashboardData?.total_sales}</Text>
                                             </Box>
                                         </Card>
                                     </Grid.Cell>
@@ -86,7 +104,7 @@ const Dashboard = () => {
                                         <Card>
                                             <Box style={styles.dashboardCardInfo}>
                                                 <Text variant="bodyLg">Retention Revenue</Text>
-                                                <Text variant="headingLg">₹0.00</Text>
+                                                <Text variant="headingLg">₹{dashboardData?.retention_revenue}</Text>
                                             </Box>
                                         </Card>
                                     </Grid.Cell>
@@ -113,7 +131,7 @@ const Dashboard = () => {
                                         <Card>
                                             <Box style={styles.dashboardCardInfo}>
                                                 <Text variant="bodyLg">Points generated</Text>
-                                                <Text variant="headingLg">₹0.00</Text>
+                                                <Text variant="headingLg">{dashboardData?.points_generated}</Text>
                                             </Box>
                                         </Card>
                                     </Grid.Cell>
@@ -121,7 +139,7 @@ const Dashboard = () => {
                                         <Card>
                                             <Box style={styles.dashboardCardInfo}>
                                                 <Text variant="bodyLg">New members</Text>
-                                                <Text variant="headingLg">₹0.00</Text>
+                                                <Text variant="headingLg">{dashboardData?.new_members}</Text>
                                             </Box>
                                         </Card>
                                     </Grid.Cell>
@@ -135,7 +153,7 @@ const Dashboard = () => {
                                         <Card>
                                             <Box style={styles.dashboardCardInfo}>
                                                 <Text variant="bodyLg">Rewards claimed</Text>
-                                                <Text variant="headingLg">₹0.00</Text>
+                                                <Text variant="headingLg">{dashboardData?.rewards_claimed}</Text>
                                             </Box>
                                         </Card>
                                     </Grid.Cell>
@@ -143,7 +161,7 @@ const Dashboard = () => {
                                         <Card>
                                             <Box style={styles.dashboardCardInfo}>
                                                 <Text variant="bodyLg">Orders from referrals</Text>
-                                                <Text variant="headingLg">₹0.00</Text>
+                                                <Text variant="headingLg">{dashboardData?.orders_from_referral}</Text>
                                             </Box>
                                         </Card>
                                     </Grid.Cell>
@@ -163,11 +181,10 @@ const Dashboard = () => {
                         <div className="accordian-title">
                             <Button
                                 variant="monochromePlain"
-                                disclosure={open ? 'down' : 'up'}
+                                disclosure={open ? 'up' : 'down'}
                                 onClick={() => {
                                     handleToggle();
                                 }}
-                                // aria-expanded={open}
                                 aria-controls="basic-collapsible"
                                 fullWidth
                                 textAlign="left"

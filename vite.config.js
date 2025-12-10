@@ -10,7 +10,7 @@ export default defineConfig({
   server: {
     historyApiFallback: true,
     hmr: {
-      host: "30eab73b1845.ngrok-free.app",
+      host: "fruitier-ramentaceous-bunny.ngrok-free.dev",
       protocol: "wss",
     },
   },

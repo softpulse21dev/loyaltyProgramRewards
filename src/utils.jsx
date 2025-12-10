@@ -113,4 +113,61 @@ export const openSocialShare = (platform, urlToShare) => {
     }
 };
 
+// Helper functions to convert between Hex and HSB
+export const hexToHsb = (hex) => {
+    // Remove # if present
+    hex = hex.replace('#', '');
+
+    // Parse hex to RGB
+    const r = parseInt(hex.substring(0, 2), 16) / 255;
+    const g = parseInt(hex.substring(2, 4), 16) / 255;
+    const b = parseInt(hex.substring(4, 6), 16) / 255;
+
+    const max = Math.max(r, g, b);
+    const min = Math.min(r, g, b);
+    const delta = max - min;
+
+    let h = 0;
+    let s = max === 0 ? 0 : delta / max;
+    let v = max;
+
+    if (delta !== 0) {
+        if (max === r) {
+            h = ((g - b) / delta) % 6;
+        } else if (max === g) {
+            h = (b - r) / delta + 2;
+        } else {
+            h = (r - g) / delta + 4;
+        }
+        h = Math.round(h * 60);
+        if (h < 0) h += 360;
+    }
+
+    return { hue: h, saturation: s, brightness: v };
+};
+
+export const hsbToHex = (hsb) => {
+    const { hue, saturation, brightness } = hsb;
+    const h = hue / 60;
+    const c = brightness * saturation;
+    const x = c * (1 - Math.abs(h % 2 - 1));
+    const m = brightness - c;
+
+    let r = 0, g = 0, b = 0;
+
+    if (h >= 0 && h < 1) { r = c; g = x; b = 0; }
+    else if (h >= 1 && h < 2) { r = x; g = c; b = 0; }
+    else if (h >= 2 && h < 3) { r = 0; g = c; b = x; }
+    else if (h >= 3 && h < 4) { r = 0; g = x; b = c; }
+    else if (h >= 4 && h < 5) { r = x; g = 0; b = c; }
+    else { r = c; g = 0; b = x; }
+
+    const toHex = (val) => {
+        const hex = Math.round((val + m) * 255).toString(16);
+        return hex.length === 1 ? '0' + hex : hex;
+    };
+
+    return `#${toHex(r)}${toHex(g)}${toHex(b)}`;
+};
+
 // https://docs.google.com/document/d/11SHYSidCKFvxceiOE4-DTzvc3UthlGxb2JsLCY6i5rc/edit?hl=en-GB&forcehl=1&tab=t.sxv4ttgt6n4c

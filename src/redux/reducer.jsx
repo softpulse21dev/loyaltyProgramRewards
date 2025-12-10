@@ -47,9 +47,10 @@ export const merchantSettingsIdReducer = (state = initialState, action) => {
                 Data: state.Data.filter(item => item.clientId !== action.payload),
             };
         case SET_DATA: {
-            const dataWithClientIds = action.payload.map(item => ({
+            // Generate clientId only for items that don't already have one
+            const dataWithClientIds = action.payload.map((item, index) => ({
                 ...item,
-                clientId: `client-${Date.now()}-${Math.random()}`
+                clientId: item.clientId || `client-${Date.now()}-${index}-${Math.random().toString(36).substr(2, 9)}`
             }));
             return {
                 ...state,
@@ -58,19 +59,33 @@ export const merchantSettingsIdReducer = (state = initialState, action) => {
         }
         case ADD_DATA: {
             const currentData = Array.isArray(state.Data) ? state.Data : [];
+            // Generate clientId for new items being added
+            const newDataWithClientIds = action.payload.map((item, index) => ({
+                ...item,
+                clientId: item.clientId || `client-${Date.now()}-${index}-${Math.random().toString(36).substr(2, 9)}`
+            }));
             return {
                 ...state,
-                Data: [...currentData, ...action.payload],
+                Data: [...currentData, ...newDataWithClientIds],
             };
         }
         case UPDATE_DATA: {
-            if (!Array.isArray(state.Data)) return state; // Safety check
+            if (!Array.isArray(state.Data)) {
+                return state;
+            }
             return {
                 ...state,
-                Data: state.Data.map(item =>
-                    // Match by our new clientId instead of a non-existent 'id'
-                    item.clientId === action.payload.clientId ? action.payload : item
-                ),
+                Data: state.Data.map(item => {
+                    if (item.clientId === action.payload.clientId) {
+                        // Preserve the original clientId, update other fields
+                        const updatedItem = {
+                            ...action.payload,
+                            clientId: item.clientId // Ensure clientId is preserved
+                        };
+                        return updatedItem;
+                    }
+                    return item;
+                }),
             };
         }
         case REMOVE_DATA:
