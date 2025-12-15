@@ -1,13 +1,12 @@
 import { BlockStack, Box, Button, ButtonGroup, Card, Collapsible, Divider, Grid, RadioButton, RangeSlider, Text, TextField } from '@shopify/polaris'
 import { DeleteIcon, UploadIcon } from '@shopify/polaris-icons';
-import React, { useCallback, useState } from 'react'
+import React, { useCallback, useState, useMemo, useEffect } from 'react'
 import ColorPickerInput from '../../../components/ColorPickerInput';
 import { StarIcon } from '../../../assets/svg/svg';
 
-const StoreFront = ({ widgetData, setWidgetData }) => {
+const StoreFront = ({ widgetData, setWidgetData, errors = {}, clearError, openCollapsible, setOpenCollapsible }) => {
 
     const [isEnabled, setIsEnabled] = useState(true);
-    const [openCollapsible, setOpenCollapsible] = useState('header'); // 'header' or 'content' or null - 'header' open by default
 
     // Handler to switch between Enable and Disable
     const handleStatusChange = useCallback((status) => {
@@ -21,7 +20,20 @@ const StoreFront = ({ widgetData, setWidgetData }) => {
     // Handler to toggle collapsibles - only one can be open at a time
     const handleToggle = useCallback((section) => {
         setOpenCollapsible((prev) => (prev === section ? null : section));
-    }, []);
+    }, [setOpenCollapsible]);
+
+    // Helper function to get error message
+    const getErrorMessage = useCallback((fieldPath) => {
+        return errors[fieldPath] || '';
+    }, [errors]);
+
+    // Helper function to handle field change and clear error
+    const handleFieldChange = useCallback((fieldPath, value, updateFn) => {
+        updateFn(value);
+        if (clearError) {
+            clearError(fieldPath);
+        }
+    }, [clearError]);
 
     // helper variables for widget styles
     const stylesData = widgetData?.general?.styles || {};
@@ -34,13 +46,13 @@ const StoreFront = ({ widgetData, setWidgetData }) => {
     const headerColor = stylesData.header?.solid;
     const headerGradientColor1 = stylesData.header?.gradient?.color1;
     const headerGradientColor2 = stylesData.header?.gradient?.color2;
-    const headerImage = stylesData.header?.image;
+    const headerImage = stylesData.header?.header_image;
     const headerBarColor = stylesData.header?.header_bar_color;
     const headerBarTextColor = stylesData.header?.header_bar_text_color;
     const headerTextColor = stylesData.header?.text_color;
     const contentBackgroundColorType = stylesData.content?.background_type;
     const backgroundColor = stylesData.content?.solid;
-    const backgroundImage = stylesData.content?.image;
+    const backgroundImage = stylesData.content?.content_image;
     const headingColor = stylesData.content?.heading_color;
     const textColor = stylesData.content?.text_color;
     const buttonTextColor = stylesData.accent?.button_text_color;
@@ -51,18 +63,22 @@ const StoreFront = ({ widgetData, setWidgetData }) => {
     const progressBarFill = advancedData.section?.progress_bar_fill;
     const progressBarBackground = advancedData.section?.progress_bar_background;
     const sectionBackgroundColor = advancedData.section?.background_color;
-    const cardBorderColor = advancedData.section?.card_border_color;
-    const cardBorderWidth = advancedData.section?.card_border_width;
-    const borderRadius = advancedData.section?.border_radius;
+    const sectionBorderColor = advancedData.section?.card_border_color;
+    const sectionBorderWidth = advancedData.section?.card_border_width;
+    const sectionBorderRadius = advancedData.section?.border_radius;
     const inputFieldColor = advancedData.input?.input_color;
     const inputBorderRadius = advancedData.input?.input_border_radius;
+    const cardBackgroundColor = advancedData.card?.background_color;
+    const cardBorderColor = advancedData.card?.border_color;
+    const cardBorderWidth = advancedData.card?.border_width;
+    const cardBorderRadius = advancedData.card?.border_radius;
 
     const headerBarText = storefrontData?.header?.header_bar_text;
     const headerText = storefrontData?.header?.header_text;
     const headerContent = storefrontData?.header?.header_content;
     const balanceText = storefrontData?.header?.balance_text;
     const imagePosition = storefrontData?.new_member_card?.image_position;
-    const newMemberCardImage = storefrontData?.new_member_card?.image;
+    const newMemberCardImage = storefrontData?.new_member_card?.new_member_image;
     const newMemberCardTitle = storefrontData?.new_member_card?.translations?.title;
     const newMemberCardButtonText = storefrontData?.new_member_card?.translations?.button_text;
     const newMemberCardSignInMessage = storefrontData?.new_member_card?.translations?.signin_msg;
@@ -81,42 +97,97 @@ const StoreFront = ({ widgetData, setWidgetData }) => {
     const vipTierCardMaxTierReached = storefrontData?.vip_tiers_card?.customer_tier?.max_tier;
     const vipTierCardAllTier = storefrontData?.vip_tiers_card?.all_tiers?.title;
 
+    // Memoize object URLs to prevent recreation on every render
+    const headerImageUrl = useMemo(() => {
+        if (!headerImage) return null;
+
+        if (typeof headerImage === 'string') {
+            return headerImage; // already a URL from backend
+        }
+
+        if (headerImage instanceof File || headerImage instanceof Blob) {
+            return URL.createObjectURL(headerImage);
+        }
+
+        return null;
+    }, [headerImage]);
+
+    const backgroundImageUrl = useMemo(() => {
+        if (!backgroundImage) return null;
+
+        if (typeof backgroundImage === 'string') {
+            return backgroundImage; // already a URL from backend
+        }
+
+        if (backgroundImage instanceof File || backgroundImage instanceof Blob) {
+            return URL.createObjectURL(backgroundImage);
+        }
+        return null;
+    }, [backgroundImage]);
+
+    const newMemberCardImageUrl = useMemo(() => {
+        if (!newMemberCardImage) return null;
+
+        if (typeof newMemberCardImage === 'string') {
+            return newMemberCardImage; // already a URL from backend
+        }
+
+        if (newMemberCardImage instanceof File || newMemberCardImage instanceof Blob) {
+            return URL.createObjectURL(newMemberCardImage);
+        }
+        return null;
+    }, [newMemberCardImage]);
+
+    // Cleanup object URLs when component unmounts or images change
+    useEffect(() => {
+        return () => {
+            if (headerImageUrl) URL.revokeObjectURL(headerImageUrl);
+        };
+    }, [headerImageUrl]);
+
+    useEffect(() => {
+        return () => {
+            if (backgroundImageUrl) URL.revokeObjectURL(backgroundImageUrl);
+        };
+    }, [backgroundImageUrl]);
+
+    useEffect(() => {
+        return () => {
+            if (newMemberCardImageUrl) URL.revokeObjectURL(newMemberCardImageUrl);
+        };
+    }, [newMemberCardImageUrl]);
 
     // Compute header background based on selected type
-    const getHeaderBackground = () => {
+    const headerBackgroundStyle = useMemo(() => {
         switch (headerType) {
             case 'solid':
                 return { background: headerColor };
             case 'gradient':
                 return { background: `linear-gradient(270deg, ${headerGradientColor1} 0%, ${headerGradientColor2} 100%)` };
             case 'image':
-                return headerImage
-                    ? { backgroundImage: `url(${URL.createObjectURL(headerImage)})`, backgroundSize: 'cover', backgroundPosition: 'center' }
+                return headerImageUrl
+                    ? { backgroundImage: `url(${headerImageUrl})`, backgroundSize: 'cover', backgroundPosition: 'center' }
                     : { background: headerColor };
             default:
                 return { background: headerColor };
         }
-    };
-
-    const headerBackgroundStyle = getHeaderBackground();
+    }, [headerType, headerColor, headerGradientColor1, headerGradientColor2, headerImageUrl]);
 
     // Compute content/body background based on selected type
-    const getContentBackground = () => {
+    const contentBackgroundStyle = useMemo(() => {
         switch (contentBackgroundColorType) {
             case 'solid':
                 return { background: backgroundColor };
             case 'gradient':
                 return { background: `linear-gradient(180deg, ${backgroundColor} 0%, #ffffff 100%)` };
             case 'image':
-                return backgroundImage
-                    ? { backgroundImage: `url(${URL.createObjectURL(backgroundImage)})`, backgroundSize: 'cover', backgroundPosition: 'center' }
+                return backgroundImageUrl
+                    ? { backgroundImage: `url(${backgroundImageUrl})`, backgroundSize: 'cover', backgroundPosition: 'center' }
                     : { background: backgroundColor };
             default:
                 return { background: backgroundColor };
         }
-    };
-
-    const contentBackgroundStyle = getContentBackground();
+    }, [contentBackgroundColorType, backgroundColor, backgroundImageUrl]);
 
 
 
@@ -173,22 +244,26 @@ const StoreFront = ({ widgetData, setWidgetData }) => {
                                     <TextField
                                         label="Header bar text"
                                         value={headerBarText}
-                                        onChange={(value) => setWidgetData({ ...widgetData, storefront_app: { ...storefrontData, header: { ...storefrontData.header, header_bar_text: value } } })}
+                                        onChange={(value) => handleFieldChange('storefront.header.header_bar_text', value, (v) => setWidgetData({ ...widgetData, storefront_app: { ...storefrontData, header: { ...storefrontData.header, header_bar_text: v } } }))}
+                                        error={getErrorMessage('storefront.header.header_bar_text') ? true : null}
                                     />
                                     <TextField
                                         label="Header text"
                                         value={headerText}
-                                        onChange={(value) => setWidgetData({ ...widgetData, storefront_app: { ...storefrontData, header: { ...storefrontData.header, header_text: value } } })}
+                                        onChange={(value) => handleFieldChange('storefront.header.header_text', value, (v) => setWidgetData({ ...widgetData, storefront_app: { ...storefrontData, header: { ...storefrontData.header, header_text: v } } }))}
+                                        error={getErrorMessage('storefront.header.header_text') ? true : null}
                                     />
                                     <TextField
                                         label="Header content"
                                         value={headerContent}
-                                        onChange={(value) => setWidgetData({ ...widgetData, storefront_app: { ...storefrontData, header: { ...storefrontData.header, header_content: value } } })}
+                                        onChange={(value) => handleFieldChange('storefront.header.header_content', value, (v) => setWidgetData({ ...widgetData, storefront_app: { ...storefrontData, header: { ...storefrontData.header, header_content: v } } }))}
+                                        error={getErrorMessage('storefront.header.header_content') ? true : null}
                                     />
                                     <TextField
                                         label="Balance"
                                         value={balanceText}
-                                        onChange={(value) => setWidgetData({ ...widgetData, storefront_app: { ...storefrontData, header: { ...storefrontData.header, balance_text: value } } })}
+                                        onChange={(value) => handleFieldChange('storefront.header.balance_text', value, (v) => setWidgetData({ ...widgetData, storefront_app: { ...storefrontData, header: { ...storefrontData.header, balance_text: v } } }))}
+                                        error={getErrorMessage('storefront.header.balance_text') ? true : null}
                                     />
                                 </BlockStack>
 
@@ -219,6 +294,7 @@ const StoreFront = ({ widgetData, setWidgetData }) => {
                                     <text>Image or logo (optional)</text>
                                     {/* Dashed border upload area - shows preview if image uploaded */}
                                     <div
+                                        onMouseDown={() => setIsEnabled(true)}
                                         onClick={() => document.getElementById('new-member-card-image-input').click()}
                                         style={{
                                             border: '1px dashed #c4cdd5',
@@ -234,7 +310,7 @@ const StoreFront = ({ widgetData, setWidgetData }) => {
                                             overflow: 'hidden'
                                         }}
                                     >
-                                        {newMemberCardImage instanceof File || newMemberCardImage instanceof Blob ? (
+                                        {newMemberCardImageUrl ? (
                                             // Show image preview inside the picker
                                             <div style={{
                                                 display: 'flex',
@@ -244,8 +320,8 @@ const StoreFront = ({ widgetData, setWidgetData }) => {
                                                 width: '100%'
                                             }}>
                                                 <img
-                                                    src={window.URL.createObjectURL(newMemberCardImage)}
-                                                    alt={newMemberCardImage.name}
+                                                    src={newMemberCardImageUrl}
+                                                    alt={newMemberCardImage}
                                                     style={{
                                                         maxWidth: '100%',
                                                         maxHeight: '100%',
@@ -274,9 +350,9 @@ const StoreFront = ({ widgetData, setWidgetData }) => {
                                                     const allowedTypes = ['image/jpeg', 'image/png', 'image/svg+xml'];
                                                     const allowedExtensions = ['.jpg', '.jpeg', '.png', '.svg'];
                                                     const fileExtension = '.' + file.name.split('.').pop().toLowerCase();
-                                                    
+
                                                     if (allowedTypes.includes(file.type) || allowedExtensions.includes(fileExtension)) {
-                                                        setWidgetData({ ...widgetData, storefront_app: { ...widgetData.storefront_app, new_member_card: { ...widgetData.storefront_app.new_member_card, image: file } } })
+                                                        setWidgetData({ ...widgetData, storefront_app: { ...widgetData.storefront_app, new_member_card: { ...widgetData.storefront_app.new_member_card, new_member_image: file } } })
                                                     } else {
                                                         alert('Please upload only JPG, JPEG, PNG, or SVG images.');
                                                     }
@@ -289,12 +365,12 @@ const StoreFront = ({ widgetData, setWidgetData }) => {
 
                                     {/* Upload image and Delete buttons */}
                                     <Box style={{ display: 'flex', alignItems: 'center', gap: '8px', marginTop: '0px' }}>
-                                        {newMemberCardImage && (
-                                            <Button tone="critical" icon={DeleteIcon} onClick={() => setWidgetData({ ...widgetData, storefront_app: { ...widgetData.storefront_app, new_member_card: { ...widgetData.storefront_app.new_member_card, image: null } } })}>
+                                        {newMemberCardImageUrl && (
+                                            <Button tone="critical" icon={DeleteIcon} onClick={() => setWidgetData({ ...widgetData, storefront_app: { ...widgetData.storefront_app, new_member_card: { ...widgetData.storefront_app.new_member_card, new_member_image: null } } })}>
                                                 Delete
                                             </Button>
                                         )}
-                                        <Button icon={UploadIcon} onClick={() => document.getElementById('new-member-card-image-input').click()}>
+                                        <Button onFocus={() => setIsEnabled(true)} icon={UploadIcon} onClick={() => document.getElementById('new-member-card-image-input').click()}>
                                             Upload image
                                         </Button>
                                     </Box>
@@ -310,6 +386,7 @@ const StoreFront = ({ widgetData, setWidgetData }) => {
                                         name="imagePositionType"
                                         checked={imagePosition === 'full-width'}
                                         onChange={() => setWidgetData({ ...widgetData, storefront_app: { ...widgetData.storefront_app, new_member_card: { ...widgetData.storefront_app.new_member_card, image_position: 'full-width' } } })}
+                                        onFocus={() => setIsEnabled(true)}
                                     />
                                     <RadioButton
                                         label="Centered"
@@ -317,6 +394,7 @@ const StoreFront = ({ widgetData, setWidgetData }) => {
                                         name="imagePositionType"
                                         checked={imagePosition === 'centered'}
                                         onChange={() => setWidgetData({ ...widgetData, storefront_app: { ...widgetData.storefront_app, new_member_card: { ...widgetData.storefront_app.new_member_card, image_position: 'centered' } } })}
+                                        onFocus={() => setIsEnabled(true)}
                                     />
                                 </Box>
 
@@ -329,22 +407,30 @@ const StoreFront = ({ widgetData, setWidgetData }) => {
                                     <TextField
                                         label="Member card title"
                                         value={newMemberCardTitle}
-                                        onChange={(value) => setWidgetData({ ...widgetData, storefront_app: { ...widgetData.storefront_app, new_member_card: { ...widgetData.storefront_app.new_member_card, translations: { ...widgetData.storefront_app.new_member_card.translations, title: value } } } })}
+                                        onChange={(value) => handleFieldChange('storefront.new_member_card.title', value, (v) => setWidgetData({ ...widgetData, storefront_app: { ...widgetData.storefront_app, new_member_card: { ...widgetData.storefront_app.new_member_card, translations: { ...widgetData.storefront_app.new_member_card.translations, title: v } } } }))}
+                                        error={getErrorMessage('storefront.new_member_card.title') ? true : null}
+                                        onFocus={() => setIsEnabled(true)}
                                     />
                                     <TextField
                                         label="Button text"
                                         value={newMemberCardButtonText}
-                                        onChange={(value) => setWidgetData({ ...widgetData, storefront_app: { ...widgetData.storefront_app, new_member_card: { ...widgetData.storefront_app.new_member_card, translations: { ...widgetData.storefront_app.new_member_card.translations, button_text: value } } } })}
+                                        onChange={(value) => handleFieldChange('storefront.new_member_card.button_text', value, (v) => setWidgetData({ ...widgetData, storefront_app: { ...widgetData.storefront_app, new_member_card: { ...widgetData.storefront_app.new_member_card, translations: { ...widgetData.storefront_app.new_member_card.translations, button_text: v } } } }))}
+                                        error={getErrorMessage('storefront.new_member_card.button_text') ? true : null}
+                                        onFocus={() => setIsEnabled(true)}
                                     />
                                     <TextField
                                         label="Sign-in message"
                                         value={newMemberCardSignInMessage}
-                                        onChange={(value) => setWidgetData({ ...widgetData, storefront_app: { ...widgetData.storefront_app, new_member_card: { ...widgetData.storefront_app.new_member_card, translations: { ...widgetData.storefront_app.new_member_card.translations, signin_msg: value } } } })}
+                                        onChange={(value) => handleFieldChange('storefront.new_member_card.signin_msg', value, (v) => setWidgetData({ ...widgetData, storefront_app: { ...widgetData.storefront_app, new_member_card: { ...widgetData.storefront_app.new_member_card, translations: { ...widgetData.storefront_app.new_member_card.translations, signin_msg: v } } } }))}
+                                        error={getErrorMessage('storefront.new_member_card.signin_msg') ? true : null}
+                                        onFocus={() => setIsEnabled(true)}
                                     />
                                     <TextField
                                         label="Sign-in link text"
                                         value={newMemberCardSignInLinkText}
-                                        onChange={(value) => setWidgetData({ ...widgetData, storefront_app: { ...widgetData.storefront_app, new_member_card: { ...widgetData.storefront_app.new_member_card, translations: { ...widgetData.storefront_app.new_member_card.translations, signin_text: value } } } })}
+                                        onChange={(value) => handleFieldChange('storefront.new_member_card.signin_text', value, (v) => setWidgetData({ ...widgetData, storefront_app: { ...widgetData.storefront_app, new_member_card: { ...widgetData.storefront_app.new_member_card, translations: { ...widgetData.storefront_app.new_member_card.translations, signin_text: v } } } }))}
+                                        error={getErrorMessage('storefront.new_member_card.signin_text') ? true : null}
+                                        onFocus={() => setIsEnabled(true)}
                                     />
 
                                 </Box>
@@ -378,28 +464,38 @@ const StoreFront = ({ widgetData, setWidgetData }) => {
                                     <TextField
                                         label="Points card title"
                                         value={pointsCardTitle}
-                                        onChange={(value) => setWidgetData({ ...widgetData, storefront_app: { ...widgetData.storefront_app, points_card: { ...widgetData.storefront_app.points_card, title: value } } })}
+                                        onChange={(value) => handleFieldChange('storefront.points_card.title', value, (v) => setWidgetData({ ...widgetData, storefront_app: { ...widgetData.storefront_app, points_card: { ...widgetData.storefront_app.points_card, title: v } } }))}
+                                        error={getErrorMessage('storefront.points_card.title') ? true : null}
+                                        onFocus={() => setIsEnabled(true)}
                                     />
                                     <TextField
                                         label="Points card message"
                                         value={pointsCardMessage}
                                         multiline={2}
-                                        onChange={(value) => setWidgetData({ ...widgetData, storefront_app: { ...widgetData.storefront_app, points_card: { ...widgetData.storefront_app.points_card, message: value } } })}
+                                        onChange={(value) => handleFieldChange('storefront.points_card.message', value, (v) => setWidgetData({ ...widgetData, storefront_app: { ...widgetData.storefront_app, points_card: { ...widgetData.storefront_app.points_card, message: v } } }))}
+                                        error={getErrorMessage('storefront.points_card.message') ? true : null}
+                                        onFocus={() => setIsEnabled(true)}
                                     />
                                     <TextField
                                         label="Ways to earn text"
                                         value={pointsCardWaysToEarnText}
-                                        onChange={(value) => setWidgetData({ ...widgetData, storefront_app: { ...widgetData.storefront_app, points_card: { ...widgetData.storefront_app.points_card, ways_to_earn_text: value } } })}
+                                        onChange={(value) => handleFieldChange('storefront.points_card.ways_to_earn_text', value, (v) => setWidgetData({ ...widgetData, storefront_app: { ...widgetData.storefront_app, points_card: { ...widgetData.storefront_app.points_card, ways_to_earn_text: v } } }))}
+                                        error={getErrorMessage('storefront.points_card.ways_to_earn_text') ? true : null}
+                                        onFocus={() => setIsEnabled(true)}
                                     />
                                     <TextField
                                         label="Ways to redeem text"
                                         value={pointsCardWaysToRedeemText}
-                                        onChange={(value) => setWidgetData({ ...widgetData, storefront_app: { ...widgetData.storefront_app, points_card: { ...widgetData.storefront_app.points_card, ways_to_redeem_text: value } } })}
+                                        onChange={(value) => handleFieldChange('storefront.points_card.ways_to_redeem_text', value, (v) => setWidgetData({ ...widgetData, storefront_app: { ...widgetData.storefront_app, points_card: { ...widgetData.storefront_app.points_card, ways_to_redeem_text: v } } }))}
+                                        error={getErrorMessage('storefront.points_card.ways_to_redeem_text') ? true : null}
+                                        onFocus={() => setIsEnabled(true)}
                                     />
                                     <TextField
                                         label="My rewards"
                                         value={pointsCardMyRewardsText}
-                                        onChange={(value) => setWidgetData({ ...widgetData, storefront_app: { ...widgetData.storefront_app, points_card: { ...widgetData.storefront_app.points_card, my_rewards: value } } })}
+                                        onChange={(value) => handleFieldChange('storefront.points_card.my_rewards', value, (v) => setWidgetData({ ...widgetData, storefront_app: { ...widgetData.storefront_app, points_card: { ...widgetData.storefront_app.points_card, my_rewards: v } } }))}
+                                        error={getErrorMessage('storefront.points_card.my_rewards') ? true : null}
+                                        onFocus={() => setIsEnabled(false)}
                                     />
                                 </Box>
                             </BlockStack>
@@ -431,13 +527,15 @@ const StoreFront = ({ widgetData, setWidgetData }) => {
                                     <TextField
                                         label="Referral card title"
                                         value={referralCardTitle}
-                                        onChange={(value) => setWidgetData({ ...widgetData, storefront_app: { ...widgetData.storefront_app, referrals_card: { ...widgetData.storefront_app.referrals_card, title: value } } })}
+                                        onChange={(value) => handleFieldChange('storefront.referrals_card.title', value, (v) => setWidgetData({ ...widgetData, storefront_app: { ...widgetData.storefront_app, referrals_card: { ...widgetData.storefront_app.referrals_card, title: v } } }))}
+                                        error={getErrorMessage('storefront.referrals_card.title') ? true : null}
                                     />
                                     <TextField
                                         label="Refferal card message"
                                         value={referralCardMessage}
                                         multiline={2}
-                                        onChange={(value) => setWidgetData({ ...widgetData, storefront_app: { ...widgetData.storefront_app, referrals_card: { ...widgetData.storefront_app.referrals_card, message: value } } })}
+                                        onChange={(value) => handleFieldChange('storefront.referrals_card.message', value, (v) => setWidgetData({ ...widgetData, storefront_app: { ...widgetData.storefront_app, referrals_card: { ...widgetData.storefront_app.referrals_card, message: v } } }))}
+                                        error={getErrorMessage('storefront.referrals_card.message') ? true : null}
                                     />
                                 </Box>
                             </BlockStack>
@@ -469,13 +567,17 @@ const StoreFront = ({ widgetData, setWidgetData }) => {
                                     <TextField
                                         label="VIP tiers title"
                                         value={vipTierCardTitle}
-                                        onChange={(value) => setWidgetData({ ...widgetData, storefront_app: { ...widgetData.storefront_app, vip_tiers_card: { ...widgetData.storefront_app.vip_tiers_card, title: value } } })}
+                                        onChange={(value) => handleFieldChange('storefront.vip_tiers_card.title', value, (v) => setWidgetData({ ...widgetData, storefront_app: { ...widgetData.storefront_app, vip_tiers_card: { ...widgetData.storefront_app.vip_tiers_card, title: v } } }))}
+                                        error={getErrorMessage('storefront.vip_tiers_card.title') ? true : null}
+                                        onFocus={() => setIsEnabled(true)}
                                     />
                                     <TextField
                                         label="VIP tiers message"
                                         value={vipTierCardMessage}
                                         multiline={2}
-                                        onChange={(value) => setWidgetData({ ...widgetData, storefront_app: { ...widgetData.storefront_app, vip_tiers_card: { ...widgetData.storefront_app.vip_tiers_card, message: value } } })}
+                                        onChange={(value) => handleFieldChange('storefront.vip_tiers_card.message', value, (v) => setWidgetData({ ...widgetData, storefront_app: { ...widgetData.storefront_app, vip_tiers_card: { ...widgetData.storefront_app.vip_tiers_card, message: v } } }))}
+                                        error={getErrorMessage('storefront.vip_tiers_card.message') ? true : null}
+                                        onFocus={() => setIsEnabled(true)}
                                     />
                                 </Box>
 
@@ -488,17 +590,23 @@ const StoreFront = ({ widgetData, setWidgetData }) => {
                                     <TextField
                                         label="Current tier"
                                         value={vipTierCardCurrentTier}
-                                        onChange={(value) => setWidgetData({ ...widgetData, storefront_app: { ...widgetData.storefront_app, vip_tiers_card: { ...widgetData.storefront_app.vip_tiers_card, customer_tier: { ...widgetData.storefront_app.vip_tiers_card.customer_tier, current_tier: value } } } })}
+                                        onChange={(value) => handleFieldChange('storefront.vip_tiers_card.current_tier', value, (v) => setWidgetData({ ...widgetData, storefront_app: { ...widgetData.storefront_app, vip_tiers_card: { ...widgetData.storefront_app.vip_tiers_card, customer_tier: { ...widgetData.storefront_app.vip_tiers_card.customer_tier, current_tier: v } } } }))}
+                                        error={getErrorMessage('storefront.vip_tiers_card.current_tier') ? true : null}
+                                        onFocus={() => setIsEnabled(false)}
                                     />
                                     <TextField
                                         label="Next tier"
                                         value={vipTierCardNextTier}
-                                        onChange={(value) => setWidgetData({ ...widgetData, storefront_app: { ...widgetData.storefront_app, vip_tiers_card: { ...widgetData.storefront_app.vip_tiers_card, customer_tier: { ...widgetData.storefront_app.vip_tiers_card.customer_tier, next_tier: value } } } })}
+                                        onChange={(value) => handleFieldChange('storefront.vip_tiers_card.next_tier', value, (v) => setWidgetData({ ...widgetData, storefront_app: { ...widgetData.storefront_app, vip_tiers_card: { ...widgetData.storefront_app.vip_tiers_card, customer_tier: { ...widgetData.storefront_app.vip_tiers_card.customer_tier, next_tier: v } } } }))}
+                                        error={getErrorMessage('storefront.vip_tiers_card.next_tier') ? true : null}
+                                        onFocus={() => setIsEnabled(false)}
                                     />
                                     <TextField
                                         label="Max tier reached"
                                         value={vipTierCardMaxTierReached}
-                                        onChange={(value) => setWidgetData({ ...widgetData, storefront_app: { ...widgetData.storefront_app, vip_tiers_card: { ...widgetData.storefront_app.vip_tiers_card, customer_tier: { ...widgetData.storefront_app.vip_tiers_card.customer_tier, max_tier: value } } } })}
+                                        onChange={(value) => handleFieldChange('storefront.vip_tiers_card.max_tier', value, (v) => setWidgetData({ ...widgetData, storefront_app: { ...widgetData.storefront_app, vip_tiers_card: { ...widgetData.storefront_app.vip_tiers_card, customer_tier: { ...widgetData.storefront_app.vip_tiers_card.customer_tier, max_tier: v } } } }))}
+                                        error={getErrorMessage('storefront.vip_tiers_card.max_tier') ? true : null}
+                                        onFocus={() => setIsEnabled(false)}
                                     />
                                 </Box>
 
@@ -511,7 +619,9 @@ const StoreFront = ({ widgetData, setWidgetData }) => {
                                     <TextField
                                         label="All tier"
                                         value={vipTierCardAllTier}
-                                        onChange={(value) => setWidgetData({ ...widgetData, storefront_app: { ...widgetData.storefront_app, vip_tiers_card: { ...widgetData.storefront_app.vip_tiers_card, all_tiers: { ...widgetData.storefront_app.vip_tiers_card.all_tiers, title: value } } } })}
+                                        onChange={(value) => handleFieldChange('storefront.vip_tiers_card.all_tiers', value, (v) => setWidgetData({ ...widgetData, storefront_app: { ...widgetData.storefront_app, vip_tiers_card: { ...widgetData.storefront_app.vip_tiers_card, all_tiers: { ...widgetData.storefront_app.vip_tiers_card.all_tiers, title: v } } } }))}
+                                        error={getErrorMessage('storefront.vip_tiers_card.all_tiers') ? true : null}
+                                        onFocus={() => setIsEnabled(false)}
                                     />
                                 </Box>
                             </BlockStack>
@@ -548,7 +658,7 @@ const StoreFront = ({ widgetData, setWidgetData }) => {
                                         margin: widgetData?.general?.styles?.presentation === 'popup' ? '50px auto' : '0px',
                                         marginLeft: widgetData?.general?.styles?.presentation === 'popup' ? 'auto' : (widgetData?.general?.styles?.position === 'left' ? '0px' : 'auto'),
                                         marginRight: widgetData?.general?.styles?.presentation === 'popup' ? 'auto' : (widgetData?.general?.styles?.position === 'right' ? '0px' : 'auto'),
-                                        borderRadius: borderRadius,
+                                        borderRadius: cardBorderRadius,
                                         boxShadow: '0 4px 12px rgba(0,0,0,0.15)',
                                         // overflow: 'hidden',
                                     }}>
@@ -587,9 +697,9 @@ const StoreFront = ({ widgetData, setWidgetData }) => {
                                         {isEnabled ?
                                             <>
                                                 {/* Join and Earn Rewards Card */}
-                                                <div style={{ marginTop: '-60px', backgroundColor: sectionBackgroundColor, border: `${cardBorderWidth}px solid ${cardBorderColor}`, padding: '20px', borderRadius: borderRadius, boxShadow: '0 4px 12px rgba(0,0,0,0.15)', overflow: 'hidden' }}>
+                                                <div style={{ marginTop: '-60px', backgroundColor: cardBackgroundColor, border: `${cardBorderWidth}px solid ${cardBorderColor}`, padding: '20px', borderRadius: cardBorderRadius, boxShadow: '0 4px 12px rgba(0,0,0,0.15)', overflow: 'hidden' }}>
                                                     <BlockStack gap="200" align="center">
-                                                        {newMemberCardImage && (newMemberCardImage instanceof File || newMemberCardImage instanceof Blob) ? (
+                                                        {newMemberCardImageUrl ? (
                                                             <div style={{
                                                                 display: 'flex',
                                                                 flexDirection: 'column',
@@ -600,8 +710,8 @@ const StoreFront = ({ widgetData, setWidgetData }) => {
 
                                                             }}>
                                                                 <img
-                                                                    src={window.URL.createObjectURL(newMemberCardImage)}
-                                                                    alt={newMemberCardImage.name}
+                                                                    src={newMemberCardImageUrl}
+                                                                    alt={newMemberCardImage}
                                                                     style={{
                                                                         maxWidth: imagePosition === 'full-width' ? '100%' : '120px',
                                                                         maxHeight: '100%',
@@ -610,7 +720,7 @@ const StoreFront = ({ widgetData, setWidgetData }) => {
                                                                     }}
                                                                 />
                                                             </div>
-                                                        ) : (null)}
+                                                        ) : null}
                                                         <text style={{ color: headingColor, fontSize: '16px', textAlign: 'center', fontWeight: '700', wordBreak: 'break-word', fontFamily: 'sans-serif' }}>
                                                             {newMemberCardTitle}
                                                         </text>
@@ -650,7 +760,8 @@ const StoreFront = ({ widgetData, setWidgetData }) => {
                                                                     onMouseLeave={e => {
                                                                         e.target.style.textDecoration = "none";
                                                                     }}
-                                                                >{newMemberCardSignInLinkText}</span>
+                                                                >{newMemberCardSignInLinkText}
+                                                                </span>
                                                             </Text>
                                                         </span>
 
@@ -659,7 +770,7 @@ const StoreFront = ({ widgetData, setWidgetData }) => {
                                                 </div>
 
                                                 {/* Earn Points Card */}
-                                                <div style={{ marginTop: '20px', border: `${cardBorderWidth}px solid ${cardBorderColor}`, padding: '16px', backgroundColor: sectionBackgroundColor, borderRadius: borderRadius, boxShadow: '0 4px 12px rgba(0,0,0,0.15)' }}>
+                                                <div style={{ marginTop: '20px', border: `${cardBorderWidth}px solid ${cardBorderColor}`, padding: '16px', backgroundColor: cardBackgroundColor, borderRadius: cardBorderRadius, boxShadow: '0 4px 12px rgba(0,0,0,0.15)' }}>
                                                     <BlockStack gap="300">
                                                         {/* Section Header */}
                                                         <div style={{ display: 'flex', flexDirection: 'column', textAlign: 'center', gap: '10px' }}>
@@ -744,7 +855,7 @@ const StoreFront = ({ widgetData, setWidgetData }) => {
                                                 </div>
 
                                                 {/* Referral Program Section */}
-                                                <div style={{ marginTop: '20px', border: `${cardBorderWidth}px solid ${cardBorderColor}`, padding: '20px', backgroundColor: sectionBackgroundColor, borderRadius: borderRadius, boxShadow: '0 4px 12px rgba(0,0,0,0.15)' }}>
+                                                <div style={{ marginTop: '20px', border: `${cardBorderWidth}px solid ${cardBorderColor}`, padding: '20px', backgroundColor: cardBackgroundColor, borderRadius: cardBorderRadius, boxShadow: '0 4px 12px rgba(0,0,0,0.15)' }}>
                                                     <BlockStack gap="300">
                                                         {/* Section Header */}
                                                         <div style={{ display: 'flex', flexDirection: 'column', textAlign: 'center', gap: '8px' }}>
@@ -773,7 +884,7 @@ const StoreFront = ({ widgetData, setWidgetData }) => {
                                                 </div>
 
                                                 {/* VIP Tiers Section */}
-                                                <div style={{ marginTop: '20px', border: `${cardBorderWidth}px solid ${cardBorderColor}`, padding: '20px', backgroundColor: sectionBackgroundColor, borderRadius: borderRadius, boxShadow: '0 4px 12px rgba(0,0,0,0.15)' }}>
+                                                <div style={{ marginTop: '20px', border: `${cardBorderWidth}px solid ${cardBorderColor}`, padding: '20px', backgroundColor: cardBackgroundColor, borderRadius: cardBorderRadius, boxShadow: '0 4px 12px rgba(0,0,0,0.15)' }}>
                                                     <BlockStack gap="200">
                                                         {/* Crown Icon and Title */}
                                                         <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', textAlign: 'center', gap: '8px' }}>
@@ -789,9 +900,10 @@ const StoreFront = ({ widgetData, setWidgetData }) => {
                                                         </div>
                                                     </BlockStack>
                                                 </div>
-                                            </> :
+                                            </>
+                                            :
                                             <>
-                                                <div style={{ marginTop: '-60px', backgroundColor: sectionBackgroundColor, border: `${cardBorderWidth}px solid ${cardBorderColor}`, padding: '16px', borderRadius: borderRadius, boxShadow: '0 4px 12px rgba(0,0,0,0.15)', overflow: 'hidden' }}>
+                                                <div style={{ marginTop: '-60px', backgroundColor: sectionBackgroundColor, border: `${sectionBorderWidth}px solid ${sectionBorderColor}`, padding: '16px', borderRadius: sectionBorderRadius, boxShadow: '0 4px 12px rgba(0,0,0,0.15)', overflow: 'hidden' }}>
                                                     <BlockStack gap="400" align="center">
                                                         <Box style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', backgroundColor: '#f8f9fa', border: '1px solid #e0e0e0', padding: '10px', borderRadius: '10px', cursor: 'pointer' }}>
                                                             <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
@@ -808,7 +920,7 @@ const StoreFront = ({ widgetData, setWidgetData }) => {
                                                                     width: 'auto',
                                                                     padding: '4px 10px',
                                                                     borderRadius: buttonRadius,
-                                                                    border: '1px solid #e0e0e0',
+                                                                    border: 'none',
                                                                     cursor: 'pointer',
                                                                     fontWeight: '400',
                                                                     transition: 'all 0.3s ease'
@@ -830,7 +942,7 @@ const StoreFront = ({ widgetData, setWidgetData }) => {
                                                             <Text variant='headingSm'>Upcoming Rewards</Text>
                                                         </span>
 
-                                                        <Box style={{ display: 'flex', flexDirection: 'column', padding: '24px', border: '1px solid #e0e0e0', borderRadius: '12px' }}>
+                                                        <Box style={{ display: 'flex', flexDirection: 'column', padding: '24px', border: `${cardBorderWidth}px solid ${cardBorderColor}`, backgroundColor: cardBackgroundColor, borderRadius: cardBorderRadius }}>
                                                             {/* <div style={{ textAlign: 'center', marginBottom: '12px' }}> */}
                                                             <text style={{ textAlign: 'center', marginBottom: '15px', color: headingColor, fontWeight: '500', fontSize: '16px' }}>{vipTierCardCurrentTier} : <b>R2</b></text>
 
@@ -846,9 +958,7 @@ const StoreFront = ({ widgetData, setWidgetData }) => {
 
                                                             <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', cursor: 'pointer' }}>
                                                                 <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-                                                                    <span>
-                                                                        <StarIcon color={iconColor} />
-                                                                    </span>
+                                                                    <StarIcon color={iconColor} />
                                                                     <text style={{ textAlign: "center", fontSize: '14px', fontWeight: '500', color: textColor, }}>{vipTierCardAllTier}</text>
                                                                 </div>
                                                                 <svg width="6" height="10" viewBox="0 0 6 10" fill="none" xmlns="http://www.w3.org/2000/svg">
@@ -962,6 +1072,136 @@ const StoreFront = ({ widgetData, setWidgetData }) => {
                                                             </svg>
                                                         </div>
 
+                                                        {/* Referral Program Section */}
+                                                        <div
+                                                            style={{
+                                                                border: `${cardBorderWidth}px solid ${cardBorderColor}`,
+                                                                borderRadius: cardBorderRadius,
+                                                                padding: '20px',
+                                                                backgroundColor: cardBackgroundColor,
+                                                                marginTop: '8px'
+                                                            }}
+                                                        >
+                                                            {/* Header */}
+                                                            <div style={{ textAlign: 'center', marginBottom: '16px' }}>
+                                                                <h3 style={{ fontSize: '16px', fontWeight: 500, color: headingColor, margin: '0 0 8px 0' }}>
+                                                                    {referralCardTitle}
+                                                                </h3>
+                                                                <p style={{ fontSize: '13px', color: textColor, margin: 0, wordBreak: 'break-word' }}>
+                                                                    {referralCardMessage}
+                                                                </p>
+                                                            </div>
+
+                                                            <Box style={{ display: 'flex', flexDirection: 'column', gap: '10px', marginBottom: '10px' }}>
+                                                                {/* You get */}
+                                                                <div style={{ display: 'flex', flexDirection: 'row', gap: '10px', alignItems: 'center', backgroundColor: '#f8f9fa', border: '1px solid #e0e0e0', padding: '10px', borderRadius: '10px' }}>
+                                                                    <svg width="18" height="18" viewBox="0 0 24 24" fill="#3b82f6">
+                                                                        <path d="M13 10V3L4 14h7v7l9-11h-7z" />
+                                                                    </svg>
+                                                                    <div style={{ display: 'flex', flexDirection: 'column' }}>
+                                                                        <span style={{ fontSize: '14px', fontWeight: 500, color: headingColor }}>You get</span>
+                                                                        <text style={{ fontSize: '13px', color: textColor }}>Earn Points S1</text>
+                                                                    </div>
+                                                                </div>
+
+                                                                {/* Your friend gets */}
+                                                                <div style={{ display: 'flex', flexDirection: 'row', gap: '10px', alignItems: 'center', backgroundColor: '#f8f9fa', border: '1px solid #e0e0e0', padding: '10px', borderRadius: '10px' }}>
+                                                                    <svg width="18" height="18" viewBox="0 0 24 24" fill="#3b82f6">
+                                                                        <path d="M13 10V3L4 14h7v7l9-11h-7z" />
+                                                                    </svg>
+                                                                    <div style={{ display: 'flex', flexDirection: 'column' }}>
+                                                                        <span style={{ fontSize: '14px', fontWeight: 500, color: headingColor }}>Your friend gets</span>
+                                                                        <text style={{ fontSize: '13px', color: textColor }}>test 2</text>
+                                                                    </div>
+                                                                </div>
+                                                            </Box>
+
+                                                            {/* Your link */}
+                                                            <div style={{ marginBottom: '16px' }}>
+                                                                <div style={{ textAlign: 'center', fontSize: '13px', color: headingColor, marginBottom: '8px' }}>
+                                                                    Your link
+                                                                </div>
+
+                                                                {/* CONTAINER: padding removed, overflow hidden added */}
+                                                                <div style={{
+                                                                    display: 'flex',
+                                                                    alignItems: 'stretch',
+                                                                    border: `1px solid ${inputFieldColor}`,
+                                                                    borderRadius: inputBorderRadius,
+                                                                    backgroundColor: '#fafafa',
+                                                                    overflow: 'hidden'
+                                                                }}>
+                                                                    {/* TEXT: padding added here */}
+                                                                    <span style={{
+                                                                        flex: 1,
+                                                                        fontSize: '13px',
+                                                                        color: '#666',
+                                                                        overflow: 'hidden',
+                                                                        textOverflow: 'ellipsis',
+                                                                        padding: '8px 10px',
+                                                                        display: 'flex',
+                                                                        alignItems: 'center'
+                                                                    }}>
+                                                                        <text style={{ textWrap: 'nowrap' }}> # https://kg-store-demo.myshopify.com?</text>
+                                                                    </span>
+
+                                                                    {/* BUTTON: border-left added, padding adjusted */}
+                                                                    <button style={{
+                                                                        background: 'none',
+                                                                        border: 'none',
+                                                                        borderLeft: `1px solid ${inputFieldColor}`,
+                                                                        cursor: 'pointer',
+                                                                        padding: '0 10px',
+                                                                        display: 'flex',
+                                                                        alignItems: 'center',
+                                                                        justifyContent: 'center',
+                                                                        margin: 0,
+                                                                        borderRadius: 0
+                                                                    }}>
+                                                                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#3b82f6" strokeWidth="2">
+                                                                            <rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect>
+                                                                            <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path>
+                                                                        </svg>
+                                                                    </button>
+                                                                </div>
+                                                            </div>
+                                                            {/* My Discounts card */}
+                                                            <div
+                                                                style={{
+                                                                    border: '1px solid #e0e0e0',
+                                                                    display: 'flex',
+                                                                    alignItems: 'center',
+                                                                    gap: '12px',
+                                                                    padding: '14px 16px',
+                                                                    backgroundColor: '#f8f9fa',
+                                                                    borderRadius: '12px',
+                                                                    cursor: 'pointer',
+                                                                    transition: 'background 0.2s'
+                                                                }}
+                                                                onMouseEnter={e => e.currentTarget.style.backgroundColor = '#f0f1f2'}
+                                                                onMouseLeave={e => e.currentTarget.style.backgroundColor = '#f8f9fa'}
+                                                            >
+                                                                <div style={{
+                                                                    width: '32px',
+                                                                    height: '32px',
+                                                                    borderRadius: '50%',
+                                                                    backgroundColor: '#e3f2fd',
+                                                                    display: 'flex',
+                                                                    alignItems: 'center',
+                                                                    justifyContent: 'center'
+                                                                }}>
+                                                                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#3b82f6" strokeWidth="2">
+                                                                        <rect x="2" y="5" width="20" height="14" rx="2"></rect>
+                                                                        <line x1="2" y1="10" x2="22" y2="10"></line>
+                                                                    </svg>
+                                                                </div>
+                                                                <span style={{ flex: 1, fontWeight: 500, fontSize: '14px', color: headingColor }}>My Discounts</span>
+                                                                <svg width="8" height="14" viewBox="0 0 8 14" fill="#ccc">
+                                                                    <path d="M1 1l6 6-6 6" stroke="#ccc" strokeWidth="2" fill="none" strokeLinecap="round" strokeLinejoin="round" />
+                                                                </svg>
+                                                            </div>
+                                                        </div>
+
                                                         <div style={{ display: 'flex', justifyContent: 'flex-end', alignItems: 'center' }}>
                                                             <button
                                                                 style={{
@@ -969,7 +1209,7 @@ const StoreFront = ({ widgetData, setWidgetData }) => {
                                                                     color: buttonTextColor,
                                                                     padding: '4px 10px',
                                                                     borderRadius: buttonRadius,
-                                                                    border: '1px solid #e0e0e0',
+                                                                    border: 'none',
                                                                     cursor: 'pointer',
                                                                     fontWeight: '400',
                                                                     lineHeight: '1.4',
@@ -982,7 +1222,8 @@ const StoreFront = ({ widgetData, setWidgetData }) => {
 
 
                                                 </div>
-                                            </>}
+                                            </>
+                                        }
                                     </div>
 
                                 </div>

@@ -1,6 +1,6 @@
 import { BlockStack, Box, Button, Card, Divider, Grid, Icon, RadioButton, RangeSlider, Text, TextField } from '@shopify/polaris'
 import { PlusIcon } from '@shopify/polaris-icons';
-import React, { useState, useRef, useEffect } from 'react'
+import React, { useRef, useEffect } from 'react'
 import '../../../widget.css';
 import ColorPickerInput from '../../../components/ColorPickerInput';
 import { AsterikIcon, BadgeIcon, CrownIcon, DollarIcon, FlowerIcon, GemIcon, GiftIcon, HeartIcon, HoldingHeartIcon, KiteIcon, OctogramIcon, StarIcon, TulipFlowerIcon } from '../../../assets/svg/svg';
@@ -73,7 +73,7 @@ const iconList = [
     }
 ];
 
-const Launcher = ({ widgetData, setWidgetData }) => {
+const Launcher = ({ widgetData, setWidgetData, errors = {}, clearError }) => {
     const launcherData = widgetData.launcher;
     const position = launcherData.layout.position;
     const iconId = launcherData.layout.icon;
@@ -81,6 +81,19 @@ const Launcher = ({ widgetData, setWidgetData }) => {
 
     // Get the selected icon object from iconList based on the ID in widgetData
     const selectedIcon = iconList.find(item => item.id === iconId) || iconList[0];
+
+    // Helper function to get error message
+    const getErrorMessage = (fieldPath) => {
+        return errors[fieldPath] || '';
+    };
+
+    // Helper function to handle field change and clear error
+    const handleFieldChange = (fieldPath, value, updateFn) => {
+        updateFn(value);
+        if (clearError) {
+            clearError(fieldPath);
+        }
+    };
 
     const textColor = launcherData.appearance.text_color;
     const backgroundType = launcherData.appearance.background_type;
@@ -216,7 +229,8 @@ const Launcher = ({ widgetData, setWidgetData }) => {
                         <TextField
                             label="Title"
                             value={title}
-                            onChange={(value) => setWidgetData({ ...widgetData, launcher: { ...launcherData, layout: { ...launcherData.layout, title: value } } })}
+                            onChange={(value) => handleFieldChange('launcher.layout.title', value, (v) => setWidgetData({ ...widgetData, launcher: { ...launcherData, layout: { ...launcherData.layout, title: v } } }))}
+                            error={getErrorMessage('launcher.layout.title') ? true : null}
                         />
 
                         <Divider />
@@ -227,6 +241,8 @@ const Launcher = ({ widgetData, setWidgetData }) => {
                             label="Text color"
                             value={textColor}
                             onChange={(value) => setWidgetData({ ...widgetData, launcher: { ...launcherData, appearance: { ...launcherData.appearance, text_color: value } } })}
+                            error={getErrorMessage('launcher.appearance.text_color')}
+                            onClearError={() => clearError && clearError('launcher.appearance.text_color')}
                         />
 
                         {/* Background color section */}
@@ -243,6 +259,8 @@ const Launcher = ({ widgetData, setWidgetData }) => {
                                         <ColorPickerInput
                                             value={solidColor}
                                             onChange={(value) => setWidgetData({ ...widgetData, launcher: { ...launcherData, appearance: { ...launcherData.appearance, solid: value } } })}
+                                            error={getErrorMessage('launcher.appearance.solid')}
+                                            onClearError={() => clearError && clearError('launcher.appearance.solid')}
                                         />
                                     </div>
                                 )}
@@ -256,10 +274,14 @@ const Launcher = ({ widgetData, setWidgetData }) => {
                                         <ColorPickerInput
                                             value={gradientColor1}
                                             onChange={(value) => setWidgetData({ ...widgetData, launcher: { ...launcherData, appearance: { ...launcherData.appearance, gradient: { ...launcherData.appearance.gradient, color1: value } } } })}
+                                            error={getErrorMessage('launcher.appearance.gradient.color1')}
+                                            onClearError={() => clearError('launcher.appearance.gradient.color1')}
                                         />
                                         <ColorPickerInput
                                             value={gradientColor2}
                                             onChange={(value) => setWidgetData({ ...widgetData, launcher: { ...launcherData, appearance: { ...launcherData.appearance, gradient: { ...launcherData.appearance.gradient, color2: value } } } })}
+                                            error={getErrorMessage('launcher.appearance.gradient.color2')}
+                                            onClearError={() => clearError('launcher.appearance.gradient.color2')}
                                         />
                                     </div>
                                 )}

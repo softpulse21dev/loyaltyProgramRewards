@@ -12,9 +12,15 @@ const CouponPage = () => {
     const navigate = useNavigate();
     const location = useLocation();
     const { rule, edit, referralRule, navigateTo, localSave, isTierRewardEdit } = location.state || {};
+
+    // Logic to determine if we should show Points inputs
+    // If it is LocalSave (VIP Tier) or ReferralRule, we hide points logic.
+    const showPointsSystem = !localSave && !referralRule;
+
     console.log('localSave', localSave)
     console.log('navigateTo coupons', navigateTo)
     console.log('rule local', rule)
+
     const [rewardTitle, setRewardTitle] = useState('');
     const [pointsAmount, setPointsAmount] = useState(100);
     const [rewardExpiration, setRewardExpiration] = useState(1);
@@ -49,21 +55,19 @@ const CouponPage = () => {
 
     useEffect(() => {
         // --- LOCAL EDIT MODE ---
-        // If we are editing a reward for a VIP Tier, populate state from the 'rule' object
         if (edit && isTierRewardEdit && rule) {
             setRewardTitle(rule.title || '');
             setPointsAmount(rule.points || 100);
             setRewardExpiration(rule.expiration_days || 0);
             setStatus(rule.status === true);
-            setSettingsJson(rule.settings_json || {}); // Use settings from rule
+            setSettingsJson(rule.settings_json || {});
             setClientId(rule.clientId);
             setRuleType(rule.type);
             setLoading(false);
-            return; // Exit early to prevent API calls
+            return;
         }
 
         // --- API-BASED EDIT MODE ---
-        // Keep this logic for editing rules from other parts of your app
         if (edit) {
             setLoading(true);
             if (referralRule) {
@@ -74,24 +78,41 @@ const CouponPage = () => {
         } else {
             setLoading(false);
         }
-
     }, [edit, rule, referralRule, isTierRewardEdit]);
 
-    const addDatas = [{
-        master_rule_id: rule.master_rule_id,
-        icon: rule.icon,
-        status: status,
-        points: pointsAmount,
-        title: rewardTitle,
-        settings_json: settings_json,
-        expiration_days: rewardExpiration,
-        type: rule.type,
-    }]
+    // Helper to clean settings_json for payload
+    const getCleanSettings = () => {
+        const cleanSettings = { ...settings_json };
+        // If we are in Referral or VIP mode, we don't need points_type
+        if (!showPointsSystem) {
+            delete cleanSettings.points_type;
+        }
+        return cleanSettings;
+    }
 
     const handleAddLocalData = () => {
         if (handleValidation()) {
             return;
         }
+
+        // Construct Payload
+        const payload = {
+            master_rule_id: rule.master_rule_id,
+            icon: rule.icon,
+            status: status,
+            title: rewardTitle,
+            settings_json: getCleanSettings(),
+            expiration_days: rewardExpiration,
+            type: rule.type,
+        };
+
+        // Only add points if we are in standard mode
+        if (showPointsSystem) {
+            payload.points = pointsAmount;
+        }
+
+        const addDatas = [payload];
+
         dispatch(addData(addDatas));
         navigate('/loyaltyProgram/tierview', { state: { navigateTo: navigateTo } });
     }
@@ -100,27 +121,30 @@ const CouponPage = () => {
         if (handleValidation()) {
             return;
         }
+
         const updatedData = {
             ...rule,
             clientId: clientId,
             status: status,
-            points: pointsAmount,
             title: rewardTitle,
-            settings_json: settings_json,
+            settings_json: getCleanSettings(),
             expiration_days: rewardExpiration,
         };
+
+        if (showPointsSystem) {
+            updatedData.points = pointsAmount;
+        }
+
         dispatch(UpdateData(updatedData));
         navigate('/loyaltyProgram/tierview', { state: { navigateTo: navigateTo } });
     };
 
     const handleDeleteLocalData = () => {
-        dispatch(DeleteData(rule.clientId)); // Pass the unique clientId to identify the item
-        console.log('navigateTo delete', navigateTo)
+        dispatch(DeleteData(rule.clientId));
         navigate('/loyaltyProgram/tierview', { state: { navigateTo: navigateTo } });
     };
 
     // Redeem API
-
     const AddRedeemRuleAPI = async () => {
         if (handleValidation()) {
             return;
@@ -133,12 +157,11 @@ const CouponPage = () => {
         formData.append("settings_json", JSON.stringify(settings_json));
         formData.append("expiration_days", rewardExpiration);
         const response = await fetchData("/add-merchant-redeeming-rules", formData);
-        console.log('Add Redeem Rule Response', response);
+
         if (response?.status === true) {
             navigate('/loyaltyProgram');
             shopify.toast.show(response?.message, { duration: 2000 });
         } else {
-            console.error('Add Redeem Rule Error', response);
             shopify.toast.show(response?.message, { duration: 2000, isError: true });
         }
     }
@@ -155,27 +178,23 @@ const CouponPage = () => {
         formData.append("settings_json", JSON.stringify(settings_json));
         formData.append("expiration_days", rewardExpiration);
         const response = await fetchData("/update-merchant-redeeming-rules", formData);
-        console.log('Update Redeem Rule Response', response);
+
         if (response?.status === true) {
             navigate('/loyaltyProgram');
             shopify.toast.show(response?.message, { duration: 2000 });
         } else {
-            console.error('Update Redeem Rule Error', response);
             shopify.toast.show(response?.message, { duration: 2000, isError: true });
         }
     }
 
     const DeleteRedeemRuleAPI = async (id) => {
-        console.log('id', id)
         const formData = new FormData();
         formData.append("rule_id", id);
         const response = await fetchData("/delete-merchant-redeeming-rules", formData);
-        console.log('Delete Redeem Rule Response', response);
         if (response?.status === true) {
             navigate('/loyaltyProgram');
             shopify.toast.show(response?.message, { duration: 2000 });
         } else {
-            console.error('Delete Redeem Rule Error', response);
             shopify.toast.show(response?.message, { duration: 2000, isError: true });
         }
     }
@@ -185,7 +204,6 @@ const CouponPage = () => {
         const formData = new FormData();
         formData.append("rule_id", rule.id);
         const response = await fetchData("/get-merchant-redeeming-rules-by-id", formData);
-        console.log('Get Redeem Rule By ID Response', response);
         if (response?.status === true) {
             setSettingsJson(response.data.settings_json);
             setRewardTitle(response.data.title);
@@ -195,14 +213,12 @@ const CouponPage = () => {
             setRuleId(response.data.id);
             setLoading(false);
         } else {
-            console.error('Get Redeem Rule By ID Error', response);
             shopify.toast.show(response?.message, { duration: 2000, isError: true });
             setLoading(false);
         }
     }
 
     // Referrals API
-
     const AddReferralRuleAPI = async () => {
         if (handleValidation()) {
             return;
@@ -211,19 +227,17 @@ const CouponPage = () => {
             const formData = new FormData();
             formData.append("master_rule_id", rule.master_rule_id);
             formData.append("status", status);
-            formData.append("points", pointsAmount);
+            // formData.append("points", pointsAmount);
             formData.append("title", rewardTitle);
-            formData.append("settings_json", JSON.stringify(settings_json));
+            formData.append("settings_json", JSON.stringify(getCleanSettings()));
             formData.append("expiration_days", rewardExpiration);
             formData.append("referral_setting_id", rule.referral_setting_id);
             formData.append("rule_type", rule.rule_type);
             const response = await fetchData("/add-referral-rule", formData);
-            console.log('Add Referral Rule Response', response);
             if (response?.status === true) {
                 navigate('/loyaltyProgram', { state: { navigateTo: navigateTo } });
                 shopify.toast.show(response?.message, { duration: 2000 });
             } else {
-                console.error('Add Referral Rule Error', response);
                 shopify.toast.show(response?.message, { duration: 2000, isError: true });
             }
         } catch (error) {
@@ -241,20 +255,18 @@ const CouponPage = () => {
             const formData = new FormData();
             formData.append("master_rule_id", rule.master_rule_id);
             formData.append("status", status);
-            formData.append("points", pointsAmount);
+            // formData.append("points", pointsAmount);
             formData.append("title", rewardTitle);
-            formData.append("settings_json", JSON.stringify(settings_json));
+            formData.append("settings_json", JSON.stringify(getCleanSettings()));
             formData.append("expiration_days", rewardExpiration);
             formData.append("referral_setting_id", rule.referral_setting_id);
             formData.append("referral_rule_id", rule.referral_rule_id);
             formData.append("rule_type", ruleType);
             const response = await fetchData("/update-referral-rule", formData);
-            console.log('Update Referral Rule Response', response);
             if (response?.status === true) {
                 navigate('/loyaltyProgram', { state: { navigateTo: navigateTo } });
                 shopify.toast.show(response?.message, { duration: 2000 });
             } else {
-                console.error('Update Referral Rule Error', response);
                 shopify.toast.show(response?.message, { duration: 2000, isError: true });
             }
         } catch (error) {
@@ -270,7 +282,6 @@ const CouponPage = () => {
             formData.append("referral_rule_id", rule.referral_rule_id);
             formData.append("referral_setting_id", rule.referral_setting_id);
             const response = await fetchData("/get-referral-rule-by-id", formData);
-            console.log('Get Referral Rule By ID Response', response);
             if (response?.status === true) {
                 setPointsAmount(response.data.points);
                 setRewardTitle(response.data.title);
@@ -279,12 +290,9 @@ const CouponPage = () => {
                 setStatus(response.data.status);
                 setRuleId(response.data.id);
                 setRuleType(response.data.rule_type);
-                // setLoading(false);
             }
         } catch (error) {
             console.error('Get Referral Rule By ID Error', error);
-        } finally {
-            // setLoading(false);
         }
     }
 
@@ -294,13 +302,11 @@ const CouponPage = () => {
             formData.append("referral_rule_id", rule.referral_rule_id);
             formData.append("referral_setting_id", rule.referral_setting_id);
             const response = await fetchData("/delete-referral-reward", formData);
-            console.log('Delete Referral Rule Response', response);
             if (response?.status === true) {
                 navigate('/loyaltyProgram', { state: { navigateTo: navigateTo } });
                 shopify.toast.show(response?.message, { duration: 2000 });
             }
             else {
-                console.error('Delete Referral Rule Error', response);
                 shopify.toast.show(response?.message, { duration: 2000, isError: true });
             }
         } catch (error) {
@@ -315,7 +321,6 @@ const CouponPage = () => {
     };
 
     const handleValidation = () => {
-        // Create a new, temporary error object to store all validation messages.
         const newErrors = {
             rewardTitle: '',
             pointsAmount: '',
@@ -335,9 +340,12 @@ const CouponPage = () => {
             isError = true;
         }
 
-        if (pointsAmount === '' || pointsAmount === null || Number(pointsAmount) <= 0) {
-            newErrors.pointsAmount = "Points must be a number greater than 0";
-            isError = true;
+        // Only validate points if we are showing the points system (Standard Mode)
+        if (showPointsSystem) {
+            if (pointsAmount === '' || pointsAmount === null || Number(pointsAmount) <= 0) {
+                newErrors.pointsAmount = "Points must be a number greater than 0";
+                isError = true;
+            }
         }
 
         if (settings_json.reward_value === '' || settings_json.reward_value === null || Number(settings_json.reward_value) <= 0) {
@@ -345,17 +353,13 @@ const CouponPage = () => {
             isError = true;
         }
 
-        // if points type is multiplier then validate the value
-        if (settings_json?.points_type === 'multiplier') {
-            // if checkbox is checked then validate the value
+        if (showPointsSystem && settings_json?.points_type === 'multiplier') {
             if (settings_json.min_points_to_redeem === true) {
                 if (settings_json.min_points_to_redeem_value === '' || settings_json.min_points_to_redeem_value === null || Number(settings_json.min_points_to_redeem_value) <= 0) {
                     newErrors.minPointsToRedeemValue = "Minimum points to redeem value must be a number greater than 0";
                     isError = true;
                 }
             }
-
-            // if checkbox is checked then validate the value
             if (settings_json.max_points_to_spend === true) {
                 if (settings_json.max_points_to_spend_value === '' || settings_json.max_points_to_spend_value === null || Number(settings_json.max_points_to_spend_value) <= 0) {
                     newErrors.maxPointsToSpendValue = "Maximum points to spend value must be a number greater than 0";
@@ -365,7 +369,6 @@ const CouponPage = () => {
         }
 
         if (rule.type === "amount_discount" || rule.type === "percentage_discount") {
-            // if collection is selected then validate the value
             if (settings_json?.applies_to === 'collection') {
                 if (settings_json.collections.length < 1) {
                     newErrors.collections = "Collection is required";
@@ -374,7 +377,6 @@ const CouponPage = () => {
             }
         }
 
-        // minimum cart requirement
         if (settings_json.min_requirement === 'min_purchase_amount') {
             if (settings_json.min_order_value_in_cents === '' || settings_json.min_order_value_in_cents === null || Number(settings_json.min_order_value_in_cents) <= 0) {
                 newErrors.minOrderValueInCents = "Minimum order value in cents must be a number greater than 0";
@@ -382,7 +384,6 @@ const CouponPage = () => {
             }
         }
 
-        // purchase type
         if (settings_json?.purchase_type === 'subscription' || settings_json?.purchase_type === 'both') {
             if (settings_json.number_of_times_on_recurring_purchases === '' || settings_json.number_of_times_on_recurring_purchases === null || Number(settings_json.number_of_times_on_recurring_purchases) < 0) {
                 newErrors.numberOfTimesOnRecurringPurchases = "Number of times on recurring purchases must be a number greater than or equal to 0";
@@ -390,7 +391,6 @@ const CouponPage = () => {
             }
         }
 
-        // free Product 
         if (rule.type === "free_product") {
             if (settings_json.products.length < 1) {
                 newErrors.products = "Product is required";
@@ -398,17 +398,16 @@ const CouponPage = () => {
             }
         }
 
-        // free shippings
         if (rule.type === "free_shipping") {
+            // UPDATED: Always validate this if checked, because it is monetary limit, not points limit
             if (settings_json.max_points_to_spend === true) {
                 if (settings_json.max_points_to_spend_value === '' || settings_json.max_points_to_spend_value === null || Number(settings_json.max_points_to_spend_value) <= 0) {
-                    newErrors.maxPointsToSpendValue = "Maximum points to spend value must be a number greater than 0";
+                    newErrors.maxPointsToSpendValue = "Maximum shipping amount value must be a number greater than 0";
                     isError = true;
                 }
             }
         }
 
-        // reward expiration
         if (rule.type !== "store_credit") {
             if (rewardExpiration === '' || rewardExpiration === null || Number(rewardExpiration) <= 0 || Number(rewardExpiration) > 365) {
                 newErrors.rewardExpiration = "Reward expiration must be a number greater than 0 and less than 365";
@@ -437,9 +436,8 @@ const CouponPage = () => {
                     icon={DeleteIcon}
                     onClick={() => {
                         if (isTierRewardEdit) {
-                            handleDeleteLocalData(); // Call local delete if it's a tier reward
+                            handleDeleteLocalData();
                         } else {
-                            // Otherwise, call the appropriate API delete
                             referralRule ? DeleteReferralRuleAPI(ruleId) : DeleteRedeemRuleAPI(ruleId);
                         }
                     }}
@@ -476,7 +474,7 @@ const CouponPage = () => {
                                     </BlockStack>
                                 </Card>
 
-                                {rule.type === "amount_discount" && (
+                                {rule.type === "amount_discount" && showPointsSystem && (
                                     <Card>
                                         <Box style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
                                             <Text variant='headingMd' as="span">Points Type</Text>
@@ -508,7 +506,6 @@ const CouponPage = () => {
                                             </div>
                                             <div>
                                                 <div>
-
                                                     {settings_json.products.map((product) => (
                                                         <div key={product.product_id} style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
                                                             <Avatar source={product.img} customer />
@@ -526,22 +523,25 @@ const CouponPage = () => {
                                         <Text variant='headingMd' as="span">Reward</Text>
                                         {(rule.type !== "store_credit") && (
                                             <>
-                                                {settings_json?.points_type === 'fixed' && (
+                                                {(settings_json?.points_type === 'fixed' || !showPointsSystem) && (
                                                     <>
                                                         <FormLayout>
                                                             <FormLayout.Group>
-                                                                <TextField
-                                                                    label="Points amount"
-                                                                    type="number"
-                                                                    value={pointsAmount}
-                                                                    onChange={(value) => {
-                                                                        setPointsAmount(value);
-                                                                        setValidationError({ ...validationError, pointsAmount: '' })
-                                                                    }}
-                                                                    error={validationError?.pointsAmount}
-                                                                    autoComplete="off"
-                                                                    suffix="points"
-                                                                />
+                                                                {showPointsSystem && (
+                                                                    <TextField
+                                                                        label="Points amount"
+                                                                        type="number"
+                                                                        value={pointsAmount}
+                                                                        onChange={(value) => {
+                                                                            setPointsAmount(value);
+                                                                            setValidationError({ ...validationError, pointsAmount: '' })
+                                                                        }}
+                                                                        error={validationError?.pointsAmount}
+                                                                        autoComplete="off"
+                                                                        suffix="points"
+                                                                    />
+                                                                )}
+
                                                                 {rule.type !== "free_shipping" && (
                                                                     <TextField
                                                                         label="Discount"
@@ -559,13 +559,13 @@ const CouponPage = () => {
                                                                 )}
                                                             </FormLayout.Group>
                                                         </FormLayout>
-                                                        {rule.type !== "free_shipping" && (
+                                                        {rule.type !== "free_shipping" && showPointsSystem && (
                                                             <Text variant='bodyMd' tone='subdued'>Based on your cost per point, {pointsAmount} points is equal to Rs. {settings_json.reward_value}</Text>
                                                         )}
                                                     </>
                                                 )}
 
-                                                {settings_json?.points_type === 'multiplier' && (
+                                                {showPointsSystem && settings_json?.points_type === 'multiplier' && (
                                                     <>
                                                         <FormLayout>
                                                             <FormLayout.Group>
@@ -652,16 +652,15 @@ const CouponPage = () => {
                                             />
                                         )}
 
-
-
-                                        {/* only for free shipping same used in amount discount  */}
+                                        {/* UPDATED: Free Shipping Checkbox is now always visible regardless of showPointsSystem */}
                                         {rule.type === "free_shipping" && (
-                                            <>
+                                            <span style={{ display: 'flex', marginTop: '-20px', gap: '7px', flexDirection: 'column' }}>
                                                 <Checkbox
                                                     label="Set a maximum shipping amount this reward can be applied to"
                                                     checked={settings_json.max_points_to_spend}
                                                     onChange={() => setSettingsJson({ ...settings_json, max_points_to_spend: !settings_json.max_points_to_spend })}
                                                 />
+
                                                 {settings_json.max_points_to_spend && (
                                                     <TextField
                                                         type="number"
@@ -674,22 +673,10 @@ const CouponPage = () => {
                                                         prefix="Rs."
                                                     />
                                                 )}
-                                            </>
+                                            </span>
                                         )}
-
-
                                     </BlockStack>
                                 </Card>
-
-
-                                {/* {(rule.type !== "store_credit") && (
-                                    <Card>
-                                        <BlockStack gap={300}>
-                                            <Text variant='headingMd' as="span">Referral Reward</Text>
-                                        </BlockStack>
-                                    </Card>
-                                )} */}
-
 
                                 {(rule.type === "amount_discount" || rule.type === "percentage_discount") && (
                                     <Card>
@@ -746,21 +733,20 @@ const CouponPage = () => {
                                                 checked={settings_json.min_requirement === 'min_purchase_amount'}
                                                 onChange={() => setSettingsJson({ ...settings_json, min_requirement: 'min_purchase_amount' })}
                                             />
-                                            <TextField
-                                                type="number"
-                                                value={settings_json.min_order_value_in_cents}
-                                                onChange={(value) => {
-                                                    setSettingsJson({ ...settings_json, min_order_value_in_cents: value });
-                                                    setValidationError({ ...validationError, minOrderValueInCents: '' })
-                                                }}
-                                                error={validationError?.minOrderValueInCents}
-                                                helpText="Value in cents. Eg: $20 = 2000"
-                                            />
-                                            {/* <Checkbox
-                                                label="Exclude free product from minimum order value"
-                                                checked={settings_json.min_points_to_redeem}
-                                                onChange={() => setSettingsJson({ ...settings_json, min_points_to_redeem: !settings_json.min_points_to_redeem })}
-                                            /> */}
+                                            {settings_json.min_requirement === 'min_purchase_amount' && (
+                                                <span style={{ marginTop: 5 }}>
+                                                    <TextField
+                                                        type="number"
+                                                        value={settings_json.min_order_value_in_cents}
+                                                        onChange={(value) => {
+                                                            setSettingsJson({ ...settings_json, min_order_value_in_cents: value });
+                                                            setValidationError({ ...validationError, minOrderValueInCents: '' })
+                                                        }}
+                                                        error={validationError?.minOrderValueInCents}
+                                                        helpText="Value in cents. Eg: $20 = 2000"
+                                                    />
+                                                </span>
+                                            )}
                                         </BlockStack>
                                     </Box>
                                 </Card>
@@ -830,7 +816,6 @@ const CouponPage = () => {
                                         </BlockStack>
                                     </Card>
                                 )}
-
                             </BlockStack>
                         </Grid.Cell>
 
