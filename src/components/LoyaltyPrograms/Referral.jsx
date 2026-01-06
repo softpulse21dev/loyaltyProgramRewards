@@ -146,8 +146,8 @@ const Referral = () => {
                                                                 <Box>
                                                                     <Text variant="bodyMd">{title}</Text>
                                                                     <InlineStack gap="100" align="center">
-                                                                        <Text variant="bodyMd">{points} points</Text>
-                                                                        <Text variant="bodyMd" fontWeight="bold">|</Text>
+                                                                        {/* <Text variant="bodyMd">{points} points</Text>
+                                                                        <Text variant="bodyMd" fontWeight="bold">|</Text> */}
                                                                         <Text variant="bodyMd">{redeemed_so_far || 0} redeemed so far</Text>
                                                                     </InlineStack>
                                                                 </Box>
@@ -212,11 +212,11 @@ const Referral = () => {
                                                                     <Icon source={IconSource} />
                                                                     <Box>
                                                                         <Text variant="bodyMd">{title}</Text>
-                                                                        <InlineStack gap="100" align="center">
-                                                                            <Text variant="bodyMd">{points} points</Text>
-                                                                            <Text variant="bodyMd" fontWeight="bold">|</Text>
+                                                                        {/* <InlineStack gap="100" align="center"> */}
+                                                                            {/* <Text variant="bodyMd">{points} points</Text>
+                                                                            <Text variant="bodyMd" fontWeight="bold">|</Text> */}
                                                                             <Text variant="bodyMd">{redeemed_so_far || 0} redeemed so far</Text>
-                                                                        </InlineStack>
+                                                                        {/* </InlineStack> */}
                                                                     </Box>
                                                                 </div>
                                                             </Box>
@@ -252,7 +252,7 @@ const Referral = () => {
                 </BlockStack>
             </Layout.AnnotatedSection>
 
-            <Layout.AnnotatedSection
+            {/* <Layout.AnnotatedSection
                 title={'Referrals Customer Account'}
                 description={'If "ON", it requires customer to create an account to claim referral coupon'}
             >
@@ -293,7 +293,7 @@ const Referral = () => {
                         />
                     </BlockStack>
                 </Card>
-            </Layout.AnnotatedSection>
+            </Layout.AnnotatedSection> */}
 
             <RedeemModal navigateTo={navigateTo} active={referralModalActive} setActive={setReferralModalActive} data={isAdvocate ? referralData?.advocate_reward?.available : referralData?.referred_friend_reward?.available} referralRule={isReferalRule} loading={loadingReferralRules} />
         </div >

@@ -75,6 +75,8 @@ const VipTier = () => {
     };
 
     const handleAddTierClick = () => {
+        // Clear any previous edit data
+        localStorage.removeItem('tierEditData');
         navigate(`/loyaltyProgram/tierview`, { state: { navigateTo: 2 } });
     };
 
@@ -156,7 +158,16 @@ const VipTier = () => {
                                                     </Box>
                                                 </div>
                                             </Box>
-                                            <Button icon={<Icon source={EditIcon} />} onClick={() => navigate(`/loyaltyProgram/tierview`, { state: { rule: item, edit: true, navigateTo: 2 } }, dispatch(TierId(item.uid)))} primary>Edit</Button>
+                                            <Button icon={<Icon source={EditIcon} />} onClick={() => {
+                                                // Store only the ID to identify which tier is being edited
+                                                localStorage.setItem('tierEditData', JSON.stringify({
+                                                    tierId: item.uid,
+                                                    editMode: true
+                                                }));
+
+                                                dispatch(TierId(item.uid));
+                                                navigate(`/loyaltyProgram/tierview`, { state: { rule: item, edit: true, navigateTo: 2 } });
+                                            }} primary>Edit</Button>
                                         </Box>
                                     </ResourceItem>
                                 )

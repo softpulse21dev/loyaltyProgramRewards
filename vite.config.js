@@ -10,7 +10,7 @@ export default defineConfig({
   server: {
     historyApiFallback: true,
     hmr: {
-      host: "fruitier-ramentaceous-bunny.ngrok-free.dev",
+      host: "shannon-mode-tribes-quest.trycloudflare.com",
       protocol: "wss",
     },
   },

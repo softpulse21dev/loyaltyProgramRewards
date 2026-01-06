@@ -1,4 +1,4 @@
-import { Avatar, Badge, BlockStack, Box, Button, Card, Checkbox, FormLayout, Grid, Layout, Page, RadioButton, Text, TextField } from '@shopify/polaris'
+import { Avatar, Badge, BlockStack, Box, Button, Card, Checkbox, FormLayout, Grid, InlineGrid, Layout, Page, RadioButton, SkeletonBodyText, SkeletonDisplayText, SkeletonPage, Text, TextField } from '@shopify/polaris'
 import { DeleteIcon } from '@shopify/polaris-icons';
 import { useEffect, useState } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
@@ -11,7 +11,24 @@ import { addData, DeleteData, UpdateData } from '../../redux/action';
 const CouponPage = () => {
     const navigate = useNavigate();
     const location = useLocation();
-    const { rule, edit, referralRule, navigateTo, localSave, isTierRewardEdit } = location.state || {};
+
+    // --- FIX START: Persist State Logic ---
+    // Initialize state from location.state (if navigating) or localStorage (if reloading)
+    const [pageState] = useState(() => {
+        if (location.state) {
+            // If we have state from navigation, save it to storage
+            localStorage.setItem('couponPageData', JSON.stringify(location.state));
+            return location.state;
+        } else {
+            // If reload (no state), try to load from storage
+            const stored = localStorage.getItem('couponPageData');
+            return stored ? JSON.parse(stored) : {};
+        }
+    });
+
+    // Destructure from our persistent pageState instead of location.state directly
+    const { rule, edit, referralRule, navigateTo, localSave, isTierRewardEdit } = pageState || {};
+    // --- FIX END ---
 
     // Logic to determine if we should show Points inputs
     // If it is LocalSave (VIP Tier) or ReferralRule, we hide points logic.
@@ -28,6 +45,8 @@ const CouponPage = () => {
     const [productModalOpen, setProductModalOpen] = useState(false);
     const [status, setStatus] = useState(false);
     const [loading, setLoading] = useState(true);
+    const [submitLoading, setSubmitLoading] = useState(false);
+    const [deleteLoading, setDeleteLoading] = useState(false);
     const [ruleId, setRuleId] = useState('');
     const [ruleType, setRuleType] = useState('');
     const [clientId, setClientId] = useState(null);
@@ -54,6 +73,9 @@ const CouponPage = () => {
     });
 
     useEffect(() => {
+        // Safe check: if no rule exists (e.g. storage cleared), stop execution
+        if (!rule) return;
+
         // --- LOCAL EDIT MODE ---
         if (edit && isTierRewardEdit && rule) {
             setRewardTitle(rule.title || '');
@@ -95,7 +117,6 @@ const CouponPage = () => {
             return;
         }
 
-        // Construct Payload
         const payload = {
             master_rule_id: rule.master_rule_id,
             icon: rule.icon,
@@ -113,6 +134,8 @@ const CouponPage = () => {
 
         const addDatas = [payload];
 
+        // Clear storage on successful navigate away
+        localStorage.removeItem('couponPageData');
         dispatch(addData(addDatas));
         navigate('/loyaltyProgram/tierview', { state: { navigateTo: navigateTo } });
     }
@@ -135,11 +158,13 @@ const CouponPage = () => {
             updatedData.points = pointsAmount;
         }
 
+        localStorage.removeItem('couponPageData');
         dispatch(UpdateData(updatedData));
         navigate('/loyaltyProgram/tierview', { state: { navigateTo: navigateTo } });
     };
 
     const handleDeleteLocalData = () => {
+        localStorage.removeItem('couponPageData');
         dispatch(DeleteData(rule.clientId));
         navigate('/loyaltyProgram/tierview', { state: { navigateTo: navigateTo } });
     };
@@ -149,6 +174,7 @@ const CouponPage = () => {
         if (handleValidation()) {
             return;
         }
+        setSubmitLoading(true);
         const formData = new FormData();
         formData.append("master_rule_id", rule.master_rule_id);
         formData.append("status", status);
@@ -159,17 +185,20 @@ const CouponPage = () => {
         const response = await fetchData("/add-merchant-redeeming-rules", formData);
 
         if (response?.status === true) {
+            localStorage.removeItem('couponPageData');
             navigate('/loyaltyProgram');
             shopify.toast.show(response?.message, { duration: 2000 });
         } else {
             shopify.toast.show(response?.message, { duration: 2000, isError: true });
         }
+        setSubmitLoading(false);
     }
 
     const UpdateRedeemRuleAPI = async () => {
         if (handleValidation()) {
             return;
         }
+        setSubmitLoading(true);
         const formData = new FormData();
         formData.append("rule_id", ruleId);
         formData.append("status", status);
@@ -180,23 +209,28 @@ const CouponPage = () => {
         const response = await fetchData("/update-merchant-redeeming-rules", formData);
 
         if (response?.status === true) {
+            localStorage.removeItem('couponPageData');
             navigate('/loyaltyProgram');
             shopify.toast.show(response?.message, { duration: 2000 });
         } else {
             shopify.toast.show(response?.message, { duration: 2000, isError: true });
         }
+        setSubmitLoading(false);
     }
 
     const DeleteRedeemRuleAPI = async (id) => {
+        setDeleteLoading(true);
         const formData = new FormData();
         formData.append("rule_id", id);
         const response = await fetchData("/delete-merchant-redeeming-rules", formData);
         if (response?.status === true) {
+            localStorage.removeItem('couponPageData');
             navigate('/loyaltyProgram');
             shopify.toast.show(response?.message, { duration: 2000 });
         } else {
             shopify.toast.show(response?.message, { duration: 2000, isError: true });
         }
+        setDeleteLoading(false);
     }
 
     const GetRedeemRuleByIdAPI = async () => {
@@ -223,11 +257,11 @@ const CouponPage = () => {
         if (handleValidation()) {
             return;
         }
+        setSubmitLoading(true);
         try {
             const formData = new FormData();
             formData.append("master_rule_id", rule.master_rule_id);
             formData.append("status", status);
-            // formData.append("points", pointsAmount);
             formData.append("title", rewardTitle);
             formData.append("settings_json", JSON.stringify(getCleanSettings()));
             formData.append("expiration_days", rewardExpiration);
@@ -235,6 +269,7 @@ const CouponPage = () => {
             formData.append("rule_type", rule.rule_type);
             const response = await fetchData("/add-referral-rule", formData);
             if (response?.status === true) {
+                localStorage.removeItem('couponPageData');
                 navigate('/loyaltyProgram', { state: { navigateTo: navigateTo } });
                 shopify.toast.show(response?.message, { duration: 2000 });
             } else {
@@ -243,7 +278,7 @@ const CouponPage = () => {
         } catch (error) {
             console.error('Add Referral Rule Error', error);
         } finally {
-            setLoading(false);
+            setSubmitLoading(false);
         }
     }
 
@@ -251,11 +286,11 @@ const CouponPage = () => {
         if (handleValidation()) {
             return;
         }
+        setSubmitLoading(true);
         try {
             const formData = new FormData();
             formData.append("master_rule_id", rule.master_rule_id);
             formData.append("status", status);
-            // formData.append("points", pointsAmount);
             formData.append("title", rewardTitle);
             formData.append("settings_json", JSON.stringify(getCleanSettings()));
             formData.append("expiration_days", rewardExpiration);
@@ -264,6 +299,7 @@ const CouponPage = () => {
             formData.append("rule_type", ruleType);
             const response = await fetchData("/update-referral-rule", formData);
             if (response?.status === true) {
+                localStorage.removeItem('couponPageData');
                 navigate('/loyaltyProgram', { state: { navigateTo: navigateTo } });
                 shopify.toast.show(response?.message, { duration: 2000 });
             } else {
@@ -272,11 +308,12 @@ const CouponPage = () => {
         } catch (error) {
             console.error('Update Referral Rule Error', error);
         } finally {
-            setLoading(false);
+            setSubmitLoading(false);
         }
     }
 
     const GetReferralRuleByIdAPI = async () => {
+        setLoading(true);
         try {
             const formData = new FormData();
             formData.append("referral_rule_id", rule.referral_rule_id);
@@ -293,16 +330,20 @@ const CouponPage = () => {
             }
         } catch (error) {
             console.error('Get Referral Rule By ID Error', error);
+        } finally {
+            setLoading(false);
         }
     }
 
     const DeleteReferralRuleAPI = async () => {
+        setDeleteLoading(true);
         try {
             const formData = new FormData();
             formData.append("referral_rule_id", rule.referral_rule_id);
             formData.append("referral_setting_id", rule.referral_setting_id);
             const response = await fetchData("/delete-referral-reward", formData);
             if (response?.status === true) {
+                localStorage.removeItem('couponPageData');
                 navigate('/loyaltyProgram', { state: { navigateTo: navigateTo } });
                 shopify.toast.show(response?.message, { duration: 2000 });
             }
@@ -312,7 +353,7 @@ const CouponPage = () => {
         } catch (error) {
             console.error('Delete Referral Rule Error', error);
         } finally {
-            setLoading(false);
+            setDeleteLoading(false);
         }
     }
 
@@ -340,7 +381,6 @@ const CouponPage = () => {
             isError = true;
         }
 
-        // Only validate points if we are showing the points system (Standard Mode)
         if (showPointsSystem) {
             if (pointsAmount === '' || pointsAmount === null || Number(pointsAmount) <= 0) {
                 newErrors.pointsAmount = "Points must be a number greater than 0";
@@ -368,7 +408,8 @@ const CouponPage = () => {
             }
         }
 
-        if (rule.type === "amount_discount" || rule.type === "percentage_discount") {
+        // FIX: Added optional chaining rule?.type just in case
+        if (rule?.type === "amount_discount" || rule?.type === "percentage_discount") {
             if (settings_json?.applies_to === 'collection') {
                 if (settings_json.collections.length < 1) {
                     newErrors.collections = "Collection is required";
@@ -391,15 +432,16 @@ const CouponPage = () => {
             }
         }
 
-        if (rule.type === "free_product") {
+        // FIX: Added optional chaining
+        if (rule?.type === "free_product") {
             if (settings_json.products.length < 1) {
                 newErrors.products = "Product is required";
                 isError = true;
             }
         }
 
-        if (rule.type === "free_shipping") {
-            // UPDATED: Always validate this if checked, because it is monetary limit, not points limit
+        // FIX: Added optional chaining
+        if (rule?.type === "free_shipping") {
             if (settings_json.max_points_to_spend === true) {
                 if (settings_json.max_points_to_spend_value === '' || settings_json.max_points_to_spend_value === null || Number(settings_json.max_points_to_spend_value) <= 0) {
                     newErrors.maxPointsToSpendValue = "Maximum shipping amount value must be a number greater than 0";
@@ -408,7 +450,8 @@ const CouponPage = () => {
             }
         }
 
-        if (rule.type !== "store_credit") {
+        // FIX: Added optional chaining
+        if (rule?.type !== "store_credit") {
             if (rewardExpiration === '' || rewardExpiration === null || Number(rewardExpiration) <= 0 || Number(rewardExpiration) > 365) {
                 newErrors.rewardExpiration = "Reward expiration must be a number greater than 0 and less than 365";
                 isError = true;
@@ -419,470 +462,533 @@ const CouponPage = () => {
         return isError;
     };
 
+    // If rule is undefined (e.g. fresh clear of localstorage and no state), return null or loader
+    if (!rule) {
+        return <Page><Layout><Card><Text>Loading or No Rule Selected. Please go back.</Text></Card></Layout></Page>;
+    }
+
     return (
-        <Page
-            backAction={{ content: 'Back', onAction: () => navigate(localSave ? '/loyaltyProgram/tierview' : '/loyaltyProgram', { state: { navigateTo: navigateTo } }) }}
-            title={
-                <Box style={{ display: "flex", justifyContent: "space-between", alignItems: "center", gap: "10px" }}>
-                    <Text as='h1' variant='headingLg'>{rule?.title || "Coupon"}</Text>
-                    <Badge tone={status === true ? "success" : "critical"}>
-                        {status === true ? "Active" : "Inactive"}
-                    </Badge>
-                </Box>
-            }
-            secondaryActions={edit ?
-                <Button
-                    tone='critical'
-                    icon={DeleteIcon}
-                    onClick={() => {
-                        if (isTierRewardEdit) {
-                            handleDeleteLocalData();
-                        } else {
-                            referralRule ? DeleteReferralRuleAPI(ruleId) : DeleteRedeemRuleAPI(ruleId);
+        <>
+            {loading ?
+                (
+                    <SkeletonPage
+                        primaryAction={{ content: <SkeletonDisplayText size="small" /> }}
+                    >
+
+                        <InlineGrid columns={['twoThirds', 'oneThird']} gap={400} >
+                            <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
+                                <Card>
+                                    <SkeletonBodyText lines={4} />
+                                </Card>
+                                <Card>
+                                    <SkeletonBodyText lines={3} />
+                                </Card>
+                                <Card>
+                                    <SkeletonBodyText lines={8} />
+                                </Card>
+                                <Card>
+                                    <SkeletonBodyText lines={8} />
+                                </Card>
+                            </div>
+
+                            <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
+                                <Card>
+                                    <SkeletonBodyText lines={4} />
+                                </Card>
+                                <Card>
+                                    <SkeletonBodyText lines={4} />
+                                </Card>
+                            </div>
+                        </InlineGrid>
+
+                    </SkeletonPage>
+                ) : (
+                    <Page
+                        backAction={{
+                            content: 'Back',
+                            onAction: () => {
+                                // Clear storage when manually going back
+                                localStorage.removeItem('couponPageData');
+                                navigate(localSave ? '/loyaltyProgram/tierview' : '/loyaltyProgram', { state: { navigateTo: navigateTo } });
+                            }
+                        }}
+                        title={
+                            <Box style={{ display: "flex", justifyContent: "space-between", alignItems: "center", gap: "10px" }}>
+                                <Text as='h1' variant='headingLg'>{rule?.title || "Coupon"}</Text>
+                                <Badge tone={status === true ? "success" : "critical"}>
+                                    {status === true ? "Active" : "Inactive"}
+                                </Badge>
+                            </Box>
                         }
-                    }}
-                >Delete
-                </Button>
-                : ''}
-            primaryAction={{
-                content: edit ? "Update" : "Save",
-                onAction: () => {
-                    if (edit && isTierRewardEdit) {
-                        handleUpdateLocalData();
-                    } else if (edit) {
-                        referralRule ? UpdateReferralRuleAPI() : UpdateRedeemRuleAPI();
-                    } else {
-                        localSave ? handleAddLocalData() : referralRule ? AddReferralRuleAPI() : AddRedeemRuleAPI();
-                    }
-                }
-            }}
-        >
-            <Layout>
-                <Layout.Section>
-                    <Grid>
-                        <Grid.Cell columnSpan={{ xs: 6, sm: 4, md: 4, lg: 8, xl: 8 }}>
-                            <BlockStack gap={400}>
-                                <Card>
-                                    <BlockStack gap={300}>
-                                        <Text variant='headingSm' as="span">Reward Title</Text>
-                                        <TextField
-                                            value={rewardTitle}
-                                            onChange={(value) => { setRewardTitle(value); setValidationError({ ...validationError, rewardTitle: '' }) }}
-                                            maxLength={255}
-                                            error={validationError?.rewardTitle}
-                                        />
-                                    </BlockStack>
-                                </Card>
+                        secondaryActions={edit ?
+                            <Button
+                                tone='critical'
+                                icon={DeleteIcon}
+                                onClick={() => {
+                                    if (isTierRewardEdit) {
+                                        handleDeleteLocalData();
+                                    } else {
+                                        referralRule ? DeleteReferralRuleAPI(ruleId) : DeleteRedeemRuleAPI(ruleId);
+                                    }
+                                }}
+                                loading={deleteLoading}
+                            >Delete
+                            </Button>
+                            : ''}
+                        primaryAction={{
+                            content: edit ? "Update" : "Save",
+                            loading: submitLoading,
+                            onAction: () => {
+                                if (edit && isTierRewardEdit) {
+                                    handleUpdateLocalData();
+                                } else if (edit) {
+                                    referralRule ? UpdateReferralRuleAPI() : UpdateRedeemRuleAPI();
+                                } else {
+                                    localSave ? handleAddLocalData() : referralRule ? AddReferralRuleAPI() : AddRedeemRuleAPI();
+                                }
+                            }
+                        }}
+                    >
+                        <Layout>
+                            <Layout.Section>
+                                <Grid>
+                                    <Grid.Cell columnSpan={{ xs: 6, sm: 4, md: 4, lg: 8, xl: 8 }}>
+                                        <BlockStack gap={400}>
+                                            <Card>
+                                                <BlockStack gap={300}>
+                                                    <Text variant='headingSm' as="span">Reward Title</Text>
+                                                    <TextField
+                                                        value={rewardTitle}
+                                                        onChange={(value) => { setRewardTitle(value); setValidationError({ ...validationError, rewardTitle: '' }) }}
+                                                        maxLength={255}
+                                                        error={validationError?.rewardTitle}
+                                                    />
+                                                </BlockStack>
+                                            </Card>
 
-                                {rule.type === "amount_discount" && showPointsSystem && (
-                                    <Card>
-                                        <Box style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
-                                            <Text variant='headingMd' as="span">Points Type</Text>
-                                            <BlockStack>
-                                                <RadioButton
-                                                    label="Fixed amount of points"
-                                                    checked={settings_json?.points_type === 'fixed'}
-                                                    onChange={() => setSettingsJson({ ...settings_json, points_type: 'fixed' })}
-                                                />
-                                                <RadioButton
-                                                    label="Incremented points"
-                                                    checked={settings_json?.points_type === 'multiplier'}
-                                                    onChange={() => setSettingsJson({ ...settings_json, points_type: 'multiplier' })}
-                                                />
-                                            </BlockStack>
-                                        </Box>
-                                    </Card>
-                                )}
+                                            {rule?.type === "amount_discount" && showPointsSystem && (
+                                                <Card>
+                                                    <Box style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+                                                        <Text variant='headingMd' as="span">Points Type</Text>
+                                                        <BlockStack>
+                                                            <RadioButton
+                                                                label="Fixed amount of points"
+                                                                checked={settings_json?.points_type === 'fixed'}
+                                                                onChange={() => setSettingsJson({ ...settings_json, points_type: 'fixed' })}
+                                                            />
+                                                            <RadioButton
+                                                                label="Incremented points"
+                                                                checked={settings_json?.points_type === 'multiplier'}
+                                                                onChange={() => setSettingsJson({ ...settings_json, points_type: 'multiplier' })}
+                                                            />
+                                                        </BlockStack>
+                                                    </Box>
+                                                </Card>
+                                            )}
 
-                                {rule.type === "free_product" && (
-                                    <Card>
-                                        <Box style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
-                                            <Text variant='headingMd' as="span">Product</Text>
-                                            <div>
-                                                <Button variant='secondary' onClick={() => { setProductModalOpen(true) }}><Text variant='bodyMd'>Select Product</Text></Button>
-                                                {validationError?.products && (
-                                                    <Text variant='bodyMd' tone='critical'>{validationError?.products}</Text>
-                                                )}
-                                            </div>
-                                            <div>
-                                                <div>
-                                                    {settings_json.products.map((product) => (
-                                                        <div key={product.product_id} style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-                                                            <Avatar source={product.img} customer />
-                                                            <Text variant='bodyMd'>{product.title}</Text>
+                                            {rule?.type === "free_product" && (
+                                                <Card>
+                                                    <Box style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+                                                        <Text variant='headingMd' as="span">Product</Text>
+                                                        <div>
+                                                            <Button variant='secondary' onClick={() => { setProductModalOpen(true) }}><Text variant='bodyMd'>Select Product</Text></Button>
+                                                            {validationError?.products && (
+                                                                <Text variant='bodyMd' tone='critical'>{validationError?.products}</Text>
+                                                            )}
                                                         </div>
-                                                    ))}
-                                                </div>
-                                            </div>
-                                        </Box>
-                                    </Card>
-                                )}
+                                                        <div>
+                                                            <div>
+                                                                {settings_json.products.map((product) => (
+                                                                    <div key={product.product_id} style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+                                                                        <Avatar source={product.img} customer />
+                                                                        <Text variant='bodyMd'>{product.title}</Text>
+                                                                    </div>
+                                                                ))}
+                                                            </div>
+                                                        </div>
+                                                    </Box>
+                                                </Card>
+                                            )}
 
-                                <Card>
-                                    <BlockStack gap={300}>
-                                        <Text variant='headingMd' as="span">Reward</Text>
-                                        {(rule.type !== "store_credit") && (
-                                            <>
-                                                {(settings_json?.points_type === 'fixed' || !showPointsSystem) && (
-                                                    <>
-                                                        <FormLayout>
-                                                            <FormLayout.Group>
-                                                                {showPointsSystem && (
-                                                                    <TextField
-                                                                        label="Points amount"
-                                                                        type="number"
-                                                                        value={pointsAmount}
-                                                                        onChange={(value) => {
-                                                                            setPointsAmount(value);
-                                                                            setValidationError({ ...validationError, pointsAmount: '' })
-                                                                        }}
-                                                                        error={validationError?.pointsAmount}
-                                                                        autoComplete="off"
-                                                                        suffix="points"
-                                                                    />
+                                            {/* reward card */}
+                                            <Card>
+                                                <BlockStack gap={200}>
+                                                    <Text variant='headingMd' as="span">Reward</Text>
+                                                    <BlockStack gap={100}>
+                                                        {(rule?.type !== "store_credit") && (
+                                                            <>
+                                                                {(settings_json?.points_type === 'fixed' || !showPointsSystem) && (
+                                                                    <>
+                                                                        <FormLayout>
+                                                                            <FormLayout.Group>
+                                                                                {showPointsSystem && (
+                                                                                    <TextField
+                                                                                        label="Points amount"
+                                                                                        type="number"
+                                                                                        value={pointsAmount}
+                                                                                        onChange={(value) => {
+                                                                                            setPointsAmount(value);
+                                                                                            setValidationError({ ...validationError, pointsAmount: '' })
+                                                                                        }}
+                                                                                        error={validationError?.pointsAmount}
+                                                                                        autoComplete="off"
+                                                                                        suffix="points"
+                                                                                    />
+                                                                                )}
+
+                                                                                {rule?.type !== "free_shipping" && (
+                                                                                    <TextField
+                                                                                        label="Discount"
+                                                                                        type="number"
+                                                                                        prefix={rule?.type !== "percentage_discount" ? "$" : ""}
+                                                                                        suffix={rule?.type === "percentage_discount" ? "%" : ""}
+                                                                                        value={settings_json.reward_value}
+                                                                                        onChange={(value) => {
+                                                                                            const floatValue = parseFloat(value);
+                                                                                            const isPercentage = rule?.type === "percentage_discount";
+                                                                                            if (
+                                                                                                value === '' ||
+                                                                                                (isPercentage && !value.includes('.') && floatValue >= 1 && floatValue <= 100) ||
+                                                                                                (!isPercentage && floatValue >= 1)
+                                                                                            ) {
+                                                                                                setSettingsJson({ ...settings_json, reward_value: value });
+                                                                                                setValidationError({ ...validationError, rewardValue: '' });
+                                                                                            }
+                                                                                        }}
+                                                                                        error={validationError?.rewardValue}
+                                                                                        autoComplete="off"
+                                                                                    />
+                                                                                )}
+                                                                            </FormLayout.Group>
+                                                                        </FormLayout>
+                                                                        {rule?.type !== "free_shipping" && showPointsSystem && (
+                                                                            <Text variant='bodyMd' tone='subdued'>Based on your cost per point, {pointsAmount} points is equal to Rs. {settings_json.reward_value}</Text>
+                                                                        )}
+                                                                    </>
                                                                 )}
 
-                                                                {rule.type !== "free_shipping" && (
-                                                                    <TextField
-                                                                        label="Discount"
-                                                                        type="number"
-                                                                        prefix={rule.type !== "percentage_discount" ? "$" : ""}
-                                                                        suffix={rule.type === "percentage_discount" ? "%" : ""}
-                                                                        value={settings_json.reward_value}
-                                                                        onChange={(value) => {
-                                                                            setSettingsJson({ ...settings_json, reward_value: value });
-                                                                            setValidationError({ ...validationError, rewardValue: '' })
-                                                                        }}
-                                                                        error={validationError?.rewardValue}
-                                                                        autoComplete="off"
-                                                                    />
+                                                                {showPointsSystem && settings_json?.points_type === 'multiplier' && (
+                                                                    <>
+                                                                        <FormLayout>
+                                                                            <FormLayout.Group>
+                                                                                <TextField
+                                                                                    label="Increment points value"
+                                                                                    type="number"
+                                                                                    value={pointsAmount}
+                                                                                    onChange={(value) => {
+                                                                                        setPointsAmount(value);
+                                                                                        setValidationError({ ...validationError, pointsAmount: '' })
+                                                                                    }}
+                                                                                    error={validationError?.pointsAmount}
+                                                                                    autoComplete="off"
+                                                                                    suffix="points"
+                                                                                />
+                                                                                <TextField
+                                                                                    label="Customer gets"
+                                                                                    type="number"
+                                                                                    prefix="$"
+                                                                                    value={settings_json.reward_value}
+                                                                                    onChange={(value) => {
+                                                                                        setSettingsJson({ ...settings_json, reward_value: value });
+                                                                                        setValidationError({ ...validationError, rewardValue: '' })
+                                                                                    }}
+                                                                                    error={validationError?.rewardValue}
+                                                                                    autoComplete="off"
+                                                                                />
+                                                                            </FormLayout.Group>
+                                                                        </FormLayout>
+                                                                        <Text variant='bodyMd' tone='subdued'>Based on your cost per point, {pointsAmount} points is equal to Rs. {settings_json.reward_value}</Text>
+
+                                                                        <Checkbox
+                                                                            label="Set a minimum amount of points required to redeem this reward"
+                                                                            checked={settings_json.min_points_to_redeem}
+                                                                            onChange={() => setSettingsJson({ ...settings_json, min_points_to_redeem: !settings_json.min_points_to_redeem })}
+                                                                        />
+                                                                        {settings_json.min_points_to_redeem && (
+                                                                            <TextField
+                                                                                type="number"
+                                                                                value={settings_json.min_points_to_redeem_value}
+                                                                                onChange={(value) => {
+                                                                                    setSettingsJson({ ...settings_json, min_points_to_redeem_value: value });
+                                                                                    setValidationError({ ...validationError, minPointsToRedeemValue: '' })
+                                                                                }}
+                                                                                error={validationError?.minPointsToRedeemValue}
+                                                                                suffix="points"
+                                                                            />
+                                                                        )}
+
+                                                                        <Checkbox
+                                                                            label="Set a maximum amount of points required to redeem this reward"
+                                                                            checked={settings_json.max_points_to_spend}
+                                                                            onChange={() => setSettingsJson({ ...settings_json, max_points_to_spend: !settings_json.max_points_to_spend })}
+                                                                        />
+                                                                        {settings_json.max_points_to_spend && (
+                                                                            <TextField
+                                                                                type="number"
+                                                                                value={settings_json.max_points_to_spend_value}
+                                                                                onChange={(value) => {
+                                                                                    setSettingsJson({ ...settings_json, max_points_to_spend_value: value });
+                                                                                    setValidationError({ ...validationError, maxPointsToSpendValue: '' })
+                                                                                }}
+                                                                                error={validationError?.maxPointsToSpendValue}
+                                                                                suffix="points"
+                                                                            />
+                                                                        )}
+                                                                    </>
                                                                 )}
-                                                            </FormLayout.Group>
-                                                        </FormLayout>
-                                                        {rule.type !== "free_shipping" && showPointsSystem && (
-                                                            <Text variant='bodyMd' tone='subdued'>Based on your cost per point, {pointsAmount} points is equal to Rs. {settings_json.reward_value}</Text>
+                                                            </>
                                                         )}
-                                                    </>
-                                                )}
 
-                                                {showPointsSystem && settings_json?.points_type === 'multiplier' && (
-                                                    <>
-                                                        <FormLayout>
-                                                            <FormLayout.Group>
-                                                                <TextField
-                                                                    label="Increment points value"
-                                                                    type="number"
-                                                                    value={pointsAmount}
-                                                                    onChange={(value) => {
-                                                                        setPointsAmount(value);
-                                                                        setValidationError({ ...validationError, pointsAmount: '' })
-                                                                    }}
-                                                                    error={validationError?.pointsAmount}
-                                                                    autoComplete="off"
-                                                                    suffix="points"
-                                                                />
-                                                                <TextField
-                                                                    label="Customer gets"
-                                                                    type="number"
-                                                                    prefix="$"
-                                                                    value={settings_json.reward_value}
-                                                                    onChange={(value) => {
-                                                                        setSettingsJson({ ...settings_json, reward_value: value });
-                                                                        setValidationError({ ...validationError, rewardValue: '' })
-                                                                    }}
-                                                                    error={validationError?.rewardValue}
-                                                                    autoComplete="off"
-                                                                />
-                                                            </FormLayout.Group>
-                                                        </FormLayout>
-                                                        <Text variant='bodyMd' tone='subdued'>Based on your cost per point, {pointsAmount} points is equal to Rs. {settings_json.reward_value}</Text>
-
-                                                        <Checkbox
-                                                            label="Set a minimum amount of points required to redeem this reward"
-                                                            checked={settings_json.min_points_to_redeem}
-                                                            onChange={() => setSettingsJson({ ...settings_json, min_points_to_redeem: !settings_json.min_points_to_redeem })}
-                                                        />
-                                                        {settings_json.min_points_to_redeem && (
+                                                        {rule?.type === "store_credit" && (
                                                             <TextField
+                                                                label="Points amount"
                                                                 type="number"
-                                                                value={settings_json.min_points_to_redeem_value}
+                                                                value={pointsAmount}
                                                                 onChange={(value) => {
-                                                                    setSettingsJson({ ...settings_json, min_points_to_redeem_value: value });
-                                                                    setValidationError({ ...validationError, minPointsToRedeemValue: '' })
+                                                                    setPointsAmount(value);
+                                                                    setValidationError({ ...validationError, pointsAmount: '' })
                                                                 }}
-                                                                error={validationError?.minPointsToRedeemValue}
+                                                                error={validationError?.pointsAmount}
+                                                                autoComplete="off"
                                                                 suffix="points"
                                                             />
                                                         )}
 
-                                                        <Checkbox
-                                                            label="Set a maximum amount of points required to redeem this reward"
-                                                            checked={settings_json.max_points_to_spend}
-                                                            onChange={() => setSettingsJson({ ...settings_json, max_points_to_spend: !settings_json.max_points_to_spend })}
+                                                        {rule?.type === "free_shipping" && (
+                                                            <span style={{ display: 'flex', gap: '7px', flexDirection: 'column' }}>
+                                                                <Checkbox
+                                                                    label="Set a maximum shipping amount this reward can be applied to"
+                                                                    checked={settings_json.max_points_to_spend}
+                                                                    onChange={() => setSettingsJson({ ...settings_json, max_points_to_spend: !settings_json.max_points_to_spend })}
+                                                                />
+
+                                                                {settings_json.max_points_to_spend && (
+                                                                    <TextField
+                                                                        type="number"
+                                                                        value={settings_json.max_points_to_spend_value}
+                                                                        onChange={(value) => {
+                                                                            setSettingsJson({ ...settings_json, max_points_to_spend_value: value });
+                                                                            setValidationError({ ...validationError, maxPointsToSpendValue: '' })
+                                                                        }}
+                                                                        error={validationError?.maxPointsToSpendValue}
+                                                                        prefix="Rs."
+                                                                    />
+                                                                )}
+                                                            </span>
+                                                        )}
+                                                    </BlockStack>
+                                                </BlockStack>
+                                            </Card>
+
+                                            {(rule?.type === "amount_discount" || rule?.type === "percentage_discount") && (
+                                                <Card>
+                                                    <Box style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+                                                        <Text variant='headingMd' as="span">Apply to</Text>
+                                                        <BlockStack>
+                                                            <RadioButton
+                                                                label="Entire order"
+                                                                checked={settings_json?.applies_to === 'entire'}
+                                                                onChange={() => setSettingsJson({ ...settings_json, applies_to: 'entire' })}
+                                                            />
+                                                            <RadioButton
+                                                                label="Collection"
+                                                                checked={settings_json?.applies_to === 'collection'}
+                                                                onChange={() => {
+                                                                    setSettingsJson({ ...settings_json, applies_to: 'collection' });
+                                                                    setValidationError({ ...validationError, collections: '' })
+                                                                }}
+                                                                onFocus={() => {
+                                                                    setCollectionModalOpen(true);
+                                                                }}
+                                                            />
+                                                            {validationError?.collections && (
+                                                                <Text variant='bodyMd' tone='critical'>{validationError?.collections}</Text>
+                                                            )}
+                                                            {settings_json?.applies_to === 'collection' && (
+                                                                settings_json?.collections?.length > 0 && (
+                                                                    <>                                            {
+                                                                        settings_json?.collections.map((col) => (
+                                                                            <div key={col.collection_id} style={{ display: 'flex', alignItems: 'center', gap: 10, padding: 3 }}>
+                                                                                <Avatar source={col.image} customer />
+                                                                                <Text>{col.name}</Text>
+                                                                            </div>
+                                                                        ))
+                                                                    }
+                                                                    </>
+                                                                ))}
+                                                        </BlockStack>
+                                                    </Box>
+                                                </Card>
+                                            )}
+
+                                            <Card>
+                                                <Box style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+                                                    <Text variant='headingMd' as="span">Minimum Cart Requirement</Text>
+                                                    <BlockStack gap={10}>
+                                                        <RadioButton
+                                                            label="None"
+                                                            checked={settings_json.min_requirement === 'none'}
+                                                            onChange={() => setSettingsJson({ ...settings_json, min_requirement: 'none' })}
                                                         />
-                                                        {settings_json.max_points_to_spend && (
+                                                        <RadioButton
+                                                            label="Minimum cart Requirement"
+                                                            checked={settings_json.min_requirement === 'min_purchase_amount'}
+                                                            onChange={() => setSettingsJson({ ...settings_json, min_requirement: 'min_purchase_amount' })}
+                                                        />
+                                                        {settings_json.min_requirement === 'min_purchase_amount' && (
+                                                            <span style={{ marginTop: 5 }}>
+                                                                <TextField
+                                                                    type="number"
+                                                                    value={settings_json.min_order_value_in_cents}
+                                                                    onChange={(value) => {
+                                                                        setSettingsJson({ ...settings_json, min_order_value_in_cents: value });
+                                                                        setValidationError({ ...validationError, minOrderValueInCents: '' })
+                                                                    }}
+                                                                    error={validationError?.minOrderValueInCents}
+                                                                    helpText="Value in cents. Eg: $20 = 2000"
+                                                                />
+                                                            </span>
+                                                        )}
+                                                    </BlockStack>
+                                                </Box>
+                                            </Card>
+
+                                            {(rule?.type !== "store_credit") && (
+                                                <Card>
+                                                    <Box style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+                                                        <Text variant='headingMd' as="span">Purchase Type (optional)</Text>
+                                                        <BlockStack>
+                                                            <Text>Additional settings for stores that have installed any "subscription" app</Text>
+                                                            <RadioButton
+                                                                label="One-time Purchase"
+                                                                checked={settings_json?.purchase_type === 'one_time'}
+                                                                onChange={() => setSettingsJson({ ...settings_json, purchase_type: 'one_time' })}
+                                                            />
+                                                            <RadioButton
+                                                                label="Subscription"
+                                                                checked={settings_json?.purchase_type === 'subscription'}
+                                                                onChange={() => setSettingsJson({ ...settings_json, purchase_type: 'subscription' })}
+                                                            />
+                                                            <RadioButton
+                                                                label="Both"
+                                                                checked={settings_json?.purchase_type === 'both'}
+                                                                onChange={() => setSettingsJson({ ...settings_json, purchase_type: 'both' })}
+                                                            />
+                                                        </BlockStack>
+                                                    </Box>
+                                                </Card>
+                                            )}
+
+                                            {(settings_json?.purchase_type === 'subscription' || settings_json?.purchase_type === 'both') && (
+                                                <>
+                                                    <Card>
+                                                        <BlockStack gap={300}>
+                                                            <Text variant='headingSm' as="span">Recurring Payment Options</Text>
                                                             <TextField
                                                                 type="number"
-                                                                value={settings_json.max_points_to_spend_value}
+                                                                value={settings_json?.number_of_times_on_recurring_purchases}
                                                                 onChange={(value) => {
-                                                                    setSettingsJson({ ...settings_json, max_points_to_spend_value: value });
-                                                                    setValidationError({ ...validationError, maxPointsToSpendValue: '' })
+                                                                    setSettingsJson({ ...settings_json, number_of_times_on_recurring_purchases: value });
+                                                                    setValidationError({ ...validationError, numberOfTimesOnRecurringPurchases: '' })
                                                                 }}
-                                                                error={validationError?.maxPointsToSpendValue}
-                                                                suffix="points"
+                                                                error={validationError?.numberOfTimesOnRecurringPurchases}
+                                                                helpText='The number of times a discount applies on recurring purchases. For example, if you set this field to 3, then the discount only applies to the first three billing cycles of a subscription. If you specify 0, then the discount applies indefinitely.'
                                                             />
-                                                        )}
-                                                    </>
-                                                )}
-                                            </>
-                                        )}
+                                                        </BlockStack>
+                                                    </Card>
+                                                </>
+                                            )}
 
-                                        {rule.type === "store_credit" && (
-                                            <TextField
-                                                label="Points amount"
-                                                type="number"
-                                                value={pointsAmount}
-                                                onChange={(value) => {
-                                                    setPointsAmount(value);
-                                                    setValidationError({ ...validationError, pointsAmount: '' })
-                                                }}
-                                                error={validationError?.pointsAmount}
-                                                autoComplete="off"
-                                                suffix="points"
-                                            />
-                                        )}
-
-                                        {/* UPDATED: Free Shipping Checkbox is now always visible regardless of showPointsSystem */}
-                                        {rule.type === "free_shipping" && (
-                                            <span style={{ display: 'flex', marginTop: '-20px', gap: '7px', flexDirection: 'column' }}>
-                                                <Checkbox
-                                                    label="Set a maximum shipping amount this reward can be applied to"
-                                                    checked={settings_json.max_points_to_spend}
-                                                    onChange={() => setSettingsJson({ ...settings_json, max_points_to_spend: !settings_json.max_points_to_spend })}
-                                                />
-
-                                                {settings_json.max_points_to_spend && (
-                                                    <TextField
-                                                        type="number"
-                                                        value={settings_json.max_points_to_spend_value}
-                                                        onChange={(value) => {
-                                                            setSettingsJson({ ...settings_json, max_points_to_spend_value: value });
-                                                            setValidationError({ ...validationError, maxPointsToSpendValue: '' })
-                                                        }}
-                                                        error={validationError?.maxPointsToSpendValue}
-                                                        prefix="Rs."
-                                                    />
-                                                )}
-                                            </span>
-                                        )}
-                                    </BlockStack>
-                                </Card>
-
-                                {(rule.type === "amount_discount" || rule.type === "percentage_discount") && (
-                                    <Card>
-                                        <Box style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
-                                            <Text variant='headingMd' as="span">Apply to</Text>
-                                            <BlockStack>
-                                                <RadioButton
-                                                    label="Entire order"
-                                                    checked={settings_json?.applies_to === 'entire'}
-                                                    onChange={() => setSettingsJson({ ...settings_json, applies_to: 'entire' })}
-                                                />
-                                                <RadioButton
-                                                    label="Collection"
-                                                    checked={settings_json?.applies_to === 'collection'}
-                                                    onChange={() => {
-                                                        setSettingsJson({ ...settings_json, applies_to: 'collection' });
-                                                        setValidationError({ ...validationError, collections: '' })
-                                                    }}
-                                                    onFocus={() => {
-                                                        setCollectionModalOpen(true);
-                                                    }}
-                                                />
-                                                {validationError?.collections && (
-                                                    <Text variant='bodyMd' tone='critical'>{validationError?.collections}</Text>
-                                                )}
-                                                {settings_json?.applies_to === 'collection' && (
-                                                    settings_json?.collections?.length > 0 && (
-                                                        <>                                            {
-                                                            settings_json?.collections.map((col) => (
-                                                                <div key={col.collection_id} style={{ display: 'flex', alignItems: 'center', gap: 10, padding: 3 }}>
-                                                                    <Avatar source={col.image} customer />
-                                                                    <Text>{col.name}</Text>
-                                                                </div>
-                                                            ))
-                                                        }
-                                                        </>
-                                                    ))}
-                                            </BlockStack>
-                                        </Box>
-                                    </Card>
-                                )}
-
-                                <Card>
-                                    <Box style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
-                                        <Text variant='headingMd' as="span">Minimum Cart Requirement</Text>
-                                        <BlockStack gap={10}>
-                                            <RadioButton
-                                                label="None"
-                                                checked={settings_json.min_requirement === 'none'}
-                                                onChange={() => setSettingsJson({ ...settings_json, min_requirement: 'none' })}
-                                            />
-                                            <RadioButton
-                                                label="Minimum cart Requirement"
-                                                checked={settings_json.min_requirement === 'min_purchase_amount'}
-                                                onChange={() => setSettingsJson({ ...settings_json, min_requirement: 'min_purchase_amount' })}
-                                            />
-                                            {settings_json.min_requirement === 'min_purchase_amount' && (
-                                                <span style={{ marginTop: 5 }}>
-                                                    <TextField
-                                                        type="number"
-                                                        value={settings_json.min_order_value_in_cents}
-                                                        onChange={(value) => {
-                                                            setSettingsJson({ ...settings_json, min_order_value_in_cents: value });
-                                                            setValidationError({ ...validationError, minOrderValueInCents: '' })
-                                                        }}
-                                                        error={validationError?.minOrderValueInCents}
-                                                        helpText="Value in cents. Eg: $20 = 2000"
-                                                    />
-                                                </span>
+                                            {(rule?.type !== "store_credit") && (
+                                                <Card>
+                                                    <BlockStack gap={300}>
+                                                        <Text variant='headingMd' >Reward Expiration</Text>
+                                                        <TextField
+                                                            type="number"
+                                                            helpText="The number of days after which the reward expires"
+                                                            value={rewardExpiration}
+                                                            onChange={(value) => {
+                                                                setRewardExpiration(value);
+                                                                setValidationError({ ...validationError, rewardExpiration: '' })
+                                                            }}
+                                                            error={validationError?.rewardExpiration}
+                                                            autoComplete="off"
+                                                            suffix="Days"
+                                                        />
+                                                    </BlockStack>
+                                                </Card>
                                             )}
                                         </BlockStack>
-                                    </Box>
-                                </Card>
+                                    </Grid.Cell>
 
-                                {(rule.type !== "store_credit") && (
-                                    <Card>
-                                        <Box style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
-                                            <Text variant='headingMd' as="span">Purchase Type (optional)</Text>
-                                            <BlockStack>
-                                                <Text>Additional settings for stores that have installed any "subscription" app</Text>
-                                                <RadioButton
-                                                    label="One-time Purchase"
-                                                    checked={settings_json?.purchase_type === 'one_time'}
-                                                    onChange={() => setSettingsJson({ ...settings_json, purchase_type: 'one_time' })}
-                                                />
-                                                <RadioButton
-                                                    label="Subscription"
-                                                    checked={settings_json?.purchase_type === 'subscription'}
-                                                    onChange={() => setSettingsJson({ ...settings_json, purchase_type: 'subscription' })}
-                                                />
-                                                <RadioButton
-                                                    label="Both"
-                                                    checked={settings_json?.purchase_type === 'both'}
-                                                    onChange={() => setSettingsJson({ ...settings_json, purchase_type: 'both' })}
-                                                />
-                                            </BlockStack>
-                                        </Box>
-                                    </Card>
-                                )}
-
-                                {(settings_json?.purchase_type === 'subscription' || settings_json?.purchase_type === 'both') && (
-                                    <>
-                                        <Card>
-                                            <BlockStack gap={300}>
-                                                <Text variant='headingSm' as="span">Recurring Payment Options</Text>
-                                                <TextField
-                                                    type="number"
-                                                    value={settings_json?.number_of_times_on_recurring_purchases}
-                                                    onChange={(value) => {
-                                                        setSettingsJson({ ...settings_json, number_of_times_on_recurring_purchases: value });
-                                                        setValidationError({ ...validationError, numberOfTimesOnRecurringPurchases: '' })
-                                                    }}
-                                                    error={validationError?.numberOfTimesOnRecurringPurchases}
-                                                    helpText='The number of times a discount applies on recurring purchases. For example, if you set this field to 3, then the discount only applies to the first three billing cycles of a subscription. If you specify 0, then the discount applies indefinitely.'
-                                                />
-                                            </BlockStack>
-                                        </Card>
-                                    </>
-                                )}
-
-                                {(rule.type !== "store_credit") && (
-                                    <Card>
+                                    <Grid.Cell columnSpan={{ xs: 6, sm: 2, md: 2, lg: 4, xl: 4 }}>
                                         <BlockStack gap={300}>
-                                            <Text variant='headingMd' >Reward Expiration</Text>
-                                            <TextField
-                                                type="number"
-                                                helpText="The number of days after which the reward expires"
-                                                value={rewardExpiration}
-                                                onChange={(value) => {
-                                                    setRewardExpiration(value);
-                                                    setValidationError({ ...validationError, rewardExpiration: '' })
-                                                }}
-                                                error={validationError?.rewardExpiration}
-                                                autoComplete="off"
-                                                suffix="Days"
-                                            />
+                                            <Card>
+                                                <Text variant='headingMd' as="span">Reward Summary</Text>
+                                                <ul style={{ listStyle: 'inherit', paddingInline: 20 }}>
+                                                    <li><p>Applies to all orders</p></li>
+                                                </ul>
+                                            </Card>
+
+                                            <Card>
+                                                <BlockStack gap={300}>
+                                                    <Box style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+                                                        <Text variant='headingMd'>Status</Text>
+                                                        <Badge tone={status === true ? "success" : "critical"}>
+                                                            {status === true ? "Active" : "Inactive"}
+                                                        </Badge>
+                                                    </Box>
+                                                    <Box>
+                                                        <div className="toggle-container" style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                                                            <label className="switch">
+                                                                <input
+                                                                    type="checkbox"
+                                                                    checked={status === true}
+                                                                    onChange={handleStatusChange}
+                                                                />
+                                                                <span className="slider"></span>
+                                                            </label>
+                                                        </div>
+                                                    </Box>
+                                                </BlockStack>
+                                            </Card>
                                         </BlockStack>
-                                    </Card>
-                                )}
-                            </BlockStack>
-                        </Grid.Cell>
+                                    </Grid.Cell>
+                                </Grid>
+                            </Layout.Section>
+                        </Layout >
 
-                        <Grid.Cell columnSpan={{ xs: 6, sm: 2, md: 2, lg: 4, xl: 4 }}>
-                            <BlockStack gap={300}>
-                                <Card>
-                                    <Text variant='headingMd' as="span">Reward Summary</Text>
-                                    <ul style={{ listStyle: 'inherit', paddingInline: 20 }}>
-                                        <li><p>Applies to all orders</p></li>
-                                    </ul>
-                                </Card>
+                        <CollectionModal
+                            open={collectionModalOpen}
+                            onClose={() => setCollectionModalOpen(false)}
+                            initialSelectedCollections={settings_json?.collections}
+                            onSave={(selected) => {
+                                console.log('selected ll', selected)
+                                setSettingsJson({
+                                    ...settings_json,
+                                    collections: selected,
+                                });
+                                setCollectionModalOpen(false);
+                            }}
+                        />
 
-                                <Card>
-                                    <BlockStack gap={300}>
-                                        <Box style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-                                            <Text variant='headingMd'>Status</Text>
-                                            <Badge tone={status === true ? "success" : "critical"}>
-                                                {status === true ? "Active" : "Inactive"}
-                                            </Badge>
-                                        </Box>
-                                        <Box>
-                                            <div className="toggle-container" style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                                                <label className="switch">
-                                                    <input
-                                                        type="checkbox"
-                                                        checked={status === true}
-                                                        onChange={handleStatusChange}
-                                                    />
-                                                    <span className="slider"></span>
-                                                </label>
-                                            </div>
-                                        </Box>
-                                    </BlockStack>
-                                </Card>
-                            </BlockStack>
-                        </Grid.Cell>
-                    </Grid>
-                </Layout.Section>
-            </Layout >
+                        <ProductModal
+                            open={productModalOpen}
+                            onClose={() => setProductModalOpen(false)}
+                            selectedProducts={settings_json?.products}
+                            onSave={(selected) => {
+                                console.log('selected product12', selected)
+                                setSettingsJson({
+                                    ...settings_json,
+                                    products: selected,
+                                })
+                            }}
+                        />
+                    </Page >
+                )
+            }
+        </>
 
-            <CollectionModal
-                open={collectionModalOpen}
-                onClose={() => setCollectionModalOpen(false)}
-                initialSelectedCollections={settings_json?.collections}
-                onSave={(selected) => {
-                    console.log('selected ll', selected)
-                    setSettingsJson({
-                        ...settings_json,
-                        collections: selected,
-                    });
-                    setCollectionModalOpen(false);
-                }}
-            />
-
-            <ProductModal
-                open={productModalOpen}
-                onClose={() => setProductModalOpen(false)}
-                selectedProducts={settings_json?.products}
-                onSave={(selected) => {
-                    console.log('selected product12', selected)
-                    setSettingsJson({
-                        ...settings_json,
-                        products: selected,
-                    })
-                }}
-            />
-        </Page >
     )
 }
 

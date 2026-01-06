@@ -96,6 +96,7 @@ const PointsModal = ({ open, onClose, customerPoints, onSave, isLoading }) => {
                     <TextField
                         label="Points Change"
                         placeholder='e.g. 100'
+                        requiredIndicator={true}
                         type="text"
                         inputMode="decimal"
                         value={pointsAmount}

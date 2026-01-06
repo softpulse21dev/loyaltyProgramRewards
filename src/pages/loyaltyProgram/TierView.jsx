@@ -1,11 +1,11 @@
-import { BlockStack, Box, Button, Card, DropZone, Grid, Icon, Layout, LegacyStack, Page, RadioButton, ResourceItem, ResourceList, Text, TextField, Thumbnail } from '@shopify/polaris'
+import { BlockStack, Box, Button, Card, DropZone, Grid, Icon, InlineGrid, Layout, LegacyStack, Page, RadioButton, ResourceItem, ResourceList, SkeletonBodyText, SkeletonDisplayText, SkeletonPage, Text, TextField, Thumbnail } from '@shopify/polaris'
 import { CashDollarIcon, CheckIcon, CurrencyConvertIcon, DeleteIcon, GiftCardIcon, HeartIcon, NoteIcon, RewardIcon, SaveIcon, StarIcon } from '@shopify/polaris-icons';
 import React, { useCallback, useEffect, useState } from 'react'
 import { useLocation, useNavigate } from 'react-router-dom';
 import RedeemModal from '../../components/RedeemModal';
 import { fetchData } from '../../action';
 import { useDispatch, useSelector } from 'react-redux';
-import { ClearTierFormData, SetData, UpdateData, UpdateTierFormData } from '../../redux/action';
+import { ClearTierFormData, SetData, UpdateData, UpdateTierFormData, TierId, MasterRewardsList, GetVipTierData } from '../../redux/action';
 import { iconsMap } from '../../utils';
 import SvgPreview from '../../components/SvgPreview';
 
@@ -19,6 +19,9 @@ const TierView = () => {
     const Data = useSelector((state) => state.merchantSettings.Data);
     const masterRewardsList = useSelector((state) => state.merchantSettings.masterRewardsList);
     const vipTierData = useSelector((state) => state.merchantSettings.vipTierData);
+    const [loading, setLoading] = useState(false);
+    const [submitLoading, setSubmitLoading] = useState(false);
+    const [deleteLoading, setDeleteLoading] = useState(false);
     const [validation, setValidation] = useState({
         tierName: '',
         goalValue: '',
@@ -35,6 +38,50 @@ const TierView = () => {
     const [active, setActive] = useState(false);
     const tierId = useSelector((state) => state.merchantSettings.tierId);
     console.log('tierId', tierId)
+
+    // Fetch data on mount/reload if missing
+    useEffect(() => {
+        const fetchTierData = async () => {
+            // 1. Check if we have the necessary data
+            if (!vipTierData || vipTierData.length === 0 || !masterRewardsList) {
+                setLoading(true);
+                try {
+                    const formData = new FormData();
+                    const response = await fetchData("/get-tiers", formData);
+                    if (response.status) {
+                        dispatch(GetVipTierData(response?.data?.tier_settings));
+                        dispatch(MasterRewardsList(response?.master_rewards));
+
+                        // If we are in "Edit" mode (based on localStorage), verify the tier exists
+                        const storedDataStr = localStorage.getItem('tierEditData');
+                        if (storedDataStr) {
+                            const storedData = JSON.parse(storedDataStr);
+                            if (storedData.tierId) {
+                                dispatch(TierId(storedData.tierId));
+                            }
+                        }
+                    }
+                } catch (error) {
+                    console.error("Error fetching tiers on reload", error);
+                } finally {
+                    setLoading(false);
+                }
+            } else {
+                // Even if data exists, check if we lost the tierId (Redux reset) but have it in local storage
+                if (!tierId) {
+                    const storedDataStr = localStorage.getItem('tierEditData');
+                    if (storedDataStr) {
+                        const storedData = JSON.parse(storedDataStr);
+                        if (storedData.tierId) {
+                            dispatch(TierId(storedData.tierId));
+                        }
+                    }
+                }
+            }
+        };
+
+        fetchTierData();
+    }, [dispatch, vipTierData, masterRewardsList, tierId]);
 
     // 3. Initialize the form data on load
     useEffect(() => {
@@ -67,6 +114,7 @@ const TierView = () => {
     }, [tierId, vipTierData, dispatch, uid]); // <-- Add 'uid' to the dependency array
 
     const handleBackAction = () => {
+        localStorage.removeItem('tierEditData');
         dispatch(ClearTierFormData());
         navigate('/loyaltyProgram', { state: { navigateTo: navigateTo } });
     };
@@ -107,6 +155,7 @@ const TierView = () => {
         if (handleValidation()) {
             return;
         }
+        setSubmitLoading(true);
         try {
             const formData = new FormData();
             formData.append("title", tierName);
@@ -134,11 +183,12 @@ const TierView = () => {
         } catch (error) {
             console.error('Error adding VIP tier:', error);
         } finally {
-            // setLoading(false);
+            setSubmitLoading(false);
         }
     }
 
     const DeleteVipTierAPI = async (tierId) => {
+        setDeleteLoading(true);
         try {
             const formData = new FormData();
             formData.append("delete", tierId);
@@ -154,7 +204,7 @@ const TierView = () => {
             console.error('Error deleting VIP tier:', error);
             shopify.toast.show(error?.message, { duration: 2000, isError: true });
         } finally {
-            // setLoading(false);
+            setDeleteLoading(false);
         }
     }
 
@@ -233,161 +283,194 @@ const TierView = () => {
     )
 
     return (
-        <Page
-            backAction={{ content: 'Back', onAction: () => { handleBackAction() } }}
-            title="VIP Tier"
-            secondaryActions={edit ? <Button tone='critical' icon={DeleteIcon} onClick={() => { DeleteVipTierAPI(rule?.uid) }}>Delete</Button> : ''}
-            primaryAction={{ content: 'Save', onAction: () => { AddVipTierAPI() } }}
-        >
-            <Layout>
-                <Layout.Section>
-                    <Grid>
-                        <Grid.Cell columnSpan={{ xs: 6, sm: 4, md: 4, lg: 8, xl: 8 }}>
-                            <BlockStack gap={400}>
-                                <Card>
+        <>
+            {loading ?
+                <SkeletonPage
+                    primaryAction={{ content: <SkeletonDisplayText size="small" /> }}
+                >
+                    <InlineGrid columns={['twoThirds', 'oneThird']} gap={400} >
+                        <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
+                            <Card>
+                                <SkeletonBodyText lines={4} />
+                            </Card>
+                            <Card>
+                                <SkeletonBodyText lines={3} />
+                            </Card>
+                            <Card>
+                                <SkeletonBodyText lines={8} />
+                            </Card>
+                            <Card>
+                                <SkeletonBodyText lines={8} />
+                            </Card>
+                        </div>
+                        <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
+                            <Card>
+                                <SkeletonBodyText lines={4} />
+                            </Card>
+                            <Card>
+                                <SkeletonBodyText lines={4} />
+                            </Card>
+                        </div>
+                    </InlineGrid>
+                </SkeletonPage>
+                :
+                <Page
+                    backAction={{ content: 'Back', onAction: () => { handleBackAction() } }}
+                    title="VIP Tier"
+                    secondaryActions={edit ? <Button tone='critical' icon={DeleteIcon} loading={deleteLoading} onClick={() => { DeleteVipTierAPI(rule?.uid) }}>Delete</Button> : ''}
+                    primaryAction={{ content: 'Save', loading: submitLoading, onAction: () => { AddVipTierAPI() } }}
+                >
+                    <Layout>
+                        <Layout.Section>
+                            <Grid>
+                                <Grid.Cell columnSpan={{ xs: 6, sm: 4, md: 4, lg: 8, xl: 8 }}>
                                     <BlockStack gap={400}>
-                                        <Text variant='headingMd' as="span">Tier Name</Text>
-                                        <TextField
-                                            value={tierName}
-                                            onChange={(value) => dispatch(UpdateTierFormData({ ...tierFormData, tierName: value }), setValidation({ ...validation, tierName: '' }))}
-                                            maxLength={255}
-                                            error={validation.tierName}
-                                        />
-                                    </BlockStack>
-                                </Card>
+                                        <Card>
+                                            <BlockStack gap={400}>
+                                                <Text variant='headingMd' as="span">Tier Name</Text>
+                                                <TextField
+                                                    value={tierName}
+                                                    onChange={(value) => dispatch(UpdateTierFormData({ ...tierFormData, tierName: value }), setValidation({ ...validation, tierName: '' }))}
+                                                    maxLength={255}
+                                                    error={validation.tierName}
+                                                />
+                                            </BlockStack>
+                                        </Card>
 
-                                <Card>
-                                    <Box style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
-                                        <Text variant='headingMd' as="span">Goal to achieve tier</Text>
-                                        <Box style={{ maxWidth: 300 }}>
-                                            <TextField
-                                                value={goalValue}
-                                                type='number'
-                                                label='Amount spent since start date'
-                                                requiredIndicator={true}
-                                                onChange={(value) => dispatch(UpdateTierFormData({ ...tierFormData, goalValue: value }), setValidation({ ...validation, goalValue: '' }))}
-                                                error={validation.goalValue}
-                                            />
-                                        </Box>
-                                    </Box>
-                                </Card>
+                                        <Card>
+                                            <Box style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+                                                <Text variant='headingMd' as="span">Goal to achieve tier</Text>
+                                                <Box style={{ maxWidth: 300 }}>
+                                                    <TextField
+                                                        value={goalValue}
+                                                        type='number'
+                                                        label='Amount spent since start date'
+                                                        requiredIndicator={true}
+                                                        onChange={(value) => dispatch(UpdateTierFormData({ ...tierFormData, goalValue: value }), setValidation({ ...validation, goalValue: '' }))}
+                                                        error={validation.goalValue}
+                                                    />
+                                                </Box>
+                                            </Box>
+                                        </Card>
 
-                                <Card>
-                                    <Box style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
-                                        <Text variant='headingMd' as="span">Points Multiplier</Text>
-                                        <Box style={{ maxWidth: 300 }}>
-                                            <TextField
-                                                value={pointsMultiplier}
-                                                type='number'
-                                                label='Points earned will be multiplied by this value'
-                                                requiredIndicator={true}
-                                                onChange={(value) => dispatch(UpdateTierFormData({ ...tierFormData, pointsMultiplier: value }), setValidation({ ...validation, pointsMultiplier: '' }))}
-                                                error={validation.pointsMultiplier}
-                                            />
-                                        </Box>
-                                    </Box>
-                                </Card>
+                                        <Card>
+                                            <Box style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+                                                <Text variant='headingMd' as="span">Points Multiplier</Text>
+                                                <Box style={{ maxWidth: 300 }}>
+                                                    <TextField
+                                                        value={pointsMultiplier}
+                                                        type='number'
+                                                        label='Points earned will be multiplied by this value'
+                                                        requiredIndicator={true}
+                                                        onChange={(value) => dispatch(UpdateTierFormData({ ...tierFormData, pointsMultiplier: value }), setValidation({ ...validation, pointsMultiplier: '' }))}
+                                                        error={validation.pointsMultiplier}
+                                                    />
+                                                </Box>
+                                            </Box>
+                                        </Card>
 
-                                <Card>
-                                    <BlockStack gap={400}>
-                                        <Text variant='headingMd'>Rewards to unlock tier</Text>
-                                        <div className='icon-size'>
-                                            <ResourceList
-                                                resourceName={{ singular: "rule", plural: "rules" }}
-                                                items={Data || []}
-                                                renderItem={(item) => {
-                                                    const { clientId, title, points, icon, status } = item;
-                                                    const IconSource = iconsMap[icon];
-                                                    return (
-                                                        <ResourceItem key={clientId}>
-                                                            <Box style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-                                                                <Box style={{ display: "flex", alignItems: "center", gap: "15px" }}>
-                                                                    <Icon source={IconSource} />
-                                                                    <Box>
-                                                                        <Text variant="bodyMd">{title}</Text>
-                                                                        <Text variant="bodyMd">{points} points</Text>
+                                        <Card>
+                                            <BlockStack gap={400}>
+                                                <Text variant='headingMd'>Rewards to unlock tier</Text>
+                                                <div className='icon-size'>
+                                                    <ResourceList
+                                                        resourceName={{ singular: "rule", plural: "rules" }}
+                                                        items={Data || []}
+                                                        renderItem={(item) => {
+                                                            const { clientId, title, points, icon, status } = item;
+                                                            const IconSource = iconsMap[icon];
+                                                            return (
+                                                                <ResourceItem key={clientId}>
+                                                                    <Box style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+                                                                        <Box style={{ display: "flex", alignItems: "center", gap: "15px" }}>
+                                                                            <Icon source={IconSource} />
+                                                                            <Box>
+                                                                                <Text variant="bodyMd">{title}</Text>
+                                                                                {/* <Text variant="bodyMd">{points} points</Text> */}
+                                                                            </Box>
+                                                                        </Box>
+                                                                        <Box style={{ display: "flex", alignItems: "center", gap: "15px" }}>
+                                                                            <Button variant="plain" onClick={() => navigate(`/loyaltyProgram/CouponPage`, { state: { rule: item, edit: true, localSave: true, isTierRewardEdit: true, navigateTo: 2 } })}>Edit</Button>
+                                                                            <div className="toggle-container" style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                                                                                <label className="switch">
+                                                                                    <input
+                                                                                        type="checkbox"
+                                                                                        checked={status === true}
+                                                                                        onChange={(e) =>
+                                                                                            handleRewardStatusChange(item, e.target.checked)
+                                                                                        }
+                                                                                    />
+                                                                                    <span className="slider"></span>
+                                                                                </label>
+                                                                            </div>
+                                                                        </Box>
                                                                     </Box>
-                                                                </Box>
-                                                                <Box style={{ display: "flex", alignItems: "center", gap: "15px" }}>
-                                                                    <Button variant="plain" onClick={() => navigate(`/loyaltyProgram/CouponPage`, { state: { rule: item, edit: true, localSave: true, isTierRewardEdit: true, navigateTo: 2 } })}>Edit</Button>
-                                                                    <div className="toggle-container" style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                                                                        <label className="switch">
-                                                                            <input
-                                                                                type="checkbox"
-                                                                                checked={status === true}
-                                                                                onChange={(e) =>
-                                                                                    handleRewardStatusChange(item, e.target.checked)
-                                                                                }
-                                                                            />
-                                                                            <span className="slider"></span>
-                                                                        </label>
-                                                                    </div>
-                                                                </Box>
-                                                            </Box>
-                                                        </ResourceItem>
-                                                    );
-                                                }}
-                                            />
-                                        </div>
-                                        <Box>
-                                            <Button onClick={() => setActive(true)}>Add Reward</Button>
-                                        </Box>
+                                                                </ResourceItem>
+                                                            );
+                                                        }}
+                                                    />
+                                                </div>
+                                                <Box>
+                                                    <Button onClick={() => setActive(true)}>Add Reward</Button>
+                                                </Box>
+                                            </BlockStack>
+                                        </Card>
+
                                     </BlockStack>
-                                </Card>
+                                </Grid.Cell>
 
-                            </BlockStack>
-                        </Grid.Cell>
+                                <Grid.Cell columnSpan={{ xs: 6, sm: 2, md: 2, lg: 4, xl: 4 }}>
+                                    <BlockStack gap={400}>
+                                        <Card>
+                                            <Text variant='headingMd' as="span">Details</Text>
+                                            <ul style={{ listStyle: 'inherit', paddingInline: 20 }}>
+                                                <li><p>0 amount spent since start date</p></li>
+                                                <li><p>0 rewards unlocked</p></li>
+                                            </ul>
+                                        </Card>
 
-                        <Grid.Cell columnSpan={{ xs: 6, sm: 2, md: 2, lg: 4, xl: 4 }}>
-                            <BlockStack gap={400}>
-                                <Card>
-                                    <Text variant='headingMd' as="span">Details</Text>
-                                    <ul style={{ listStyle: 'inherit', paddingInline: 20 }}>
-                                        <li><p>0 amount spent since start date</p></li>
-                                        <li><p>0 rewards unlocked</p></li>
-                                    </ul>
-                                </Card>
+                                        <Card>
+                                            <Text variant="headingMd" as="h2">
+                                                Icon
+                                            </Text>
 
-                                <Card>
-                                    <Text variant="headingMd" as="h2">
-                                        Icon
-                                    </Text>
+                                            <Box
+                                                style={{
+                                                    display: "grid",
+                                                    gap: "8px",
+                                                    marginTop: "8px",
+                                                }}
+                                            >
+                                                <RadioButton
+                                                    label={'Default Icon'}
+                                                    checked={selectedIcon === "default"}
+                                                    onChange={() => dispatch(UpdateTierFormData({ ...tierFormData, selectedIcon: 'default' }))}
+                                                />
+                                                <div className='icon-size' style={{ display: "flex", maxWidth: "15%", alignItems: "flex-start", justifyContent: "center" }}>
+                                                    <Icon source={RewardIcon} />
+                                                </div>
+                                                <RadioButton
+                                                    label='Custom Icon'
+                                                    checked={selectedIcon === "custom"}
+                                                    onChange={() => dispatch(UpdateTierFormData({ ...tierFormData, selectedIcon: 'custom' }))}
+                                                />
+                                                <DropZone onDrop={handleDropZoneDrop} variableHeight allowMultiple={false} accept="image/png, image/jpeg, image/svg+xml">
+                                                    {uploadedFiles}
+                                                    {fileUpload}
+                                                </DropZone>
+                                                {validation.files && <Text variant="bodySm" as="p" tone="critical">{validation.files}</Text>}
+                                            </Box>
+                                        </Card>
+                                    </BlockStack>
+                                </Grid.Cell>
+                            </Grid>
+                        </Layout.Section>
+                    </Layout>
 
-                                    <Box
-                                        style={{
-                                            display: "grid",
-                                            gap: "8px",
-                                            marginTop: "8px",
-                                        }}
-                                    >
-                                        <RadioButton
-                                            label={'Default Icon'}
-                                            checked={selectedIcon === "default"}
-                                            onChange={() => dispatch(UpdateTierFormData({ ...tierFormData, selectedIcon: 'default' }))}
-                                        />
-                                        <div className='icon-size' style={{ display: "flex", maxWidth: "15%", alignItems: "flex-start", justifyContent: "center" }}>
-                                            <Icon source={RewardIcon} />
-                                        </div>
-                                        <RadioButton
-                                            label='Custom Icon'
-                                            checked={selectedIcon === "custom"}
-                                            onChange={() => dispatch(UpdateTierFormData({ ...tierFormData, selectedIcon: 'custom' }))}
-                                        />
-                                        <DropZone onDrop={handleDropZoneDrop} variableHeight allowMultiple={false} accept="image/png, image/jpeg, image/svg+xml">
-                                            {uploadedFiles}
-                                            {fileUpload}
-                                        </DropZone>
-                                        {validation.files && <Text variant="bodySm" as="p" tone="critical">{validation.files}</Text>}
-                                    </Box>
-                                </Card>
-                            </BlockStack>
-                        </Grid.Cell>
-                    </Grid>
-                </Layout.Section>
-            </Layout>
-
-            <RedeemModal localSave={true} navigateTo={2} active={active} setActive={setActive} data={masterRewardsList} loading={!masterRewardsList} />
-        </Page>
+                    <RedeemModal localSave={true} navigateTo={2} active={active} setActive={setActive} data={masterRewardsList} loading={!masterRewardsList} />
+                </Page>
+            }
+        </>
     )
 }
 

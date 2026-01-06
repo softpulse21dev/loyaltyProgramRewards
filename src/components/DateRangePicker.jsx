@@ -37,13 +37,13 @@ function DateRangePicker({ inputValues, setInputValues, getDashboardData }) {
     };
 
     const ranges = useCallback(() => [
-        { title: 'today', alias: "today", period: { since: today, until: today } },
-        { title: 'yesterday', alias: "yesterday", period: { since: yesterday, until: yesterday } },
-        { title: 'last7days', alias: "last7days", period: { since: new Date(new Date().setDate(today.getDate() - 7)), until: today } },
-        { title: 'last30days', alias: "last30days", period: { since: new Date(new Date().setDate(today.getDate() - 29)), until: today } },
-        { title: 'last90days', alias: "last90days", period: { since: new Date(new Date().setDate(today.getDate() - 90)), until: today } },
-        { title: 'lastmonth', alias: "lastmonth", period: { since: startOfLastMonth, until: endOfLastMonth } },
-        { title: 'custom', alias: "custom", period: { since: today, until: today } }
+        { title: 'Today', alias: "today", period: { since: today, until: today } },
+        { title: 'Yesterday', alias: "yesterday", period: { since: yesterday, until: yesterday } },
+        { title: 'Last 7 Days', alias: "last7days", period: { since: new Date(new Date().setDate(today.getDate() - 6)), until: today } },
+        { title: 'Last 30 Days', alias: "last30days", period: { since: new Date(new Date().setDate(today.getDate() - 29)), until: today } },
+        { title: 'Last 90 Days', alias: "last90days", period: { since: new Date(new Date().setDate(today.getDate() - 90)), until: today } },
+        { title: 'Last Month', alias: "lastmonth", period: { since: startOfLastMonth, until: endOfLastMonth } },
+        { title: 'Custom', alias: "custom", period: { since: today, until: today } }
     ], [today, yesterday, startOfLastMonth, endOfLastMonth]);
 
     const [popoverActive, setPopoverActive] = useState(false);

@@ -113,6 +113,10 @@ export const openSocialShare = (platform, urlToShare) => {
     }
 };
 
+export const cleanStrictWhitespace = (value) => {
+    if (!value) return "";
+    return value.replace(/\s+/g, "");
+};
 // Helper functions to convert between Hex and HSB
 export const hexToHsb = (hex) => {
     // Remove # if present
@@ -170,4 +174,23 @@ export const hsbToHex = (hsb) => {
     return `#${toHex(r)}${toHex(g)}${toHex(b)}`;
 };
 
+export const darkenColor = (hex, amount = 0.3) => {
+    let color = hex?.replace('#', '');
+
+    if (color?.length === 3) {
+        color = color.split('').map(c => c + c).join('');
+    }
+
+    const num = parseInt(color, 16);
+
+    let r = (num >> 16) & 255;
+    let g = (num >> 8) & 255;
+    let b = num & 255;
+
+    r = Math.floor(r * (1 - amount));
+    g = Math.floor(g * (1 - amount));
+    b = Math.floor(b * (1 - amount));
+
+    return `rgb(${r}, ${g}, ${b})`;
+};
 // https://docs.google.com/document/d/11SHYSidCKFvxceiOE4-DTzvc3UthlGxb2JsLCY6i5rc/edit?hl=en-GB&forcehl=1&tab=t.sxv4ttgt6n4c

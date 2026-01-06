@@ -1,9 +1,9 @@
-import { Card, Text, Page, IndexFilters, IndexTable, ChoiceList, TextField, BlockStack, Box, InlineStack, Pagination, Select, Button, SkeletonBodyText, useSetIndexFiltersMode, IndexFiltersMode, Popover, DatePicker, Icon } from "@shopify/polaris";
+import { Card, Text, Page, IndexFilters, IndexTable, ChoiceList, TextField, BlockStack, Box, InlineStack, Pagination, Select, Button, SkeletonBodyText, useSetIndexFiltersMode, IndexFiltersMode, Popover, DatePicker, Icon, Badge, useIndexResourceState } from "@shopify/polaris";
 import { CalendarIcon } from "@shopify/polaris-icons";
 import { useState, useCallback, useEffect, useRef, useMemo } from "react";
 import { useNavigate } from "react-router-dom";
 import { fetchData } from "../action";
-import { formatShortDate } from "../utils";
+import { capitalizeFirst, formatShortDate } from "../utils";
 
 const Customer = () => {
     const navigate = useNavigate();
@@ -15,6 +15,8 @@ const Customer = () => {
     const [customerType, setCustomerType] = useState('');
     const [limit, setLimit] = useState('15');
     const [loading, setLoading] = useState(true);
+    const [vipTierList, setVipTierList] = useState([]); // State to hold the list R1, R2, etc.
+    const [selectedVipTier, setSelectedVipTier] = useState(null);
 
     // --- Sorting State ---
     const [sortColumn, setSortColumn] = useState(null);
@@ -35,7 +37,7 @@ const Customer = () => {
     const [nameFilter, setNameFilter] = useState('');
 
     // --- DATE FILTER STATE ---
-    const [orderDateRange, setOrderDateRange] = useState(''); // Holds 'today', 'last7', 'custom', etc.
+    const [orderDateRange, setOrderDateRange] = useState('');
     const [orderStartDate, setOrderStartDate] = useState(null);
     const [orderEndDate, setOrderEndDate] = useState(null);
     const [activePopover, setActivePopover] = useState(null);
@@ -62,77 +64,54 @@ const Customer = () => {
     const last30Days = new Date(new Date().setDate(today.getDate() - 30));
     const last60Days = new Date(new Date().setDate(today.getDate() - 60));
 
+    useEffect(() => {
+        localStorage.removeItem("current_customer_view_id");
+    }, []);
+
     // Reusable component for numerical filters within the IndexFilter popover with Apply button
     const NumberRangeFilter = ({ rangeState, setRangeState, label, onClose }) => {
         const [localMin, setLocalMin] = useState(rangeState.min);
         const [localMax, setLocalMax] = useState(rangeState.max);
 
-        // Sync local state with prop state when it changes externally (e.g., clear filters)
         useEffect(() => {
             setLocalMin(rangeState.min);
             setLocalMax(rangeState.max);
         }, [rangeState.min, rangeState.max]);
 
         const handleApply = () => {
-            // Validate that maximum is not less than minimum
             const minNum = localMin ? parseFloat(localMin) : null;
             const maxNum = localMax ? parseFloat(localMax) : null;
 
-            if (minNum !== null && maxNum !== null && maxNum < minNum) {
-                // Don't apply if max is less than min
-                return;
-            }
+            if (minNum !== null && maxNum !== null && maxNum < minNum) return;
 
-            // Ensure only numeric values are applied
             let minValue = '';
             let maxValue = '';
 
-            if (localMin && /^\d+$/.test(localMin)) {
-                minValue = localMin;
-            }
-
-            if (localMax && /^\d+$/.test(localMax)) {
-                maxValue = localMax;
-            }
+            if (localMin && /^\d+$/.test(localMin)) minValue = localMin;
+            if (localMax && /^\d+$/.test(localMax)) maxValue = localMax;
 
             setRangeState({ min: minValue, max: maxValue });
-            // Close the filter popover after applying
             if (onClose) {
-                setTimeout(() => {
-                    onClose();
-                }, 100);
+                setTimeout(() => { onClose(); }, 100);
             }
         };
 
         const handleMinChange = (value) => {
-            // Only allow numeric digits (0-9) or empty string
-            if (value === '' || /^\d+$/.test(value)) {
-                setLocalMin(value);
-            }
+            if (value === '' || /^\d+$/.test(value)) setLocalMin(value);
         };
 
         const handleMaxChange = (value) => {
-            // Only allow numeric digits (0-9) or empty string
-            if (value === '' || /^\d+$/.test(value)) {
-                setLocalMax(value);
-            }
+            if (value === '' || /^\d+$/.test(value)) setLocalMax(value);
         };
 
         const handleMinBlur = () => {
-            // Clear if non-numeric value somehow got through
-            if (localMin && !/^\d+$/.test(localMin)) {
-                setLocalMin('');
-            }
+            if (localMin && !/^\d+$/.test(localMin)) setLocalMin('');
         };
 
         const handleMaxBlur = () => {
-            // Clear if non-numeric value somehow got through
-            if (localMax && !/^\d+$/.test(localMax)) {
-                setLocalMax('');
-            }
+            if (localMax && !/^\d+$/.test(localMax)) setLocalMax('');
         };
 
-        // Check if both fields are empty OR if maximum is less than minimum
         const minNum = localMin ? parseFloat(localMin) : null;
         const maxNum = localMax ? parseFloat(localMax) : null;
         const isMaxLessThanMin = minNum !== null && maxNum !== null && maxNum <= minNum;
@@ -174,7 +153,7 @@ const Customer = () => {
     };
 
     const handleDateRangeChange = (value) => {
-        const range = value[0]; // ChoiceList returns array
+        const range = value[0];
         setOrderDateRange(range);
 
         if (range === "today") {
@@ -199,7 +178,6 @@ const Customer = () => {
 
     const handleDateSelection = (setDate) => ({ end: newSelectedDate }) => {
         if (newSelectedDate) {
-            // Adjust timezone offset if necessary, usually setting hours handles basic issues
             const localDate = new Date(newSelectedDate);
             localDate.setHours(12);
             setDate(localDate);
@@ -209,44 +187,32 @@ const Customer = () => {
 
     const formatDateForInput = (date) => date ? date.toISOString().slice(0, 10) : "";
 
-    // --- Sort Handler (Client-side only - does NOT trigger API calls) ---
+    // --- Sort Handler ---
     const handleSort = useCallback((headingIndex, direction, id) => {
-        // Map headingIndex to column name if id is not provided
         const columnMap = {
             1: 'name',
             3: 'referral_used',
             4: 'points_balance',
             5: 'orders_count',
-            6: 'points_spent',
-            7: 'registration_date'
+            6: 'total_spent',
+            7: 'vip_tier_name',
+            8: 'registration_date',
         };
 
-        // Use id if provided, otherwise use headingIndex mapping
         const columnId = id || columnMap[headingIndex];
 
         if (columnId) {
-            // Check if clicking the same column - if so, toggle direction
             let newDirection = 'ascending';
-
             if (sortStateRef.current.column === columnId) {
-                // Same column - toggle direction
                 newDirection = sortStateRef.current.direction === 'ascending' ? 'descending' : 'ascending';
-            } else {
-                // New column - start with ascending
-                newDirection = 'ascending';
             }
-
-            // Update ref
             sortStateRef.current = { column: columnId, direction: newDirection };
-
-            // Update state - NOTE: sortColumn and sortDirection are NOT in useEffect dependencies
-            // so changing these will NOT trigger API calls - sorting is purely client-side
             setSortColumn(columnId);
             setSortDirection(newDirection);
         }
     }, []);
 
-    // --- Sorted Customers (Client-side sorting) ---
+    // --- Sorted Customers ---
     const sortedCustomers = useMemo(() => {
         if (!sortColumn || !customers || customers.length === 0) {
             return customers || [];
@@ -257,37 +223,57 @@ const Customer = () => {
                 let aValue = a[sortColumn];
                 let bValue = b[sortColumn];
 
-                // Handle null/undefined values
                 if (aValue === null || aValue === undefined) aValue = '';
                 if (bValue === null || bValue === undefined) bValue = '';
 
-                // Handle different data types
                 if (sortColumn === 'name') {
-                    // String comparison (A-Z / Z-A)
                     aValue = String(aValue || '').toLowerCase().trim();
                     bValue = String(bValue || '').toLowerCase().trim();
                     const comparison = aValue.localeCompare(bValue, undefined, { numeric: true, sensitivity: 'base' });
                     return sortDirection === 'ascending' ? comparison : -comparison;
+                } else if (sortColumn === 'vip_tier_name') {
+                    const tierList = Array.isArray(vipTierList) ? vipTierList : [];
+                    const aStr = String(aValue || '').trim();
+                    const bStr = String(bValue || '').trim();
+
+                    if (tierList.length > 0) {
+                        let indexA = -1;
+                        let indexB = -1;
+
+                        for (let i = 0; i < tierList.length; i++) {
+                            const tierValue = String(tierList[i] || '').trim();
+                            if (tierValue.toLowerCase() === aStr.toLowerCase()) indexA = i;
+                            if (tierValue.toLowerCase() === bStr.toLowerCase()) indexB = i;
+                        }
+
+                        if (indexA === -1) indexA = Number.MAX_SAFE_INTEGER;
+                        if (indexB === -1) indexB = Number.MAX_SAFE_INTEGER;
+
+                        const comparison = indexA - indexB;
+                        return sortDirection === 'ascending' ? comparison : -comparison;
+                    } else {
+                        const comparison = aStr.localeCompare(bStr, undefined, { numeric: true, sensitivity: 'base' });
+                        return sortDirection === 'ascending' ? comparison : -comparison;
+                    }
                 } else if (sortColumn === 'registration_date') {
-                    // Date comparison - handle various date formats
                     let aDate = 0;
                     let bDate = 0;
-
                     if (aValue) {
                         const dateA = new Date(aValue);
                         aDate = isNaN(dateA.getTime()) ? 0 : dateA.getTime();
                     }
-
                     if (bValue) {
                         const dateB = new Date(bValue);
                         bDate = isNaN(dateB.getTime()) ? 0 : dateB.getTime();
                     }
-
                     const comparison = aDate - bDate;
                     return sortDirection === 'ascending' ? comparison : -comparison;
+                } else if (sortColumn === 'total_spent' || sortColumn === 'points_spent') {
+                    aValue = parseFloat(aValue) || 0;
+                    bValue = parseFloat(bValue) || 0;
+                    const comparison = aValue - bValue;
+                    return sortDirection === 'ascending' ? comparison : -comparison;
                 } else {
-                    // Numeric comparison (referral_used, points_balance, orders_count, points_spent)
-                    // Handles 0-9 / 9-0 sorting
                     aValue = parseFloat(aValue) || 0;
                     bValue = parseFloat(bValue) || 0;
                     const comparison = aValue - bValue;
@@ -300,7 +286,51 @@ const Customer = () => {
             console.error('Sorting error:', error);
             return customers;
         }
-    }, [customers, sortColumn, sortDirection]);
+    }, [customers, sortColumn, sortDirection, vipTierList]);
+
+    // --- Selection Logic ---
+    const selectableCustomers = useMemo(() => {
+        return sortedCustomers.filter(c => {
+            const source = c.source ? c.source.toLowerCase() : '';
+            return source !== 'guest';
+        });
+    }, [sortedCustomers]);
+
+    const {
+        selectedResources,
+        allResourcesSelected,
+        handleSelectionChange,
+        clearSelection,
+    } = useIndexResourceState(selectableCustomers, {
+        resourceIDResolver: (data) => String(data.id),
+    });
+
+    const handleSelectionChangeWrapper = useCallback((selectionType, isSelected, selectionId) => {
+        if (selectionType === 'page') {
+            if (allResourcesSelected) {
+                clearSelection();
+            } else {
+                handleSelectionChange(selectionType, true);
+            }
+        } else {
+            handleSelectionChange(selectionType, isSelected, selectionId);
+        }
+    }, [allResourcesSelected, handleSelectionChange, clearSelection]);
+
+    const promotedBulkActions = useMemo(() => [
+        {
+            content: <Text>Clear Selection</Text>,
+            onAction: () => { clearSelection(); },
+        },
+        {
+            content: <Text>Exclude Selected</Text>,
+            onAction: () => { HandleExcludeProgramApi(1); },
+        },
+        {
+            content: <Text>Include Selected</Text>,
+            onAction: () => { HandleExcludeProgramApi(0); },
+        },
+    ], [selectedResources]);
 
     // --- API Call ---
     const GetCustomersAPI = async (endCursor = '', startCursor = '', type) => {
@@ -314,10 +344,9 @@ const Customer = () => {
             formData.append("next", endCursor);
             formData.append("previous", startCursor);
             formData.append("type", type);
+            formData.append("vip_tier_name", selectedVipTier || "");
 
-            // --- Constructing the Filter Object ---
             const filterObject = {
-                // Date Logic: Send specific dates if they exist, otherwise send the range key
                 date_range: Array.isArray(orderDateRange) ? orderDateRange[0] : (orderDateRange || ""),
                 start_date: formatDateForInput(orderStartDate),
                 end_date: formatDateForInput(orderEndDate),
@@ -325,9 +354,7 @@ const Customer = () => {
                 orders_max: ordersRange.max || "",
             };
 
-            // Only include other filters based on customerType
             if (customerType === 'member') {
-                // Members: show everything
                 filterObject.referrals_min = referralsRange.min || "";
                 filterObject.referrals_max = referralsRange.max || "";
                 filterObject.points_min = pointsRange.min || "";
@@ -335,20 +362,22 @@ const Customer = () => {
                 filterObject.points_spent_min = pointsSpentRange.min || "";
                 filterObject.points_spent_max = pointsSpentRange.max || "";
             }
-            // else if (customerType === 'guest') {
-            //     Guests: hide points_min, points_max, points_spent_min, points_spent_max
-            //     filterObject.referrals_min = referralsRange.min || "";
-            //     filterObject.referrals_max = referralsRange.max || "";
-            // }
-            // If customerType is blank/undefined: only date and orders (already added above)
 
             formData.append("filters", JSON.stringify(filterObject));
-
             const response = await fetchData("/list-customer", formData);
+            console.log('response_debug', response);
 
             if (response?.status === true) {
                 setCustomers(response.data);
+
+                // --- FIX: Check where the list actually resides ---
+                // If response.data is an Array, it cannot contain vip_tier_list.
+                // It is likely response.vip_tier_list
+                const fetchedTierList = response.vip_tier_list || response.data?.vip_tier_list || [];
+                setVipTierList(fetchedTierList);
+
                 setPaginationData(response.pagination);
+                clearSelection();
             } else {
                 if (typeof shopify !== 'undefined' && shopify.toast) {
                     shopify.toast.show(response?.message, { duration: 2000, isError: true });
@@ -361,39 +390,48 @@ const Customer = () => {
         }
     }
 
-    // Ref to store the debounce timeout
-    const debounceTimerRef = useRef(null);
-
-    // --- Effect to Trigger API ---
-    useEffect(() => {
-        // Clear any existing timeout
-        if (debounceTimerRef.current) {
-            clearTimeout(debounceTimerRef.current);
+    const HandleExcludeProgramApi = async (status) => {
+        try {
+            const formData = new FormData();
+            formData.append("customer_ids", JSON.stringify(selectedResources));
+            formData.append("is_excluded", status);
+            const response = await fetchData("/toggle-customer-exclusion", formData);
+            if (response?.status === true) {
+                GetCustomersAPI();
+                shopify.toast.show(response?.message, { duration: 2000 });
+            } else {
+                shopify.toast.show(response?.message, { duration: 2000, isError: true });
+            }
+        } catch (error) {
+            console.error('Error excluding program:', error);
         }
+        finally {
+            setLoading(false);
+        }
+    }
 
-        // Set a new timeout
+    // Debounce API Trigger
+    const debounceTimerRef = useRef(null);
+    useEffect(() => {
+        if (debounceTimerRef.current) clearTimeout(debounceTimerRef.current);
+
         debounceTimerRef.current = setTimeout(() => {
-            // Only trigger if not "Custom" OR if "Custom" and both dates are selected
             if (orderDateRange !== 'custom' || (orderDateRange === 'custom' && orderStartDate && orderEndDate)) {
                 GetCustomersAPI();
             } else if (!orderDateRange) {
-                GetCustomersAPI(); // Trigger if date filter is cleared
+                GetCustomersAPI();
             }
         }, 500);
 
-        // Cleanup function
-        return () => {
-            if (debounceTimerRef.current) {
-                clearTimeout(debounceTimerRef.current);
-            }
-        };
+        return () => { if (debounceTimerRef.current) clearTimeout(debounceTimerRef.current); };
     }, [
         customerType, limit, queryValue, nameFilter,
-        orderDateRange, orderStartDate, orderEndDate, // Added specific date dependencies
-        referralsRange.min, referralsRange.max, // Serialize range objects
+        orderDateRange, orderStartDate, orderEndDate,
+        referralsRange.min, referralsRange.max,
         pointsRange.min, pointsRange.max,
         ordersRange.min, ordersRange.max,
-        pointsSpentRange.min, pointsSpentRange.max
+        pointsSpentRange.min, pointsSpentRange.max,
+        selectedVipTier
     ]);
 
     const customerTypeOptions = [
@@ -401,27 +439,27 @@ const Customer = () => {
         { label: 'Guest', value: 'guest' },
         { label: 'Member', value: 'member' },
     ];
-    const options = [
+    
+    // --- Constant for Pagination ---
+    const paginationOptions = [
         { label: '15', value: '15' },
         { label: '30', value: '30' },
         { label: '50', value: '50' },
     ];
 
     // --- Filter Handlers ---
-
     const handleNameFilterRemove = useCallback(() => setNameFilter(''), []);
     const handleStatusFilterRemove = useCallback(() => setCustomerType(''), []);
-
     const handleDateRangeFilterRemove = useCallback(() => {
         setOrderDateRange('');
         setOrderStartDate(null);
         setOrderEndDate(null);
     }, []);
-
     const handleReferralsRangeRemove = useCallback(() => setReferralsRange({ min: '', max: '' }), []);
     const handlePointsRangeRemove = useCallback(() => setPointsRange({ min: '', max: '' }), []);
     const handleOrdersRangeRemove = useCallback(() => setOrdersRange({ min: '', max: '' }), []);
     const handlePointsSpentRangeRemove = useCallback(() => setPointsSpentRange({ min: '', max: '' }), []);
+    const handleVipTierFilterRemove = useCallback(() => setSelectedVipTier(null), []);
 
     const handleFiltersClearAll = useCallback(() => {
         handleNameFilterRemove();
@@ -430,8 +468,9 @@ const Customer = () => {
         handlePointsRangeRemove();
         handleOrdersRangeRemove();
         handlePointsSpentRangeRemove();
+        handleVipTierFilterRemove();
         handleDateRangeFilterRemove();
-    }, [handleNameFilterRemove, handleStatusFilterRemove, handleDateRangeFilterRemove, handleReferralsRangeRemove, handlePointsRangeRemove, handleOrdersRangeRemove, handlePointsSpentRangeRemove]);
+    }, [handleNameFilterRemove, handleStatusFilterRemove, handleDateRangeFilterRemove, handleReferralsRangeRemove, handlePointsRangeRemove, handleOrdersRangeRemove, handlePointsSpentRangeRemove, handleVipTierFilterRemove]);
 
     // --- Helper to render Date Popover ---
     const renderDateFilter = (label, date, setDate, popoverKey, month, year, setDateObj, minDate) => (
@@ -467,8 +506,23 @@ const Customer = () => {
         </Popover>
     );
 
-    // --- Filter UI Configuration ---
+    // --- FIX: Create a NEW array for VIP options, do not mutate global options ---
+    const vipTierOptions = useMemo(() => {
+        // Create a FRESH array
+        const generatedOptions = []; 
+        
+        if (Array.isArray(vipTierList) && vipTierList.length > 0) {
+            vipTierList.forEach(tier => {
+                const tierValue = String(tier || '').trim();
+                if (tierValue) {
+                    generatedOptions.push({ label: tierValue, value: tierValue });
+                }
+            });
+        }
+        return generatedOptions;
+    }, [vipTierList]);
 
+    // --- Filter UI Configuration ---
     const allFilters = [
         {
             key: "orderDate",
@@ -511,6 +565,7 @@ const Customer = () => {
                     choices={[
                         { label: 'Guest', value: 'guest' },
                         { label: 'Member', value: 'member' },
+                        { label: 'Excluded', value: 'excluded' },
                     ]}
                     selected={customerType ? [customerType] : []}
                     onChange={(value) => setCustomerType(value[0] || '')}
@@ -571,36 +626,31 @@ const Customer = () => {
             ),
             shortcut: true,
         },
+        {
+            key: 'vipTierFilter',
+            label: 'VIP Tier',
+            filter: (
+                <Select
+                    label="VIP Tier"
+                    options={vipTierOptions}
+                    value={selectedVipTier || ''}
+                    onChange={(value) => setSelectedVipTier(value || null)}
+                />
+            ),
+            shortcut: true,
+        },
     ];
 
-    // Conditionally filter based on customerType
     const filters = allFilters.filter(filter => {
-        // Always show status filter
-        if (filter.key === 'statusFilter') {
-            return true;
-        }
-        // If status is blank/undefined: only show date filter and ordersRange
-        if (!customerType || customerType === '') {
-            return filter.key === 'orderDate' || filter.key === 'ordersRange';
-        }
-        // If status is guest: hide pointsRange and pointsSpentRange
+        if (filter.key === 'statusFilter') return true;
+        if (!customerType || customerType === '') return filter.key === 'orderDate' || filter.key === 'ordersRange';
         if (customerType === 'guest') {
-            return filter.key !== 'pointsRange' &&
-                filter.key !== 'pointsSpentRange' &&
-                filter.key !== 'referralsRange';
+            return filter.key !== 'pointsRange' && filter.key !== 'pointsSpentRange' && filter.key !== 'referralsRange' && filter.key !== 'vipTierFilter';
         }
-        // If status is member: show everything
         return true;
     });
 
     // --- Applied Filters "Pills" ---
-    const getRangeLabel = (range) => {
-        if (range.min !== '' && range.max !== '') return `Between ${range.min} and ${range.max}`;
-        if (range.min !== '') return `Min: ${range.min}`;
-        if (range.max !== '') return `Max: ${range.max}`;
-        return '';
-    };
-
     const appliedFilters = [];
 
     if (orderDateRange) {
@@ -612,62 +662,62 @@ const Customer = () => {
         else if (orderDateRange === 'custom' && orderStartDate && orderEndDate) {
             label = `${formatDateForInput(orderStartDate)} - ${formatDateForInput(orderEndDate)}`;
         }
-
-        if (label) {
-            appliedFilters.push({
-                key: 'orderDate',
-                label: `Date: ${label}`,
-                onRemove: handleDateRangeFilterRemove,
-            });
-        }
+        if (label) appliedFilters.push({ key: 'orderDate', label: `Date: ${label}`, onRemove: handleDateRangeFilterRemove });
     }
 
     if (nameFilter) appliedFilters.push({ key: 'nameFilter', label: `Name is "${nameFilter}"`, onRemove: handleNameFilterRemove });
     if (customerType) appliedFilters.push({ key: 'statusFilter', label: `Status is ${customerType}`, onRemove: handleStatusFilterRemove });
 
-    // Conditionally show filters based on customerType
     if (customerType === 'member') {
-        // Members: show all filters
         if (referralsRange.min || referralsRange.max) appliedFilters.push({ key: 'referralsRange', label: `Referrals ${getRangeLabel(referralsRange)}`, onRemove: handleReferralsRangeRemove });
         if (pointsRange.min || pointsRange.max) appliedFilters.push({ key: 'pointsRange', label: `Points ${getRangeLabel(pointsRange)}`, onRemove: handlePointsRangeRemove });
         if (ordersRange.min || ordersRange.max) appliedFilters.push({ key: 'ordersRange', label: `Orders ${getRangeLabel(ordersRange)}`, onRemove: handleOrdersRangeRemove });
         if (pointsSpentRange.min || pointsSpentRange.max) appliedFilters.push({ key: 'pointsSpentRange', label: `Points Spent ${getRangeLabel(pointsSpentRange)}`, onRemove: handlePointsSpentRangeRemove });
+        if (selectedVipTier) appliedFilters.push({ key: 'vipTierFilter', label: `VIP Tier is ${selectedVipTier}`, onRemove: handleVipTierFilterRemove });
     } else if (customerType === 'guest') {
-        // Guests: hide points and pointsSpent
-        // if (referralsRange.min || referralsRange.max) appliedFilters.push({ key: 'referralsRange', label: `Referrals ${getRangeLabel(referralsRange)}`, onRemove: handleReferralsRangeRemove });
         if (ordersRange.min || ordersRange.max) appliedFilters.push({ key: 'ordersRange', label: `Orders ${getRangeLabel(ordersRange)}`, onRemove: handleOrdersRangeRemove });
     } else {
-        // Blank/undefined: only show orders
         if (ordersRange.min || ordersRange.max) appliedFilters.push({ key: 'ordersRange', label: `Orders ${getRangeLabel(ordersRange)}`, onRemove: handleOrdersRangeRemove });
     }
+
+    const isFilterDisabled = selectedResources.length > 0 || allResourcesSelected;
 
     // --- Table Row Markup ---
     const rowMarkup = sortedCustomers.map((val, index) => {
         const isGuest = val.source && val.source.toLowerCase() === 'guest';
+        const isSelected = selectedResources.includes(String(val.id));
 
         return (
             <IndexTable.Row
-                id={val.shopify_cust_id}
+                id={val.id}
                 key={val.shopify_cust_id}
-                position={index} 
-                onClick={isGuest ? undefined : () => navigate(`/customer/customerView`, { state: { id: val.shopify_cust_id } })}
+                position={index}
+                selected={isSelected}
+                disabled={isGuest}
+                onClick={isGuest ? undefined : () => {
+                    localStorage.setItem("current_customer_view_id", val.shopify_cust_id);
+                    navigate(`/customer/customerView`, { state: { id: val.shopify_cust_id } });
+                }}
             >
                 <IndexTable.Cell><Text variant='bodyMd' as="span">{val.email}</Text></IndexTable.Cell>
                 <IndexTable.Cell><Text variant='bodyMd' as="span">{val.name}</Text></IndexTable.Cell>
-                <IndexTable.Cell><Text variant='bodyMd' as="span">{val.source}</Text></IndexTable.Cell>
+                <IndexTable.Cell>
+                    <Badge tone={val?.source === 'guest' ? 'enabled' : val?.source === 'member' ? 'success' : 'critical'}>
+                        {capitalizeFirst(val?.source)}
+                    </Badge>
+                </IndexTable.Cell>
                 <IndexTable.Cell><Text variant='bodyMd' as="span">{val.referral_used}</Text></IndexTable.Cell>
                 <IndexTable.Cell><Text variant='bodyMd' as="span">{val.points_balance}</Text></IndexTable.Cell>
                 <IndexTable.Cell><Text variant='bodyMd' as="span">{val.orders_count}</Text></IndexTable.Cell>
-                <IndexTable.Cell><Text variant='bodyMd' as="span">{val.points_spent}</Text></IndexTable.Cell>
+                <IndexTable.Cell><Text variant='bodyMd' as="span">{val.total_spent}</Text></IndexTable.Cell>
+                <IndexTable.Cell><Text variant='bodyMd' as="span">{val.vip_tier_name}</Text></IndexTable.Cell>
                 <IndexTable.Cell><Text variant='bodyMd' as="span"> {formatShortDate(val.registration_date)}</Text></IndexTable.Cell>
             </IndexTable.Row >
         );
     });
 
     return (
-        <Page title="Customers"
-        // secondaryActions={<Select label="Filter customers by type" options={customerTypeOptions} onChange={setCustomerType} value={customerType} />}
-        >
+        <Page title="Customers" fullWidth>
             <Card padding="0">
                 <div>
                     <IndexFilters
@@ -684,13 +734,17 @@ const Customer = () => {
                         onClearAll={handleFiltersClearAll}
                         mode={IndexFiltersMode.Filtering}
                         setMode={setMode}
+                        disabled={isFilterDisabled}
                     />
                 </div>
                 <IndexTable
-                    sortable={[false, true, false, true, true, true, true, true]}
+                    sortable={[false, true, false, true, true, true, true, true, true]}
                     resourceName={{ singular: 'customer', plural: 'customers' }}
                     itemCount={loading ? 8 : sortedCustomers.length}
-                    selectable={false}
+                    selectable={true}
+                    selectedItemsCount={allResourcesSelected ? 'All' : selectedResources.length}
+                    onSelectionChange={handleSelectionChangeWrapper}
+                    promotedBulkActions={promotedBulkActions}
                     headings={[
                         { title: 'Email' },
                         { title: 'Name', id: 'name' },
@@ -698,7 +752,8 @@ const Customer = () => {
                         { title: 'Referrals', id: 'referral_used' },
                         { title: 'Points', id: 'points_balance' },
                         { title: 'Orders', id: 'orders_count' },
-                        { title: 'Points Spent', id: 'points_spent' },
+                        { title: 'Points Spent', id: 'total_spent' },
+                        { title: 'Vip Tier', id: 'vip_tier_name' },
                         { title: 'Date Joined', id: 'registration_date' },
                     ]}
                     onSort={handleSort}
@@ -715,6 +770,7 @@ const Customer = () => {
                             <IndexTable.Cell><SkeletonBodyText lines={1} /></IndexTable.Cell>
                             <IndexTable.Cell><SkeletonBodyText lines={1} /></IndexTable.Cell>
                             <IndexTable.Cell><SkeletonBodyText lines={1} /></IndexTable.Cell>
+                            <IndexTable.Cell><SkeletonBodyText lines={1} /></IndexTable.Cell>
                         </IndexTable.Row>
                     )) : rowMarkup}
                 </IndexTable>
@@ -723,20 +779,18 @@ const Customer = () => {
                     <Box className='marginVertical'>
                         <InlineStack gap="300" blockAlign="center">
                             <Text>Show</Text>
-                            <Select options={options} onChange={setLimit} value={limit} />
+                            {/* FIX: Use the specific pagination options constant */}
+                            <Select options={paginationOptions} onChange={setLimit} value={limit} disabled={isFilterDisabled} />
                             <Text>Entries</Text>
                         </InlineStack>
                     </Box>
                     <InlineStack gap="300" blockAlign="center">
                         <Pagination
-                            hasNext={paginationData?.hasNextPage}
-                            hasPrevious={paginationData?.hasPreviousPage}
+                            hasNext={!isFilterDisabled && paginationData?.hasNextPage}
+                            hasPrevious={!isFilterDisabled && paginationData?.hasPreviousPage}
                             onNext={() => GetCustomersAPI(paginationData?.endCursor, '', 'first')}
                             onPrevious={() => GetCustomersAPI('', paginationData?.startCursor, 'last')}
                         />
-                    </InlineStack>
-                    <InlineStack gap="300">
-                        <Button variant="primary" style={{ marginRight: "10px" }}>PDF</Button>
                     </InlineStack>
                 </BlockStack>
             </Card>

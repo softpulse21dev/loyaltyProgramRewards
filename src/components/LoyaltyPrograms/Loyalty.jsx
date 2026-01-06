@@ -130,11 +130,13 @@ const Loyalty = () => {
                                                         </Box>
                                                     </Box>
                                                     <Box style={{ display: "flex", alignItems: "center", gap: "15px" }}>
-                                                        <Button onClick={() =>
+                                                        <Button onClick={() => {
+
+                                                            localStorage.setItem('loyaltyEditData', JSON.stringify({ rule_id: item.rule_id, edit: true }));
                                                             navigate(NavigateMap[item.display_use_type], {
                                                                 state: { rule: item, edit: true },
-                                                            })
-                                                        } variant="plain">Edit</Button>
+                                                            });
+                                                        }} variant="plain">Edit</Button>
                                                         <div className="toggle-container" style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
                                                             <label className="switch">
                                                                 <input
@@ -265,7 +267,7 @@ const Loyalty = () => {
                 </div>
             </Layout.AnnotatedSection>
 
-            <Layout.AnnotatedSection
+            {/* <Layout.AnnotatedSection
                 title={'Birthday Eligibility Period'}
                 description={'Set how far in advance customers must provide their birthdate to be eligible for birthday rewards'}
             >
@@ -280,7 +282,7 @@ const Loyalty = () => {
                         max={30}
                     />
                 </Card>
-            </Layout.AnnotatedSection>
+            </Layout.AnnotatedSection> */}
 
             <Modal
                 open={modalActive}

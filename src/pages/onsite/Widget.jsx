@@ -15,6 +15,7 @@ const Widget = () => {
     const [widgetData, setWidgetData] = useState(null);
     const [loading, setLoading] = useState(true);
     const [saveLoading, setSaveLoading] = useState(false);
+    const [statusLoading, setStatusLoading] = useState(false);
 
     const fetchWidgetAPI = useCallback(async () => {
         setLoading(true);
@@ -95,16 +96,32 @@ const Widget = () => {
         []
     );
 
+    const handleUpdateStatus = useCallback(async (isEnabled) => {
+        setStatusLoading(true);
+        try {
+            const formData = new FormData();
+            formData.append('is_enabled', isEnabled ? '1' : '0');
+            const response = await fetchData('/update-onsite-settings-status', formData);
+            if (response?.status) {
+                setWidgetData((prev) => ({
+                    ...prev,
+                    is_enabled: isEnabled
+                }));
+                shopify.toast.show(response?.message, { duration: 2000 });
+            } else {
+                shopify.toast.show(response?.message, { duration: 2000, isError: true, });
+            }
+        } catch (error) {
+            console.error(`Failed to ${isEnabled ? 'enable' : 'disable'} widget`, error);
+            shopify.toast.show(`Failed to ${isEnabled ? 'enable' : 'disable'} widget`, { duration: 2000, isError: true, });
+        } finally {
+            setStatusLoading(false);
+        }
+    }, []);
+
     useEffect(() => {
         fetchWidgetAPI();
     }, [fetchWidgetAPI]);
-
-    const handleToggle = useCallback(() => {
-        setWidgetData((prev) => ({
-            ...prev,
-            is_enabled: !prev?.is_enabled
-        }));
-    }, []);
 
     const validateWidgetData = useCallback((data) => {
         const newErrors = {};
@@ -446,7 +463,8 @@ const Widget = () => {
                                     {
                                         content: 'Disable',
                                         destructive: true,
-                                        onAction: handleToggle,
+                                        onAction: () => handleUpdateStatus(false),
+                                        loading: statusLoading,
                                     },
                                 ]
                                 : []
@@ -457,7 +475,7 @@ const Widget = () => {
                             <Box style={{ marginBottom: '30px' }}>
                                 <Banner
                                     title={'Widget is disabled'}
-                                    action={{ content: 'Enable', onAction: handleToggle }}
+                                    action={{ content: 'Enable', onAction: () => handleUpdateStatus(true), loading: statusLoading }}
                                     tone="warning"
                                 >
                                     <p>
