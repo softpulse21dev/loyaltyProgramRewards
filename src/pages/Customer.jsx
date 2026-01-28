@@ -231,7 +231,8 @@ const Customer = () => {
                     bValue = String(bValue || '').toLowerCase().trim();
                     const comparison = aValue.localeCompare(bValue, undefined, { numeric: true, sensitivity: 'base' });
                     return sortDirection === 'ascending' ? comparison : -comparison;
-                } else if (sortColumn === 'vip_tier_name') {
+                } // --- FIX: Updated VIP Tier Sorting Logic ---
+                else if (sortColumn === 'vip_tier_name') {
                     const tierList = Array.isArray(vipTierList) ? vipTierList : [];
                     const aStr = String(aValue || '').trim();
                     const bStr = String(bValue || '').trim();
@@ -241,17 +242,23 @@ const Customer = () => {
                         let indexB = -1;
 
                         for (let i = 0; i < tierList.length; i++) {
-                            const tierValue = String(tierList[i] || '').trim();
+                            // OLD: const tierValue = String(tierList[i] || '').trim();
+                            // NEW: Extract title from the object
+                            const item = tierList[i];
+                            const tierValue = (item?.title ? String(item.title) : String(item || '')).trim();
+
                             if (tierValue.toLowerCase() === aStr.toLowerCase()) indexA = i;
                             if (tierValue.toLowerCase() === bStr.toLowerCase()) indexB = i;
                         }
 
+                        // If tier not found in list, push to end
                         if (indexA === -1) indexA = Number.MAX_SAFE_INTEGER;
                         if (indexB === -1) indexB = Number.MAX_SAFE_INTEGER;
 
                         const comparison = indexA - indexB;
                         return sortDirection === 'ascending' ? comparison : -comparison;
                     } else {
+                        // Fallback to alphabetical if list is empty
                         const comparison = aStr.localeCompare(bStr, undefined, { numeric: true, sensitivity: 'base' });
                         return sortDirection === 'ascending' ? comparison : -comparison;
                     }
@@ -344,7 +351,7 @@ const Customer = () => {
             formData.append("next", endCursor);
             formData.append("previous", startCursor);
             formData.append("type", type);
-            formData.append("vip_tier_name", selectedVipTier || "");
+            // formData.append("vip_tier_name", selectedVipTier || "");
 
             const filterObject = {
                 date_range: Array.isArray(orderDateRange) ? orderDateRange[0] : (orderDateRange || ""),
@@ -352,6 +359,7 @@ const Customer = () => {
                 end_date: formatDateForInput(orderEndDate),
                 orders_min: ordersRange.min || "",
                 orders_max: ordersRange.max || "",
+                vip_tier_id: selectedVipTier || "",
             };
 
             if (customerType === 'member') {
@@ -439,7 +447,7 @@ const Customer = () => {
         { label: 'Guest', value: 'guest' },
         { label: 'Member', value: 'member' },
     ];
-    
+
     // --- Constant for Pagination ---
     const paginationOptions = [
         { label: '15', value: '15' },
@@ -501,6 +509,7 @@ const Customer = () => {
                     onMonthChange={handleMonthChange(setDateObj)}
                     onChange={handleDateSelection(setDate)}
                     disableDatesBefore={minDate}
+                    disableDatesAfter={today}
                 />
             </Card>
         </Popover>
@@ -509,13 +518,17 @@ const Customer = () => {
     // --- FIX: Create a NEW array for VIP options, do not mutate global options ---
     const vipTierOptions = useMemo(() => {
         // Create a FRESH array
-        const generatedOptions = []; 
-        
+        const generatedOptions = [];
+
         if (Array.isArray(vipTierList) && vipTierList.length > 0) {
             vipTierList.forEach(tier => {
-                const tierValue = String(tier || '').trim();
-                if (tierValue) {
-                    generatedOptions.push({ label: tierValue, value: tierValue });
+                console.log('tier', tier)
+                // Extract 'title' for label and 'uid' for value
+                const tierName = tier?.title ? String(tier.title).trim() : '';
+                const tierId = tier?.uid ? String(tier.uid).trim() : '';
+
+                if (tierName && tierId) {
+                    generatedOptions.push({ label: tierName, value: tierId });
                 }
             });
         }
@@ -673,7 +686,7 @@ const Customer = () => {
         if (pointsRange.min || pointsRange.max) appliedFilters.push({ key: 'pointsRange', label: `Points ${getRangeLabel(pointsRange)}`, onRemove: handlePointsRangeRemove });
         if (ordersRange.min || ordersRange.max) appliedFilters.push({ key: 'ordersRange', label: `Orders ${getRangeLabel(ordersRange)}`, onRemove: handleOrdersRangeRemove });
         if (pointsSpentRange.min || pointsSpentRange.max) appliedFilters.push({ key: 'pointsSpentRange', label: `Points Spent ${getRangeLabel(pointsSpentRange)}`, onRemove: handlePointsSpentRangeRemove });
-        if (selectedVipTier) appliedFilters.push({ key: 'vipTierFilter', label: `VIP Tier is ${selectedVipTier}`, onRemove: handleVipTierFilterRemove });
+        if (selectedVipTier) appliedFilters.push({ key: 'vipTierFilter', label: `VIP Tier is ${vipTierList.find(t => t.uid === selectedVipTier)?.title || ''}`, onRemove: handleVipTierFilterRemove });
     } else if (customerType === 'guest') {
         if (ordersRange.min || ordersRange.max) appliedFilters.push({ key: 'ordersRange', label: `Orders ${getRangeLabel(ordersRange)}`, onRemove: handleOrdersRangeRemove });
     } else {

@@ -2,7 +2,7 @@ import { BlockStack, Box, Button, ButtonGroup, Card, Collapsible, Divider, Grid,
 import { DeleteIcon, UploadIcon } from '@shopify/polaris-icons';
 import React, { useCallback, useState, useMemo, useEffect } from 'react'
 import ColorPickerInput from '../../../components/ColorPickerInput';
-import { StarIcon } from '../../../assets/svg/svg';
+import { BoldArrowRightIcon, BoldCopyIcon, BoldCrownIcon, BoldDiscountIcon, BoldFillStarIcon, BoldGiftIcon, BoldRewardsIcon, BoldStarIcon, BoldTrophyIcon, BoldTruckIcon, StarIcon } from '../../../assets/svg/svg';
 
 const StoreFront = ({ widgetData, setWidgetData, errors = {}, clearError, openCollapsible, setOpenCollapsible }) => {
 
@@ -68,6 +68,8 @@ const StoreFront = ({ widgetData, setWidgetData, errors = {}, clearError, openCo
     const sectionBorderRadius = advancedData.section?.border_radius;
     const inputFieldColor = advancedData.input?.input_color;
     const inputBorderRadius = advancedData.input?.input_border_radius;
+    const boxBackgroundColor = advancedData.box?.background_color;
+    const boxBorderColor = advancedData.box?.border_color;
     const cardBackgroundColor = advancedData.card?.background_color;
     const cardBorderColor = advancedData.card?.border_color;
     const cardBorderWidth = advancedData.card?.border_width;
@@ -90,6 +92,7 @@ const StoreFront = ({ widgetData, setWidgetData, errors = {}, clearError, openCo
     const pointsCardMyRewardsText = storefrontData?.points_card?.my_rewards;
     const referralCardTitle = storefrontData?.referrals_card?.title;
     const referralCardMessage = storefrontData?.referrals_card?.message;
+    const referralCardMyDiscountText = storefrontData?.referrals_card?.my_discount_text;
     const vipTierCardTitle = storefrontData?.vip_tiers_card?.title;
     const vipTierCardMessage = storefrontData?.vip_tiers_card?.message;
     const vipTierCardCurrentTier = storefrontData?.vip_tiers_card?.customer_tier?.current_tier;
@@ -537,9 +540,15 @@ const StoreFront = ({ widgetData, setWidgetData, errors = {}, clearError, openCo
                                         onChange={(value) => handleFieldChange('storefront.referrals_card.message', value, (v) => setWidgetData({ ...widgetData, storefront_app: { ...widgetData.storefront_app, referrals_card: { ...widgetData.storefront_app.referrals_card, message: v } } }))}
                                         error={getErrorMessage('storefront.referrals_card.message') ? true : null}
                                     />
+                                    <TextField
+                                        label="My discount text"
+                                        value={referralCardMyDiscountText}
+                                        onChange={(value) => handleFieldChange('storefront.referrals_card.my_discount_text', value, (v) => setWidgetData({ ...widgetData, storefront_app: { ...widgetData.storefront_app, referrals_card: { ...widgetData.storefront_app.referrals_card, my_discount_text: v } } }))}
+                                        error={getErrorMessage('storefront.referrals_card.my_discount_text') ? true : null}
+                                        onFocus={() => setIsEnabled(false)}
+                                    />
                                 </Box>
                             </BlockStack>
-
                         </Collapsible>
 
                         <div className="accordian-title" style={{ backgroundColor: '#f0f0f0', padding: '5px 10px', borderRadius: '5px', marginTop: '5px' }}>
@@ -727,7 +736,7 @@ const StoreFront = ({ widgetData, setWidgetData, errors = {}, clearError, openCo
                                                         <button
                                                             style={{
                                                                 margin: '0 auto',
-                                                                marginTop: '10px',
+                                                                marginTop: '2px',
                                                                 backgroundColor: buttonColor,
                                                                 color: buttonTextColor,
                                                                 width: '80%',
@@ -753,7 +762,7 @@ const StoreFront = ({ widgetData, setWidgetData, errors = {}, clearError, openCo
                                                         <span style={{ color: textColor }}>
                                                             <Text alignment='center' variant="bodySm" >
                                                                 {newMemberCardSignInMessage} {' '}
-                                                                <span style={{ color: linkColor, }}
+                                                                <span style={{ color: linkColor, fontWeight: '700' }}
                                                                     onMouseEnter={e => {
                                                                         e.target.style.textDecoration = "underline";
                                                                     }}
@@ -785,102 +794,93 @@ const StoreFront = ({ widgetData, setWidgetData, errors = {}, clearError, openCo
                                                         {/* Ways to Earn */}
                                                         <div
                                                             style={{
-                                                                border: '1px solid #e0e0e0',
+                                                                border: `1px solid ${boxBorderColor}`,
                                                                 display: 'flex',
                                                                 alignItems: 'center',
                                                                 gap: '12px',
                                                                 padding: '14px 16px',
-                                                                backgroundColor: '#f8f9fa',
+                                                                backgroundColor: boxBackgroundColor,
                                                                 borderRadius: '12px',
                                                                 cursor: 'pointer',
                                                                 transition: 'background 0.2s'
                                                             }}
-                                                            onMouseEnter={e => e.currentTarget.style.backgroundColor = '#f0f1f2'}
-                                                            onMouseLeave={e => e.currentTarget.style.backgroundColor = '#f8f9fa'}
+                                                            onMouseEnter={e => { e.currentTarget.style.opacity = '0.9'; }}
+                                                            onMouseLeave={e => { e.currentTarget.style.opacity = '1'; }}
                                                         >
-                                                            <div style={{
-                                                                width: '32px',
-                                                                height: '32px',
-                                                                borderRadius: '50%',
-                                                                backgroundColor: '#fff3e0',
-                                                                display: 'flex',
-                                                                alignItems: 'center',
-                                                                justifyContent: 'center'
-                                                            }}>
-                                                                <svg width="16" height="16" viewBox="0 0 24 24" fill="#f5a623">
-                                                                    <path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z" />
-                                                                </svg>
-                                                            </div>
+                                                            <BoldStarIcon color={iconColor} width='22' height='22' />
                                                             <text style={{ flex: 1, fontWeight: 500, fontSize: '14px', color: textColor }}>{pointsCardWaysToEarnText}</text>
-                                                            <svg width="8" height="14" viewBox="0 0 8 14" fill="#ccc">
-                                                                <path d="M1 1l6 6-6 6" stroke="#ccc" strokeWidth="2" fill="none" strokeLinecap="round" strokeLinejoin="round" />
-                                                            </svg>
+                                                            <BoldArrowRightIcon color={iconColor} height='14' width='14' />
                                                         </div>
 
                                                         {/* Ways to Redeem */}
                                                         <div
                                                             style={{
-                                                                border: '1px solid #e0e0e0',
+                                                                border: `1px solid ${boxBorderColor}`,
                                                                 display: 'flex',
                                                                 alignItems: 'center',
                                                                 gap: '12px',
                                                                 padding: '14px 16px',
-                                                                backgroundColor: '#f8f9fa',
+                                                                backgroundColor: boxBackgroundColor,
                                                                 borderRadius: '12px',
                                                                 cursor: 'pointer',
                                                                 transition: 'background 0.2s'
                                                             }}
-                                                            onMouseEnter={e => e.currentTarget.style.backgroundColor = '#f0f1f2'}
-                                                            onMouseLeave={e => e.currentTarget.style.backgroundColor = '#f8f9fa'}
+                                                            onMouseEnter={e => { e.currentTarget.style.opacity = '0.9'; }}
+                                                            onMouseLeave={e => { e.currentTarget.style.opacity = '1'; }}
                                                         >
-                                                            <div style={{
-                                                                width: '32px',
-                                                                height: '32px',
-                                                                borderRadius: '50%',
-                                                                backgroundColor: '#e8f5e9',
-                                                                display: 'flex',
-                                                                alignItems: 'center',
-                                                                justifyContent: 'center'
-                                                            }}>
-                                                                <svg width="16" height="16" viewBox="0 0 24 24" fill="#4caf50">
-                                                                    <path d="M20 6h-2.18c.11-.31.18-.65.18-1 0-1.66-1.34-3-3-3-1.05 0-1.96.54-2.5 1.35l-.5.67-.5-.68C10.96 2.54 10.05 2 9 2 7.34 2 6 3.34 6 5c0 .35.07.69.18 1H4c-1.11 0-1.99.89-1.99 2L2 19c0 1.11.89 2 2 2h16c1.11 0 2-.89 2-2V8c0-1.11-.89-2-2-2zm-5-2c.55 0 1 .45 1 1s-.45 1-1 1-1-.45-1-1 .45-1 1-1zM9 4c.55 0 1 .45 1 1s-.45 1-1 1-1-.45-1-1 .45-1 1-1zm11 15H4v-2h16v2zm0-5H4V8h5.08L7 10.83 8.62 12 11 8.76l1-1.36 1 1.36L15.38 12 17 10.83 14.92 8H20v6z" />
-                                                                </svg>
-                                                            </div>
+                                                            <BoldGiftIcon color={iconColor} width='22' height='22' />
                                                             <span style={{ flex: 1, fontWeight: 500, fontSize: '14px', color: textColor }}>{pointsCardWaysToRedeemText}</span>
-                                                            <svg width="8" height="14" viewBox="0 0 8 14" fill="#ccc">
-                                                                <path d="M1 1l6 6-6 6" stroke="#ccc" strokeWidth="2" fill="none" strokeLinecap="round" strokeLinejoin="round" />
-                                                            </svg>
+                                                            <BoldArrowRightIcon color={iconColor} height='14' width='14' />
                                                         </div>
                                                     </BlockStack>
                                                 </div>
 
                                                 {/* Referral Program Section */}
-                                                <div style={{ marginTop: '20px', border: `${cardBorderWidth}px solid ${cardBorderColor}`, padding: '20px', backgroundColor: cardBackgroundColor, borderRadius: cardBorderRadius, boxShadow: '0 4px 12px rgba(0,0,0,0.15)' }}>
-                                                    <BlockStack gap="300">
-                                                        {/* Section Header */}
-                                                        <div style={{ display: 'flex', flexDirection: 'column', textAlign: 'center', gap: '8px' }}>
-                                                            <text style={{ color: headingColor, fontSize: '16px', textAlign: 'center', fontWeight: '700', fontFamily: 'sans-serif' }} >
-                                                                {referralCardTitle}
-                                                            </text>
-                                                            <text style={{ wordBreak: 'break-word', color: textColor, fontSize: '12px' }}>
-                                                                {referralCardMessage}
-                                                            </text>
+                                                <div
+                                                    style={{
+                                                        border: `${cardBorderWidth}px solid ${cardBorderColor}`,
+                                                        borderRadius: cardBorderRadius,
+                                                        padding: '20px',
+                                                        backgroundColor: cardBackgroundColor,
+                                                        marginTop: '20px',
+                                                        boxShadow: '0 4px 12px rgba(0,0,0,0.15)'
+                                                    }}
+                                                >
+                                                    {/* Header */}
+                                                    <div style={{ textAlign: 'center', marginBottom: '16px' }}>
+                                                        <h3 style={{ fontSize: '16px', fontWeight: 500, color: headingColor, margin: '0 0 8px 0' }}>
+                                                            {referralCardTitle}
+                                                        </h3>
+                                                        <p style={{ fontSize: '13px', color: textColor, margin: 0, wordBreak: 'break-word' }}>
+                                                            {referralCardMessage}
+                                                        </p>
+                                                    </div>
+
+                                                    <Box style={{ display: 'flex', flexDirection: 'column', gap: '10px', marginBottom: '10px' }}>
+                                                        {/* You get */}
+                                                        <div style={{ display: 'flex', flexDirection: 'row', gap: '10px', alignItems: 'center', backgroundColor: boxBackgroundColor, border: `1px solid ${boxBorderColor}`, padding: '10px', borderRadius: '10px' }}
+                                                            onMouseEnter={e => { e.currentTarget.style.opacity = '0.9'; }}
+                                                            onMouseLeave={e => { e.currentTarget.style.opacity = '1'; }}
+                                                        >
+                                                            <BoldTruckIcon color={iconColor} width='22' height='22' />
+                                                            <div style={{ display: 'flex', flexDirection: 'column' }}>
+                                                                <span style={{ fontSize: '14px', fontWeight: 500, color: headingColor }}>You get</span>
+                                                                <text style={{ fontSize: '13px', color: textColor }}>Earn Points S1</text>
+                                                            </div>
                                                         </div>
 
-                                                        {/* Referral Reward Info */}
-                                                        <div style={{
-                                                            backgroundColor: '#f5f5f5',
-                                                            borderRadius: '12px',
-                                                            padding: '16px'
-                                                        }}>
-                                                            <span style={{ color: headingColor, }}>
-                                                                <Text variant="bodySm" >They will get</Text>
-                                                            </span>
-                                                            <text style={{ marginTop: '4px', fontSize: '13px', fontWeight: '500', color: textColor }}>
-                                                                Rs. 5 off coupon referral
-                                                            </text>
+                                                        {/* Your friend gets */}
+                                                        <div style={{ display: 'flex', flexDirection: 'row', gap: '10px', alignItems: 'center', backgroundColor: boxBackgroundColor, border: `1px solid ${boxBorderColor}`, padding: '10px', borderRadius: '10px' }}
+                                                            onMouseEnter={e => { e.currentTarget.style.opacity = '0.9'; }}
+                                                            onMouseLeave={e => { e.currentTarget.style.opacity = '1'; }}
+                                                        >
+                                                            <BoldDiscountIcon color={iconColor} width='22' height='22' />
+                                                            <div style={{ display: 'flex', flexDirection: 'column' }}>
+                                                                <span style={{ fontSize: '14px', fontWeight: 500, color: headingColor }}>Your friend gets</span>
+                                                                <text style={{ fontSize: '13px', color: textColor }}>test 2</text>
+                                                            </div>
                                                         </div>
-                                                    </BlockStack>
+                                                    </Box>
                                                 </div>
 
                                                 {/* VIP Tiers Section */}
@@ -888,12 +888,12 @@ const StoreFront = ({ widgetData, setWidgetData, errors = {}, clearError, openCo
                                                     <BlockStack gap="200">
                                                         {/* Crown Icon and Title */}
                                                         <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', textAlign: 'center', gap: '8px' }}>
-                                                            <svg width="24" height="24" viewBox="0 0 24 24" fill="#8b5cf6">
-                                                                <path d="M5 16L3 5l5.5 5L12 4l3.5 6L21 5l-2 11H5zm14 3c0 .6-.4 1-1 1H6c-.6 0-1-.4-1-1v-1h14v1z" />
-                                                            </svg>
-                                                            <span style={{ color: headingColor }} >
-                                                                <Text variant="headingMd" as="h3">{vipTierCardTitle}</Text>
-                                                            </span>
+                                                            <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                                                                <BoldCrownIcon color={iconColor} height='22' width='22' />
+                                                                <span style={{ color: headingColor }} >
+                                                                    <Text variant="headingMd" as="h3">{vipTierCardTitle}</Text>
+                                                                </span>
+                                                            </div>
                                                             <text style={{ wordBreak: 'break-word', color: textColor, fontSize: '12px' }}>
                                                                 {vipTierCardMessage}
                                                             </text>
@@ -905,9 +905,12 @@ const StoreFront = ({ widgetData, setWidgetData, errors = {}, clearError, openCo
                                             <>
                                                 <div style={{ marginTop: '-60px', backgroundColor: sectionBackgroundColor, border: `${sectionBorderWidth}px solid ${sectionBorderColor}`, padding: '16px', borderRadius: sectionBorderRadius, boxShadow: '0 4px 12px rgba(0,0,0,0.15)', overflow: 'hidden' }}>
                                                     <BlockStack gap="400" align="center">
-                                                        <Box style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', backgroundColor: '#f8f9fa', border: '1px solid #e0e0e0', padding: '10px', borderRadius: '10px', cursor: 'pointer' }}>
+                                                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', backgroundColor: boxBackgroundColor, border: `1px solid ${boxBorderColor}`, padding: '10px', borderRadius: '10px', cursor: 'pointer' }}
+                                                            onMouseEnter={e => { e.currentTarget.style.opacity = '0.9'; }}
+                                                            onMouseLeave={e => { e.currentTarget.style.opacity = '1'; }}
+                                                        >
                                                             <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-                                                                <StarIcon color={iconColor} />
+                                                                <BoldStarIcon color={iconColor} height='22' width='22' />
                                                                 <span style={{ color: textColor }}>
                                                                     <Text variant="bodyLg">4456 points</Text>
                                                                 </span>
@@ -936,11 +939,12 @@ const StoreFront = ({ widgetData, setWidgetData, errors = {}, clearError, openCo
                                                             >
                                                                 History
                                                             </button>
-                                                        </Box>
+                                                        </div>
 
-                                                        <span style={{ color: headingColor }}>
+                                                        {/* upcoming rewards card */}
+                                                        {/* <span style={{ color: headingColor }}>
                                                             <Text variant='headingSm'>Upcoming Rewards</Text>
-                                                        </span>
+                                                        </span> */}
 
                                                         <Box style={{ display: 'flex', flexDirection: 'column', padding: '24px', border: `${cardBorderWidth}px solid ${cardBorderColor}`, backgroundColor: cardBackgroundColor, borderRadius: cardBorderRadius }}>
                                                             {/* <div style={{ textAlign: 'center', marginBottom: '12px' }}> */}
@@ -958,251 +962,79 @@ const StoreFront = ({ widgetData, setWidgetData, errors = {}, clearError, openCo
 
                                                             <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', cursor: 'pointer' }}>
                                                                 <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-                                                                    <StarIcon color={iconColor} />
+                                                                    <BoldFillStarIcon color={iconColor} height='22' width='22' />
                                                                     <text style={{ textAlign: "center", fontSize: '14px', fontWeight: '500', color: textColor, }}>{vipTierCardAllTier}</text>
                                                                 </div>
-                                                                <svg width="6" height="10" viewBox="0 0 6 10" fill="none" xmlns="http://www.w3.org/2000/svg">
-                                                                    <path d="M1 9L5 5L1 1" stroke="#999" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
-                                                                </svg>
+                                                                <BoldArrowRightIcon color={iconColor} height='14' width='14' />
                                                             </div>
                                                         </Box>
 
                                                         {/* Rewards card */}
                                                         <div
                                                             style={{
-                                                                border: '1px solid #e0e0e0',
+                                                                border: `1px solid ${boxBorderColor}`,
                                                                 display: 'flex',
                                                                 alignItems: 'center',
                                                                 gap: '12px',
                                                                 padding: '14px 16px',
-                                                                backgroundColor: '#f8f9fa',
+                                                                backgroundColor: boxBackgroundColor,
                                                                 borderRadius: '12px',
                                                                 cursor: 'pointer',
                                                                 transition: 'background 0.2s'
                                                             }}
-                                                            onMouseEnter={e => e.currentTarget.style.backgroundColor = '#f0f1f2'}
-                                                            onMouseLeave={e => e.currentTarget.style.backgroundColor = '#f8f9fa'}
+                                                            onMouseEnter={e => { e.currentTarget.style.opacity = '0.9'; }}
+                                                            onMouseLeave={e => { e.currentTarget.style.opacity = '1'; }}
                                                         >
-                                                            <div style={{
-                                                                width: '32px',
-                                                                height: '32px',
-                                                                borderRadius: '50%',
-                                                                backgroundColor: '#fff3e0',
-                                                                display: 'flex',
-                                                                alignItems: 'center',
-                                                                justifyContent: 'center'
-                                                            }}>
-                                                                <svg width="16" height="16" viewBox="0 0 24 24" fill="#f5a623">
-                                                                    <path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z" />
-                                                                </svg>
-                                                            </div>
+                                                            <BoldTrophyIcon color={iconColor} height='22' width='22' />
                                                             <text style={{ flex: 1, fontWeight: 500, fontSize: '14px', color: textColor }}>{pointsCardMyRewardsText}</text>
-                                                            <svg width="8" height="14" viewBox="0 0 8 14" fill="#ccc">
-                                                                <path d="M1 1l6 6-6 6" stroke="#ccc" strokeWidth="2" fill="none" strokeLinecap="round" strokeLinejoin="round" />
-                                                            </svg>
+                                                            <BoldArrowRightIcon color={iconColor} height='14' width='14' />
                                                         </div>
 
                                                         {/* Ways to Earn */}
                                                         <div
                                                             style={{
-                                                                border: '1px solid #e0e0e0',
+                                                                border: `1px solid ${boxBorderColor}`,
                                                                 display: 'flex',
                                                                 alignItems: 'center',
                                                                 gap: '12px',
                                                                 padding: '14px 16px',
-                                                                backgroundColor: '#f8f9fa',
+                                                                backgroundColor: boxBackgroundColor,
                                                                 borderRadius: '12px',
                                                                 cursor: 'pointer',
                                                                 transition: 'background 0.2s'
                                                             }}
-                                                            onMouseEnter={e => e.currentTarget.style.backgroundColor = '#f0f1f2'}
-                                                            onMouseLeave={e => e.currentTarget.style.backgroundColor = '#f8f9fa'}
+                                                            onMouseEnter={e => { e.currentTarget.style.opacity = '0.9'; }}
+                                                            onMouseLeave={e => { e.currentTarget.style.opacity = '1'; }}
                                                         >
-                                                            <div style={{
-                                                                width: '32px',
-                                                                height: '32px',
-                                                                borderRadius: '50%',
-                                                                backgroundColor: '#fff3e0',
-                                                                display: 'flex',
-                                                                alignItems: 'center',
-                                                                justifyContent: 'center'
-                                                            }}>
-                                                                <svg width="16" height="16" viewBox="0 0 24 24" fill="#f5a623">
-                                                                    <path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z" />
-                                                                </svg>
-                                                            </div>
+                                                            <BoldStarIcon color={iconColor} height='22' width='22' />
                                                             <text style={{ flex: 1, fontWeight: 500, fontSize: '14px', color: textColor }}>{pointsCardWaysToEarnText}</text>
-                                                            <svg width="8" height="14" viewBox="0 0 8 14" fill="#ccc">
-                                                                <path d="M1 1l6 6-6 6" stroke="#ccc" strokeWidth="2" fill="none" strokeLinecap="round" strokeLinejoin="round" />
-                                                            </svg>
+                                                            <BoldArrowRightIcon color={iconColor} height='14' width='14' />
                                                         </div>
 
                                                         {/* Ways to redeem */}
                                                         <div
                                                             style={{
-                                                                border: '1px solid #e0e0e0',
+                                                                border: `1px solid ${boxBorderColor}`,
                                                                 display: 'flex',
                                                                 alignItems: 'center',
                                                                 gap: '12px',
                                                                 padding: '14px 16px',
-                                                                backgroundColor: '#f8f9fa',
+                                                                backgroundColor: boxBackgroundColor,
                                                                 borderRadius: '12px',
                                                                 cursor: 'pointer',
                                                                 transition: 'background 0.2s'
                                                             }}
-                                                            onMouseEnter={e => e.currentTarget.style.backgroundColor = '#f0f1f2'}
-                                                            onMouseLeave={e => e.currentTarget.style.backgroundColor = '#f8f9fa'}
+                                                            onMouseEnter={e => { e.currentTarget.style.opacity = '0.9'; }}
+                                                            onMouseLeave={e => { e.currentTarget.style.opacity = '1'; }}
                                                         >
-                                                            <div style={{
-                                                                width: '32px',
-                                                                height: '32px',
-                                                                borderRadius: '50%',
-                                                                backgroundColor: '#fff3e0',
-                                                                display: 'flex',
-                                                                alignItems: 'center',
-                                                                justifyContent: 'center'
-                                                            }}>
-                                                                <svg width="16" height="16" viewBox="0 0 24 24" fill="#f5a623">
-                                                                    <path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z" />
-                                                                </svg>
-                                                            </div>
+                                                            <BoldGiftIcon color={iconColor} height='22' width='22' />
                                                             <text style={{ flex: 1, fontWeight: 500, fontSize: '14px', color: textColor }}>{pointsCardWaysToRedeemText}</text>
-                                                            <svg width="8" height="14" viewBox="0 0 8 14" fill="#ccc">
-                                                                <path d="M1 1l6 6-6 6" stroke="#ccc" strokeWidth="2" fill="none" strokeLinecap="round" strokeLinejoin="round" />
-                                                            </svg>
+                                                            <BoldArrowRightIcon color={iconColor} height='14' width='14' />
                                                         </div>
 
-                                                        {/* Referral Program Section */}
-                                                        <div
-                                                            style={{
-                                                                border: `${cardBorderWidth}px solid ${cardBorderColor}`,
-                                                                borderRadius: cardBorderRadius,
-                                                                padding: '20px',
-                                                                backgroundColor: cardBackgroundColor,
-                                                                marginTop: '8px'
-                                                            }}
-                                                        >
-                                                            {/* Header */}
-                                                            <div style={{ textAlign: 'center', marginBottom: '16px' }}>
-                                                                <h3 style={{ fontSize: '16px', fontWeight: 500, color: headingColor, margin: '0 0 8px 0' }}>
-                                                                    {referralCardTitle}
-                                                                </h3>
-                                                                <p style={{ fontSize: '13px', color: textColor, margin: 0, wordBreak: 'break-word' }}>
-                                                                    {referralCardMessage}
-                                                                </p>
-                                                            </div>
 
-                                                            <Box style={{ display: 'flex', flexDirection: 'column', gap: '10px', marginBottom: '10px' }}>
-                                                                {/* You get */}
-                                                                <div style={{ display: 'flex', flexDirection: 'row', gap: '10px', alignItems: 'center', backgroundColor: '#f8f9fa', border: '1px solid #e0e0e0', padding: '10px', borderRadius: '10px' }}>
-                                                                    <svg width="18" height="18" viewBox="0 0 24 24" fill="#3b82f6">
-                                                                        <path d="M13 10V3L4 14h7v7l9-11h-7z" />
-                                                                    </svg>
-                                                                    <div style={{ display: 'flex', flexDirection: 'column' }}>
-                                                                        <span style={{ fontSize: '14px', fontWeight: 500, color: headingColor }}>You get</span>
-                                                                        <text style={{ fontSize: '13px', color: textColor }}>Earn Points S1</text>
-                                                                    </div>
-                                                                </div>
 
-                                                                {/* Your friend gets */}
-                                                                <div style={{ display: 'flex', flexDirection: 'row', gap: '10px', alignItems: 'center', backgroundColor: '#f8f9fa', border: '1px solid #e0e0e0', padding: '10px', borderRadius: '10px' }}>
-                                                                    <svg width="18" height="18" viewBox="0 0 24 24" fill="#3b82f6">
-                                                                        <path d="M13 10V3L4 14h7v7l9-11h-7z" />
-                                                                    </svg>
-                                                                    <div style={{ display: 'flex', flexDirection: 'column' }}>
-                                                                        <span style={{ fontSize: '14px', fontWeight: 500, color: headingColor }}>Your friend gets</span>
-                                                                        <text style={{ fontSize: '13px', color: textColor }}>test 2</text>
-                                                                    </div>
-                                                                </div>
-                                                            </Box>
-
-                                                            {/* Your link */}
-                                                            <div style={{ marginBottom: '16px' }}>
-                                                                <div style={{ textAlign: 'center', fontSize: '13px', color: headingColor, marginBottom: '8px' }}>
-                                                                    Your link
-                                                                </div>
-
-                                                                {/* CONTAINER: padding removed, overflow hidden added */}
-                                                                <div style={{
-                                                                    display: 'flex',
-                                                                    alignItems: 'stretch',
-                                                                    border: `1px solid ${inputFieldColor}`,
-                                                                    borderRadius: inputBorderRadius,
-                                                                    backgroundColor: '#fafafa',
-                                                                    overflow: 'hidden'
-                                                                }}>
-                                                                    {/* TEXT: padding added here */}
-                                                                    <span style={{
-                                                                        flex: 1,
-                                                                        fontSize: '13px',
-                                                                        color: '#666',
-                                                                        overflow: 'hidden',
-                                                                        textOverflow: 'ellipsis',
-                                                                        padding: '8px 10px',
-                                                                        display: 'flex',
-                                                                        alignItems: 'center'
-                                                                    }}>
-                                                                        <text style={{ textWrap: 'nowrap' }}> # https://kg-store-demo.myshopify.com?</text>
-                                                                    </span>
-
-                                                                    {/* BUTTON: border-left added, padding adjusted */}
-                                                                    <button style={{
-                                                                        background: 'none',
-                                                                        border: 'none',
-                                                                        borderLeft: `1px solid ${inputFieldColor}`,
-                                                                        cursor: 'pointer',
-                                                                        padding: '0 10px',
-                                                                        display: 'flex',
-                                                                        alignItems: 'center',
-                                                                        justifyContent: 'center',
-                                                                        margin: 0,
-                                                                        borderRadius: 0
-                                                                    }}>
-                                                                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#3b82f6" strokeWidth="2">
-                                                                            <rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect>
-                                                                            <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path>
-                                                                        </svg>
-                                                                    </button>
-                                                                </div>
-                                                            </div>
-                                                            {/* My Discounts card */}
-                                                            <div
-                                                                style={{
-                                                                    border: '1px solid #e0e0e0',
-                                                                    display: 'flex',
-                                                                    alignItems: 'center',
-                                                                    gap: '12px',
-                                                                    padding: '14px 16px',
-                                                                    backgroundColor: '#f8f9fa',
-                                                                    borderRadius: '12px',
-                                                                    cursor: 'pointer',
-                                                                    transition: 'background 0.2s'
-                                                                }}
-                                                                onMouseEnter={e => e.currentTarget.style.backgroundColor = '#f0f1f2'}
-                                                                onMouseLeave={e => e.currentTarget.style.backgroundColor = '#f8f9fa'}
-                                                            >
-                                                                <div style={{
-                                                                    width: '32px',
-                                                                    height: '32px',
-                                                                    borderRadius: '50%',
-                                                                    backgroundColor: '#e3f2fd',
-                                                                    display: 'flex',
-                                                                    alignItems: 'center',
-                                                                    justifyContent: 'center'
-                                                                }}>
-                                                                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#3b82f6" strokeWidth="2">
-                                                                        <rect x="2" y="5" width="20" height="14" rx="2"></rect>
-                                                                        <line x1="2" y1="10" x2="22" y2="10"></line>
-                                                                    </svg>
-                                                                </div>
-                                                                <span style={{ flex: 1, fontWeight: 500, fontSize: '14px', color: headingColor }}>My Discounts</span>
-                                                                <svg width="8" height="14" viewBox="0 0 8 14" fill="#ccc">
-                                                                    <path d="M1 1l6 6-6 6" stroke="#ccc" strokeWidth="2" fill="none" strokeLinecap="round" strokeLinejoin="round" />
-                                                                </svg>
-                                                            </div>
-                                                        </div>
-
-                                                        <div style={{ display: 'flex', justifyContent: 'flex-end', alignItems: 'center' }}>
+                                                        {/* <div style={{ display: 'flex', justifyContent: 'flex-end', alignItems: 'center' }}>
                                                             <button
                                                                 style={{
                                                                     backgroundColor: buttonColor,
@@ -1217,10 +1049,123 @@ const StoreFront = ({ widgetData, setWidgetData, errors = {}, clearError, openCo
                                                             >
                                                                 Logout
                                                             </button>
-                                                        </div>
+                                                        </div> */}
                                                     </BlockStack>
+                                                </div>
 
+                                                {/* Referral Program Section */}
+                                                <div
+                                                    style={{
+                                                        boxShadow: '0 4px 12px rgba(0,0,0,0.15)',
+                                                        border: `${sectionBorderWidth}px solid ${sectionBorderColor}`,
+                                                        borderRadius: sectionBorderRadius,
+                                                        padding: '20px',
+                                                        backgroundColor: sectionBackgroundColor,
+                                                        marginTop: '20px'
+                                                    }}
+                                                >
+                                                    {/* Header */}
+                                                    <div style={{ textAlign: 'center', marginBottom: '16px' }}>
+                                                        <h3 style={{ fontSize: '16px', fontWeight: 500, color: headingColor, margin: '0 0 8px 0' }}>
+                                                            {referralCardTitle}
+                                                        </h3>
+                                                        <p style={{ fontSize: '13px', color: textColor, margin: 0, wordBreak: 'break-word' }}>
+                                                            {referralCardMessage}
+                                                        </p>
+                                                    </div>
 
+                                                    <Box style={{ display: 'flex', flexDirection: 'column', gap: '10px', marginBottom: '10px' }}>
+                                                        {/* You get */}
+                                                        <div style={{ display: 'flex', flexDirection: 'row', gap: '10px', alignItems: 'center', backgroundColor: boxBackgroundColor, border: `1px solid ${boxBorderColor}`, padding: '10px', borderRadius: '10px' }}
+                                                            onMouseEnter={e => { e.currentTarget.style.opacity = '0.9'; }}
+                                                            onMouseLeave={e => { e.currentTarget.style.opacity = '1'; }}
+                                                        >
+                                                            <BoldTruckIcon color={iconColor} height='22' width='22' />
+                                                            <div style={{ display: 'flex', flexDirection: 'column' }}>
+                                                                <span style={{ fontSize: '14px', fontWeight: 500, color: headingColor }}>You get</span>
+                                                                <text style={{ fontSize: '13px', color: textColor }}>Earn Points S1</text>
+                                                            </div>
+                                                        </div>
+
+                                                        {/* Your friend gets */}
+                                                        <div style={{ display: 'flex', flexDirection: 'row', gap: '10px', alignItems: 'center', backgroundColor: boxBackgroundColor, border: `1px solid ${boxBorderColor}`, padding: '10px', borderRadius: '10px' }}
+                                                            onMouseEnter={e => { e.currentTarget.style.opacity = '0.9'; }}
+                                                            onMouseLeave={e => { e.currentTarget.style.opacity = '1'; }}
+                                                        >
+                                                            <BoldDiscountIcon color={iconColor} height='22' width='22' />
+                                                            <div style={{ display: 'flex', flexDirection: 'column' }}>
+                                                                <span style={{ fontSize: '14px', fontWeight: 500, color: headingColor }}>Your friend gets</span>
+                                                                <text style={{ fontSize: '13px', color: textColor }}>test 2</text>
+                                                            </div>
+                                                        </div>
+                                                    </Box>
+
+                                                    {/* Your link */}
+                                                    <div style={{ marginBottom: '16px' }}>
+                                                        <div style={{ textAlign: 'center', fontSize: '13px', color: headingColor, marginBottom: '8px' }}>
+                                                            Your link
+                                                        </div>
+
+                                                        {/* CONTAINER: padding removed, overflow hidden added */}
+                                                        <div style={{
+                                                            display: 'flex',
+                                                            alignItems: 'stretch',
+                                                            border: `1px solid ${inputFieldColor}`,
+                                                            borderRadius: inputBorderRadius,
+                                                            backgroundColor: boxBackgroundColor,
+                                                            overflow: 'hidden'
+                                                        }}>
+                                                            {/* TEXT: padding added here */}
+                                                            <span style={{
+                                                                flex: 1,
+                                                                fontSize: '13px',
+                                                                color: '#666',
+                                                                overflow: 'hidden',
+                                                                textOverflow: 'ellipsis',
+                                                                padding: '8px 10px',
+                                                                display: 'flex',
+                                                                alignItems: 'center'
+                                                            }}>
+                                                                <text style={{ textWrap: 'nowrap' }}> # https://kg-store-demo.myshopify.com?</text>
+                                                            </span>
+
+                                                            {/* BUTTON: border-left added, padding adjusted */}
+                                                            <button style={{
+                                                                background: 'none',
+                                                                border: 'none',
+                                                                borderLeft: `1px solid ${inputFieldColor}`,
+                                                                cursor: 'pointer',
+                                                                padding: '0 10px',
+                                                                display: 'flex',
+                                                                alignItems: 'center',
+                                                                justifyContent: 'center',
+                                                                margin: 0,
+                                                                borderRadius: 0
+                                                            }}>
+                                                                <BoldCopyIcon color={iconColor} height='20' width='20' />
+                                                            </button>
+                                                        </div>
+                                                    </div>
+                                                    {/* My Discounts card */}
+                                                    <div
+                                                        style={{
+                                                            border: `1px solid ${boxBorderColor}`,
+                                                            display: 'flex',
+                                                            alignItems: 'center',
+                                                            gap: '12px',
+                                                            padding: '14px 16px',
+                                                            backgroundColor: boxBackgroundColor,
+                                                            borderRadius: '12px',
+                                                            cursor: 'pointer',
+                                                            transition: 'background 0.2s'
+                                                        }}
+                                                        onMouseEnter={e => { e.currentTarget.style.opacity = '0.9'; }}
+                                                        onMouseLeave={e => { e.currentTarget.style.opacity = '1'; }}
+                                                    >
+                                                        <BoldRewardsIcon color={iconColor} height='22' width='22' />
+                                                        <span style={{ flex: 1, fontWeight: 500, fontSize: '14px', color: headingColor }}>{referralCardMyDiscountText}</span>
+                                                        <BoldArrowRightIcon color={iconColor} height='14' width='14' />
+                                                    </div>
                                                 </div>
                                             </>
                                         }

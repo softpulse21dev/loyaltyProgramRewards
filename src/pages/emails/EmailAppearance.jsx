@@ -1,6 +1,6 @@
 /* eslint-disable no-undef */
-import { BlockStack, Box, Button, Card, Divider, Grid, Page, RadioButton, Text, TextField, SkeletonPage, SkeletonDisplayText, SkeletonBodyText } from '@shopify/polaris';
-import { DeleteIcon, UploadIcon } from '@shopify/polaris-icons';
+import { BlockStack, Box, Button, Card, Divider, Grid, Page, RadioButton, Text, TextField, SkeletonPage, SkeletonDisplayText, SkeletonBodyText, Icon } from '@shopify/polaris';
+import { DeleteIcon, PinIcon, UploadIcon } from '@shopify/polaris-icons';
 import React, { useState, useMemo, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom';
 import ColorPickerInput from '../../components/ColorPickerInput';
@@ -24,6 +24,7 @@ const EmailAppearance = () => {
     const [saveLoading, setSaveLoading] = useState(false);
     const [getLoading, setGetLoading] = useState(false);
     const [emailSettings, setEmailSettings] = useState(null);
+    const [availableVariables, setAvailableVariables] = useState([]);
     // Memoize object URL to prevent recreation on every render
     const emailImageUrl = useMemo(() => {
         if (!emailImage) return null;
@@ -106,8 +107,7 @@ const EmailAppearance = () => {
             if (response?.status === true) {
                 const settings = response?.data[0]?.email_template_settings;
                 setEmailSettings(settings);
-                console.log('response?.data?.email_template_settings', settings);
-                
+                setAvailableVariables(response?.data[0]?.available_variables || []);
                 // Populate state variables from loaded settings
                 if (settings) {
                     if (settings.image) {
@@ -168,204 +168,220 @@ const EmailAppearance = () => {
 
             <Grid columns={{ xs: 6, sm: 6, md: 6, lg: 12, xl: 12 }}>
                 <Grid.Cell columnSpan={{ xs: 6, sm: 6, md: 2, lg: 4, xl: 4 }}>
-                    <Card>
-                        <BlockStack gap={300}>
-                            <Box style={{ gap: '10px', display: 'flex', flexDirection: 'column' }}>
-                                <Text variant="bodyMd">Image</Text>
-                                <Box style={{ display: 'flex', flexDirection: 'column' }}>
-                                    {/* Dashed border upload area - shows preview if image uploaded */}
-                                    <div
-                                        onClick={() => document.getElementById('email-image-input').click()}
-                                        style={{
-                                            border: '1px dashed #c4cdd5',
-                                            borderRadius: '8px',
-                                            padding: emailImage ? '8px' : '24px',
-                                            display: 'flex',
-                                            alignItems: 'center',
-                                            justifyContent: 'center',
-                                            backgroundColor: '#fafbfb',
-                                            minHeight: '120px',
-                                            cursor: 'pointer',
-                                            position: 'relative',
-                                            overflow: 'hidden'
-                                        }}
-                                    >
-                                        {emailImageUrl ? (
-                                            // Show image preview inside the picker
-                                            <div style={{
+                    <BlockStack gap={500}>
+                        <Card>
+                            <BlockStack gap={300}>
+                                <Box style={{ gap: '10px', display: 'flex', flexDirection: 'column' }}>
+                                    <Text variant="bodyMd">Image</Text>
+                                    <Box style={{ display: 'flex', flexDirection: 'column' }}>
+                                        {/* Dashed border upload area - shows preview if image uploaded */}
+                                        <div
+                                            onClick={() => document.getElementById('email-image-input').click()}
+                                            style={{
+                                                border: '1px dashed #c4cdd5',
+                                                borderRadius: '8px',
+                                                padding: emailImage ? '8px' : '24px',
                                                 display: 'flex',
-                                                flexDirection: 'column',
                                                 alignItems: 'center',
-                                                gap: '8px',
-                                                width: '100%'
-                                            }}>
-                                                <img
-                                                    src={emailImageUrl}
-                                                    alt={emailImage?.name || 'Email image'}
-                                                    style={{
-                                                        maxWidth: '100%',
-                                                        maxHeight: '100%',
-                                                        objectFit: 'contain',
-                                                        borderRadius: '4px'
-                                                    }}
-                                                />
-                                            </div>
-                                        ) : (
-                                            // Show Add image button when no image
-                                            <Button onClick={(e) => {
-                                                e.stopPropagation();
-                                                document.getElementById('email-image-input').click();
-                                            }}>
-                                                Add image
-                                            </Button>
-                                        )}
-                                        <input
-                                            type="file"
-                                            id="email-image-input"
-                                            accept=".jpg,.jpeg,.png,.svg,image/jpeg,image/png,image/svg+xml"
-                                            style={{ display: 'none' }}
-                                            onChange={(e) => {
-                                                const file = e.target.files[0];
-                                                if (file) {
-                                                    const allowedTypes = ['image/jpeg', 'image/png', 'image/svg+xml'];
-                                                    const allowedExtensions = ['.jpg', '.jpeg', '.png', '.svg'];
-                                                    const fileExtension = '.' + file.name.split('.').pop().toLowerCase();
-
-                                                    if (allowedTypes.includes(file.type) || allowedExtensions.includes(fileExtension)) {
-                                                        setEmailImage(file);
-                                                    } else {
-                                                        alert('Please upload only JPG, JPEG, PNG, or SVG images.');
-                                                    }
-                                                }
-                                                // Reset input so same file can be selected again
-                                                e.target.value = '';
+                                                justifyContent: 'center',
+                                                backgroundColor: '#fafbfb',
+                                                minHeight: '120px',
+                                                cursor: 'pointer',
+                                                position: 'relative',
+                                                overflow: 'hidden'
                                             }}
-                                        />
-                                    </div>
+                                        >
+                                            {emailImageUrl ? (
+                                                // Show image preview inside the picker
+                                                <div style={{
+                                                    display: 'flex',
+                                                    flexDirection: 'column',
+                                                    alignItems: 'center',
+                                                    gap: '8px',
+                                                    width: '100%'
+                                                }}>
+                                                    <img
+                                                        src={emailImageUrl}
+                                                        alt={emailImage?.name || 'Email image'}
+                                                        style={{
+                                                            maxWidth: '100%',
+                                                            maxHeight: '100%',
+                                                            objectFit: 'contain',
+                                                            borderRadius: '4px'
+                                                        }}
+                                                    />
+                                                </div>
+                                            ) : (
+                                                // Show Add image button when no image
+                                                <Button onClick={(e) => {
+                                                    e.stopPropagation();
+                                                    document.getElementById('email-image-input').click();
+                                                }}>
+                                                    Add image
+                                                </Button>
+                                            )}
+                                            <input
+                                                type="file"
+                                                id="email-image-input"
+                                                accept=".jpg,.jpeg,.png,.svg,image/jpeg,image/png,image/svg+xml"
+                                                style={{ display: 'none' }}
+                                                onChange={(e) => {
+                                                    const file = e.target.files[0];
+                                                    if (file) {
+                                                        const allowedTypes = ['image/jpeg', 'image/png', 'image/svg+xml'];
+                                                        const allowedExtensions = ['.jpg', '.jpeg', '.png', '.svg'];
+                                                        const fileExtension = '.' + file.name.split('.').pop().toLowerCase();
 
-                                    {/* Upload image and Delete buttons */}
-                                    <Box style={{ display: 'flex', alignItems: 'center', gap: '8px', marginTop: '8px' }}>
-                                        {emailImageUrl && (
-                                            <Button tone="critical" icon={DeleteIcon} onClick={() => setEmailImage(null)}>
-                                                Delete
+                                                        if (allowedTypes.includes(file.type) || allowedExtensions.includes(fileExtension)) {
+                                                            setEmailImage(file);
+                                                        } else {
+                                                            alert('Please upload only JPG, JPEG, PNG, or SVG images.');
+                                                        }
+                                                    }
+                                                    // Reset input so same file can be selected again
+                                                    e.target.value = '';
+                                                }}
+                                            />
+                                        </div>
+
+                                        {/* Upload image and Delete buttons */}
+                                        <Box style={{ display: 'flex', alignItems: 'center', gap: '8px', marginTop: '8px' }}>
+                                            {emailImageUrl && (
+                                                <Button tone="critical" icon={DeleteIcon} onClick={() => setEmailImage(null)}>
+                                                    Delete
+                                                </Button>
+                                            )}
+                                            <Button icon={UploadIcon} onClick={() => document.getElementById('email-image-input').click()}>
+                                                Upload image
                                             </Button>
-                                        )}
-                                        <Button icon={UploadIcon} onClick={() => document.getElementById('email-image-input').click()}>
-                                            Upload image
-                                        </Button>
+                                        </Box>
+
                                     </Box>
-
                                 </Box>
-                            </Box>
 
-                            {/* Image placement options */}
-                            <Box>
-                                <Text variant="bodyMd" style={{ marginBottom: '8px' }}>Image placement</Text>
-                                <Box style={{ display: 'flex', flexDirection: 'column' }}>
-                                    <RadioButton
-                                        label="Banner"
-                                        id="image-placement-banner"
-                                        name="imagePlacement"
-                                        checked={imagePlacement === 'banner'}
-                                        onChange={() => setImagePlacement('banner')}
-                                    />
-                                    <RadioButton
-                                        label="Logo"
-                                        id="image-placement-logo"
-                                        name="imagePlacement"
-                                        checked={imagePlacement === 'logo'}
-                                        onChange={() => setImagePlacement('logo')}
-                                    />
+                                {/* Image placement options */}
+                                <Box>
+                                    <Text variant="bodyMd" style={{ marginBottom: '8px' }}>Image placement</Text>
+                                    <Box style={{ display: 'flex', flexDirection: 'column' }}>
+                                        <RadioButton
+                                            label="Banner"
+                                            id="image-placement-banner"
+                                            name="imagePlacement"
+                                            checked={imagePlacement === 'banner'}
+                                            onChange={() => setImagePlacement('banner')}
+                                        />
+                                        <RadioButton
+                                            label="Logo"
+                                            id="image-placement-logo"
+                                            name="imagePlacement"
+                                            checked={imagePlacement === 'logo'}
+                                            onChange={() => setImagePlacement('logo')}
+                                        />
+                                    </Box>
                                 </Box>
-                            </Box>
 
-                            <Divider />
+                                <Divider />
 
-                            <Text variant="bodyMd" fontWeight='semibold' >Colors</Text>
+                                <Text variant="bodyMd" fontWeight='semibold' >Colors</Text>
 
-                            <ColorPickerInput
-                                label="Background color"
-                                value={backgroundColor}
-                                onChange={(value) => setBackgroundColor(value)}
-                            // onChange={(value) => setWidgetData({ ...widgetData, general: { ...widgetData.general, advanced: { ...widgetData.general.advanced, input: { ...widgetData.general.advanced.input, input_color: value } } } })}
-                            // error={getErrorMessage('general.advanced.input.input_color')}
-                            // onClearError={() => clearError('general.advanced.input.input_color')}
-                            // onFocus={() => setIsEnabled(false)}
-                            />
+                                <ColorPickerInput
+                                    label="Background color"
+                                    value={backgroundColor}
+                                    onChange={(value) => setBackgroundColor(value)}
+                                // onChange={(value) => setWidgetData({ ...widgetData, general: { ...widgetData.general, advanced: { ...widgetData.general.advanced, input: { ...widgetData.general.advanced.input, input_color: value } } } })}
+                                // error={getErrorMessage('general.advanced.input.input_color')}
+                                // onClearError={() => clearError('general.advanced.input.input_color')}
+                                // onFocus={() => setIsEnabled(false)}
+                                />
 
-                            <ColorPickerInput
-                                label="Heading color"
-                                value={headingColor}
-                                onChange={(value) => setHeadingColor(value)}
-                            // onChange={(value) => setWidgetData({ ...widgetData, general: { ...widgetData.general, advanced: { ...widgetData.general.advanced, input: { ...widgetData.general.advanced.input, input_color: value } } } })}
-                            // error={getErrorMessage('general.advanced.input.input_color')}
-                            // onClearError={() => clearError('general.advanced.input.input_color')}
-                            // onFocus={() => setIsEnabled(false)}
-                            />
+                                <ColorPickerInput
+                                    label="Heading color"
+                                    value={headingColor}
+                                    onChange={(value) => setHeadingColor(value)}
+                                // onChange={(value) => setWidgetData({ ...widgetData, general: { ...widgetData.general, advanced: { ...widgetData.general.advanced, input: { ...widgetData.general.advanced.input, input_color: value } } } })}
+                                // error={getErrorMessage('general.advanced.input.input_color')}
+                                // onClearError={() => clearError('general.advanced.input.input_color')}
+                                // onFocus={() => setIsEnabled(false)}
+                                />
 
-                            <ColorPickerInput
-                                label="Text color"
-                                value={textColor}
-                                onChange={(value) => setTextColor(value)}
-                            // onChange={(value) => setWidgetData({ ...widgetData, general: { ...widgetData.general, advanced: { ...widgetData.general.advanced, input: { ...widgetData.general.advanced.input, input_color: value } } } })}
-                            // error={getErrorMessage('general.advanced.input.input_color')}
-                            // onClearError={() => clearError('general.advanced.input.input_color')}
-                            // onFocus={() => setIsEnabled(false)}
-                            />
+                                <ColorPickerInput
+                                    label="Text color"
+                                    value={textColor}
+                                    onChange={(value) => setTextColor(value)}
+                                // onChange={(value) => setWidgetData({ ...widgetData, general: { ...widgetData.general, advanced: { ...widgetData.general.advanced, input: { ...widgetData.general.advanced.input, input_color: value } } } })}
+                                // error={getErrorMessage('general.advanced.input.input_color')}
+                                // onClearError={() => clearError('general.advanced.input.input_color')}
+                                // onFocus={() => setIsEnabled(false)}
+                                />
 
-                            <ColorPickerInput
-                                label="Border color"
-                                value={borderColor}
-                                onChange={(value) => setBorderColor(value)}
-                            // onChange={(value) => setWidgetData({ ...widgetData, general: { ...widgetData.general, advanced: { ...widgetData.general.advanced, input: { ...widgetData.general.advanced.input, input_color: value } } } })}
-                            // error={getErrorMessage('general.advanced.input.input_color')}
-                            // onClearError={() => clearError('general.advanced.input.input_color')}
-                            // onFocus={() => setIsEnabled(false)}
-                            />
+                                <ColorPickerInput
+                                    label="Border color"
+                                    value={borderColor}
+                                    onChange={(value) => setBorderColor(value)}
+                                // onChange={(value) => setWidgetData({ ...widgetData, general: { ...widgetData.general, advanced: { ...widgetData.general.advanced, input: { ...widgetData.general.advanced.input, input_color: value } } } })}
+                                // error={getErrorMessage('general.advanced.input.input_color')}
+                                // onClearError={() => clearError('general.advanced.input.input_color')}
+                                // onFocus={() => setIsEnabled(false)}
+                                />
 
-                            <Divider />
+                                <Divider />
 
-                            {/* accent colors */}
-                            <Text variant="bodyMd" fontWeight='semibold' >Accent colors</Text>
-                            <ColorPickerInput
-                                label="Button text color"
-                                value={buttonTextColor}
-                                onChange={(value) => setButtonTextColor(value)}
-                            />
-                            <ColorPickerInput
-                                label="Button background color"
-                                value={buttonBackgroundColor}
-                                onChange={(value) => setButtonBackgroundColor(value)}
-                            />
-                            <ColorPickerInput
-                                label="Link color"
-                                value={linkColor}
-                                onChange={(value) => setLinkColor(value)}
-                            />
-                            <ColorPickerInput
-                                label="Footer text color"
-                                value={footerTextColor}
-                                onChange={(value) => setFooterTextColor(value)}
-                            />
+                                {/* accent colors */}
+                                <Text variant="bodyMd" fontWeight='semibold' >Accent colors</Text>
+                                <ColorPickerInput
+                                    label="Button text color"
+                                    value={buttonTextColor}
+                                    onChange={(value) => setButtonTextColor(value)}
+                                />
+                                <ColorPickerInput
+                                    label="Button background color"
+                                    value={buttonBackgroundColor}
+                                    onChange={(value) => setButtonBackgroundColor(value)}
+                                />
+                                <ColorPickerInput
+                                    label="Link color"
+                                    value={linkColor}
+                                    onChange={(value) => setLinkColor(value)}
+                                />
+                                <ColorPickerInput
+                                    label="Footer text color"
+                                    value={footerTextColor}
+                                    onChange={(value) => setFooterTextColor(value)}
+                                />
 
-                            <Divider />
-                            {/* footer  */}
-                            <Text variant="bodyMd" fontWeight='semibold' >Footer</Text>
-                            <TextField
-                                label="Disclaimer"
-                                value={disclaimer}
-                                onChange={(value) => setDisclaimer(value)}
-                                multiline={3}
-                            />
-                            <TextField
+                                <Divider />
+                                {/* footer  */}
+                                <Text variant="bodyMd" fontWeight='semibold' >Footer</Text>
+                                <TextField
+                                    label="Disclaimer"
+                                    value={disclaimer}
+                                    onChange={(value) => setDisclaimer(value)}
+                                    multiline={3}
+                                />
+                                {/* <TextField
                                 label="Unsubscribe text"
                                 value={unsubscribeText}
                                 onChange={(value) => setUnsubscribeText(value)}
                                 multiline={3}
-                            />
+                            /> */}
+                            </BlockStack>
+                        </Card>
 
-                        </BlockStack>
-                    </Card>
+
+                        <Card background="bg-surface-secondary" style={{ marginTop: '15px', backgroundColor: 'red' }}>
+                            <BlockStack gap={200}>
+                                <Text variant="bodyMd" fontWeight='semibold'>Available template variables</Text>
+                                {availableVariables?.map((item, index) => (
+                                    <Box key={index} style={{ display: 'flex', flexDirection: 'row', gap: '10px', alignItems: 'center' }}>
+                                        <Box>
+                                            <Icon source={PinIcon} />
+                                        </Box>
+                                        <Text tone="subdued" variant="bodyMd">{item}</Text>
+                                    </Box>
+                                ))}
+                            </BlockStack>
+                        </Card>
+                    </BlockStack>
                 </Grid.Cell>
 
                 <Grid.Cell columnSpan={{ xs: 6, sm: 6, md: 4, lg: 8, xl: 8 }}>
@@ -449,9 +465,9 @@ const EmailAppearance = () => {
                                             <div style={{ color: footerTextColor }}>
                                                 <Text alignment='center' variant='bodyXs' >This email was sent to  "Email" because you signed up for "store_name" Rewards.</Text>
                                             </div>
-                                            <div style={{ color: footerTextColor }}>
+                                            {/* <div style={{ color: footerTextColor }}>
                                                 <Text alignment='center' variant='bodyXs'>Don't want to receive these emails anymore? <a style={{ color: linkColor }} href="#">Unsubscribe</a></Text>
-                                            </div>
+                                            </div> */}
                                         </Box>
                                     </Box>
 

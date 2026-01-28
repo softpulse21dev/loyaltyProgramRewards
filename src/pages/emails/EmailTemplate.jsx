@@ -4,9 +4,11 @@ import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { fetchData } from '../../action';
 import { darkenColor } from '../../utils';
+import TestMailModal from '../../components/TestMailModal';
 
 const EmailTemplate = () => {
-  const EmailData = JSON.parse(localStorage.getItem('editTemplateData'));
+  const storedData = localStorage.getItem('editTemplateData');
+  const EmailData = storedData ? JSON.parse(storedData) : null;
   console.log('data tenos', EmailData)
   const navigate = useNavigate();
   const [status, setStatus] = useState(EmailData?.is_enabled);
@@ -14,6 +16,7 @@ const EmailTemplate = () => {
   const [saveLoading, setSaveLoading] = useState(false);
   const [getLoading, setGetLoading] = useState(false);
   const [emailSettings, setEmailSettings] = useState(null);
+  const [testMailModalOpen, setTestMailModalOpen] = useState(false);
   // --- State for Content ---
   const [emailSubject, setEmailSubject] = useState(EmailData?.subject);
   const [emailHeading, setEmailHeading] = useState(EmailData?.heading);
@@ -25,7 +28,7 @@ const EmailTemplate = () => {
   const handleSendTestEmail = async () => {
     setLoading(true);
 
-     // 1. Configuration: Gather current state from your UI AND the styling settings
+    // 1. Configuration: Gather current state from your UI AND the styling settings
     const emailConfig = {
       headingText: emailHeading,
       bodyText: emailContent,
@@ -152,7 +155,8 @@ const EmailTemplate = () => {
           secondaryActions={
             <Button
               variant="secondary"
-              onClick={handleSendTestEmail}
+              // onClick={handleSendTestEmail}
+              onClick={() => setTestMailModalOpen(true)}
               loading={loading}
             >
               Send test email
@@ -165,23 +169,27 @@ const EmailTemplate = () => {
               <BlockStack gap={400}>
                 <Card>
                   <BlockStack gap={200}>
-                    <Text variant="headingMd">Status</Text>
-                    <Box style={{ display: 'flex', flexDirection: 'column' }}>
-                      <RadioButton
-                        label="Enabled"
-                        id="enabled"
-                        name="accounts"
-                        checked={status == true}
-                        onChange={() => setStatus(true)}
-                      />
-                      <RadioButton
-                        label="Disabled"
-                        checked={status == false}
-                        id="disabled"
-                        name="accounts"
-                        onChange={() => setStatus(false)}
-                      />
-                    </Box>
+                    {EmailData?.id !== 'otp_page' && (
+                      <>
+                        <Text variant="headingMd">Status</Text>
+                        <Box style={{ display: 'flex', flexDirection: 'column' }}>
+                          <RadioButton
+                            label="Enabled"
+                            id="enabled"
+                            name="accounts"
+                            checked={status == true}
+                            onChange={() => setStatus(true)}
+                          />
+                          <RadioButton
+                            label="Disabled"
+                            checked={status == false}
+                            id="disabled"
+                            name="accounts"
+                            onChange={() => setStatus(false)}
+                          />
+                        </Box>
+                      </>
+                    )}
 
                     <TextField
                       label="Subject"
@@ -240,7 +248,7 @@ const EmailTemplate = () => {
                   <BlockStack gap={200}>
                     <Text variant="bodyMd" fontWeight='semibold'>Available template variables</Text>
                     {EmailData?.available_variables?.map((item, index) => (
-                      <Box key={index} style={{ display: 'flex', flexDirection: 'row', gap: '10px', alignItems: 'center', justifyContent: 'space-between' }}>
+                      <Box key={index} style={{ display: 'flex', flexDirection: 'row', gap: '10px', alignItems: 'center' }}>
                         <Box>
                           <Icon source={PinIcon} />
                         </Box>
@@ -346,9 +354,9 @@ const EmailTemplate = () => {
                         <div style={{ color: emailSettings?.accent_colors?.footer_text_color }}>
                           <Text alignment='center' variant='bodyXs' >This email was sent to "admin@example.com" because you signed up for "My Store" Rewards.</Text>
                         </div>
-                        <div style={{ color: emailSettings?.accent_colors?.footer_text_color }}>
+                        {/* <div style={{ color: emailSettings?.accent_colors?.footer_text_color }}>
                           <Text alignment='center' variant='bodyXs' >Don't want to receive these emails anymore? <a href="#" style={{ color: emailSettings?.accent_colors?.link_color }}>Unsubscribe</a></Text>
-                        </div>
+                        </div> */}
                       </Box>
                     </Box>
                   </Card>
@@ -358,6 +366,12 @@ const EmailTemplate = () => {
           </Grid>
         </Page>
       )}
+      <TestMailModal
+        open={testMailModalOpen}
+        onClose={() => setTestMailModalOpen(false)}
+        save={handleSendTestEmail}
+        type={EmailData?.id || ''}
+      />
     </>
   )
 }
@@ -501,9 +515,9 @@ const generateEmailHtml = (config, data) => {
               <p style="margin: 0; font-size: 12px; color: ${colors.footerText}; line-height: 1.4; font-family: Arial, sans-serif;">
                 This email was sent to ${data.email} because you signed up for ${data.store_name} Rewards.
               </p>
-              <p style="margin: 10px 0 0 0; font-size: 12px; color: ${colors.footerText}; font-family: Arial, sans-serif;">
-                Don't want to receive these emails anymore? <a href="#" style="color: ${colors.footerLink}; text-decoration: underline;">Unsubscribe</a>
-              </p>
+              // <p style="margin: 10px 0 0 0; font-size: 12px; color: ${colors.footerText}; font-family: Arial, sans-serif;">
+              //   Don't want to receive these emails anymore? <a href="#" style="color: ${colors.footerLink}; text-decoration: underline;">Unsubscribe</a>
+              // </p>
             </td>
           </tr>
 

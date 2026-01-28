@@ -65,8 +65,9 @@ const Dashboard = () => {
             const response = await fetchData("/toggle-loyalty-program", formData);
             console.log('updateLoyaltyStatusAPI', response);
             if (response.status === true) {
-                // setLoyaltyStatus(response.data.program_status == '1');
-                await fetchDashboardAPI();
+                // Update local state instead of calling fetchDashboardAPI to avoid page reload
+                setLoyaltyStatus(newStatus);
+                shopify.toast.show(response?.message, { duration: 2000 });
             } else {
                 shopify.toast.show(response?.message, { duration: 2000, isError: true });
             }

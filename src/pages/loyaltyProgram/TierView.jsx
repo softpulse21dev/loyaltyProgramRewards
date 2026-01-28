@@ -101,8 +101,8 @@ const TierView = () => {
             dispatch(UpdateTierFormData({
                 uid: currentTier.uid, // <-- Store the ID in the form state
                 tierName: currentTier.title || '',
-                goalValue: currentTier.points_needed || '',
-                pointsMultiplier: currentTier.points_multiply || '',
+                goalValue: currentTier.points_needed ?? '',
+                pointsMultiplier: currentTier.points_multiply ?? '',
                 selectedIcon: currentTier.icon_type || 'default',
                 files: initialFiles,
             }));
@@ -128,12 +128,19 @@ const TierView = () => {
             newErrors.tierName = 'Tier name is required';
             isError = true;
         }
-        if (!tierFormData?.goalValue) {
+        // Goal value validation
+        if (tierFormData?.goalValue === undefined || tierFormData?.goalValue === null || tierFormData?.goalValue === '') {
             newErrors.goalValue = 'Goal value is required';
+            isError = true;
+        } else if (tierFormData?.goalValue < 0) {
+            newErrors.goalValue = 'Goal value cannot be negative';
             isError = true;
         }
         if (!tierFormData?.pointsMultiplier) {
             newErrors.pointsMultiplier = 'Points multiplier is required';
+            isError = true;
+        } else if (tierFormData?.pointsMultiplier < 0) {
+            newErrors.pointsMultiplier = 'Points multiplier cannot be negative';
             isError = true;
         }
         console.log('tierFormData?.selectedIcon', tierFormData?.selectedIcon)
@@ -390,7 +397,6 @@ const TierView = () => {
                                                                             </Box>
                                                                         </Box>
                                                                         <Box style={{ display: "flex", alignItems: "center", gap: "15px" }}>
-                                                                            <Button variant="plain" onClick={() => navigate(`/loyaltyProgram/CouponPage`, { state: { rule: item, edit: true, localSave: true, isTierRewardEdit: true, navigateTo: 2 } })}>Edit</Button>
                                                                             <div className="toggle-container" style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
                                                                                 <label className="switch">
                                                                                     <input
@@ -403,6 +409,7 @@ const TierView = () => {
                                                                                     <span className="slider"></span>
                                                                                 </label>
                                                                             </div>
+                                                                            <Button onClick={() => navigate(`/loyaltyProgram/CouponPage`, { state: { rule: item, edit: true, localSave: true, isTierRewardEdit: true, navigateTo: 2 } })}>Edit</Button>
                                                                         </Box>
                                                                     </Box>
                                                                 </ResourceItem>

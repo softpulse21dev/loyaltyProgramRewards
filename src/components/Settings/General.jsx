@@ -1,7 +1,8 @@
-import { Box, Button, Card, Layout, TextField, BlockStack, InlineStack, Tag, Select, Text } from "@shopify/polaris";
-import { ClipboardIcon } from "@shopify/polaris-icons";
+import { Box, Button, Card, Layout, TextField, BlockStack, InlineStack, Tag, Select, Text, Badge, Icon, Tooltip } from "@shopify/polaris";
+import { ClipboardIcon, InfoIcon } from "@shopify/polaris-icons";
 import { useState, useCallback, useEffect } from "react";
 import ResetPointsModal from "../ResetPointsModal";
+import { fetchData } from "../../action";
 
 const General = ({ settingsData, setSettingsData, errors, clearError }) => {
     console.log('settingsData general page', settingsData);
@@ -17,6 +18,8 @@ const General = ({ settingsData, setSettingsData, errors, clearError }) => {
     const installDate = settings.created_at || "";
     const storeUrl = settings.store_url || "";
     const subDomain = settings.sub_domain || "";
+    const verifiedStatus = settings.verified_status || "";
+    const verifiedEmail = settings.verify_email || "";
     // const currentCurrency = settings.store_currency || "USD";
     // const currencyListRaw = settings.store_currency_list || {};
     // const currencyOptions = Object.entries(currencyListRaw).map(([code, label]) => ({
@@ -53,7 +56,41 @@ const General = ({ settingsData, setSettingsData, errors, clearError }) => {
     const [tagInputError, setTagInputError] = useState("");
     const [resetPointsModalActive, setResetPointsModalActive] = useState(false);
     const [dateOptions, setDateOptions] = useState([]);
+    const [emailSender, setEmailSender] = useState(verifiedEmail);
     // Update excludeTags when settingsData.excluded_tags changes externally
+
+    const verifyEmailAPI = async () => {
+        const formData = new FormData();
+        formData.append("email", emailSender);
+        const response = await fetchData("/email-verify", formData);
+        console.log('verify email response', response);
+        if (response.status) {
+            getSettingsAPI();
+            shopify.toast.show(response.message, { duration: 2000 });
+        } else {
+            console.log('verify email error', response);
+            shopify.toast.show(response.message, { duration: 2000, isError: true });
+        }
+    }
+
+    const getSettingsAPI = async () => {
+        // setLoading(true);
+        try {
+            const formData = new FormData();
+            const response = await fetchData("/get-settings", formData);
+            console.log('Settings Response', response);
+            if (response.status) {
+                setSettingsData(response.data);
+            } else {
+                shopify.toast.show(response?.message, { duration: 2000, isError: true });
+            }
+        } catch (error) {
+            console.error('Error getting settings:', error);
+        } finally {
+            // setLoading(false);
+        }
+    }
+
     useEffect(() => {
         const newTags = getInitialTags();
         // Only update if the new tags are different from current state
@@ -295,6 +332,54 @@ const General = ({ settingsData, setSettingsData, errors, clearError }) => {
                             onChange={(value) => handleDateSelectChange(value)}
                         />
                     </InlineStack>
+                </Card>
+            </Layout.AnnotatedSection>
+
+            <Layout.AnnotatedSection
+                title="Email Sender"
+                description="Set and verify the email address used to send emails to users."
+            >
+                <Card>
+                    <Box style={{ display: 'flex', gap: '10px', flexDirection: 'column', marginBottom: '10px' }}>
+                        <Badge tone="info">
+                            <Box style={{ display: 'flex', gap: '5px', padding: '5px 0px' }}>
+                                <Box><Icon source={InfoIcon} /></Box>
+                                <Text>Enter the email address that will be used to send emails to all users.
+                                    Once verified, this address will appear as the sender, and users can reply directly to it.
+                                </Text>
+                            </Box>
+                        </Badge>
+                        {verifiedStatus === '1' && (
+                            <Badge tone="success">
+                                <Box style={{ display: 'flex', gap: '5px', padding: '5px 0px', alignItems: 'center' }}>
+                                    <Box><Icon source={InfoIcon} /></Box>
+                                    <Text>This email address has been successfully confirmed and is ready for use.</Text>
+                                </Box>
+                            </Badge>
+                        )}
+                        {verifiedStatus === '3' && (
+                            <Badge tone="warning">
+                                <Box style={{ display: 'flex', gap: '5px', padding: '5px 0px', }}>
+                                    <Box><Icon source={InfoIcon} /></Box>
+                                    <Text> A verification email has been sent to {settings?.verify_email}. Please check your inbox and follow the link to complete verification.</Text>
+                                </Box>
+                            </Badge>
+                        )}
+                    </Box>
+
+                    <TextField
+                        label={<Text>Sender Email Address</Text>}
+                        value={emailSender}
+                        onChange={(value) => setEmailSender(value)}
+                        connectedRight={
+                            !(settings?.verified_status === '1' && emailSender === settings?.verify_email) ? (
+                                <Button onClick={() => verifyEmailAPI()} variant="secondary">
+                                    Verify now
+                                </Button>
+                            ) : null
+                        }
+                        helpText="Note: This will verify the email sender by sending a test email to the email sender."
+                    />
                 </Card>
             </Layout.AnnotatedSection>
 

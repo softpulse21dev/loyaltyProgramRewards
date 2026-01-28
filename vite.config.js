@@ -10,7 +10,7 @@ export default defineConfig({
   server: {
     historyApiFallback: true,
     hmr: {
-      host: "shannon-mode-tribes-quest.trycloudflare.com",
+      host: "simon-clay-crest-heel.trycloudflare.com",
       protocol: "wss",
     },
   },

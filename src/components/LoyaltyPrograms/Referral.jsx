@@ -68,6 +68,7 @@ const Referral = () => {
         }
     }
 
+    // ✅ Modified function to handle "Single Active" logic locally
     const updateReferalRuleStatusAPI = async (id, status) => {
         try {
             const formData = new FormData();
@@ -76,15 +77,51 @@ const Referral = () => {
             const response = await fetchData("/update-referral-rule-status", formData);
             console.log('Update Refer Error', response);
             if (response?.status === true) {
-                GetReferralRulesAPI();
+                const newStatus = !status; // The status we want to apply
+
+                setReferralData((prev) => {
+                    if (!prev) return prev;
+
+                    // Helper function to update a specific list (Referral or Advocate)
+                    const updateList = (list) => {
+                        if (!Array.isArray(list)) return [];
+
+                        // Check if the item exists in this list so we only update the correct group
+                        const existsInList = list.some((item) => item.referral_rule_id === id);
+                        if (!existsInList) return list;
+
+                        return list.map((item) => {
+                            if (item.referral_rule_id === id) {
+                                // This is the specific item toggled
+                                return { ...item, status: newStatus };
+                            } else {
+                                // For all other items:
+                                // If we just ENABLED the target (newStatus === true), we must DISABLE others.
+                                // If we just DISABLED the target, we leave others as they are.
+                                return newStatus ? { ...item, status: false } : item;
+                            }
+                        });
+                    };
+
+                    return {
+                        ...prev,
+                        referred_friend_reward: {
+                            ...prev.referred_friend_reward,
+                            added: updateList(prev?.referred_friend_reward?.added),
+                        },
+                        advocate_reward: {
+                            ...prev.advocate_reward,
+                            added: updateList(prev?.advocate_reward?.added),
+                        },
+                    };
+                });
+
                 shopify.toast.show(response?.message, { duration: 2000 });
             } else {
                 shopify.toast.show(response?.message, { duration: 2000, isError: true });
             }
         } catch (error) {
             console.error('Update Refer Error', error);
-        } finally {
-            // setLoading(false);
         }
     }
 
@@ -154,7 +191,6 @@ const Referral = () => {
                                                             </div>
                                                         </Box>
                                                         <Box style={{ display: "flex", alignItems: "center", gap: "10px" }}>
-                                                            <Button onClick={() => { navigate(`/loyaltyProgram/CouponPage`, { state: { rule: item, referralRule: true, edit: true, navigateTo: 1 } }) }} variant="plain" primary>Edit</Button>
                                                             <div className="toggle-container" style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
                                                                 <label className="switch">
                                                                     <input
@@ -165,6 +201,7 @@ const Referral = () => {
                                                                     <span className="slider"></span>
                                                                 </label>
                                                             </div>
+                                                            <Button onClick={() => { navigate(`/loyaltyProgram/CouponPage`, { state: { rule: item, referralRule: true, edit: true, navigateTo: 1 } }) }} >Edit</Button>
                                                         </Box>
                                                     </Box>
                                                 </ResourceItem>
@@ -213,15 +250,14 @@ const Referral = () => {
                                                                     <Box>
                                                                         <Text variant="bodyMd">{title}</Text>
                                                                         {/* <InlineStack gap="100" align="center"> */}
-                                                                            {/* <Text variant="bodyMd">{points} points</Text>
+                                                                        {/* <Text variant="bodyMd">{points} points</Text>
                                                                             <Text variant="bodyMd" fontWeight="bold">|</Text> */}
-                                                                            <Text variant="bodyMd">{redeemed_so_far || 0} redeemed so far</Text>
+                                                                        <Text variant="bodyMd">{redeemed_so_far || 0} redeemed so far</Text>
                                                                         {/* </InlineStack> */}
                                                                     </Box>
                                                                 </div>
                                                             </Box>
                                                             <Box style={{ display: "flex", alignItems: "center", gap: "10px" }}>
-                                                                <Button onClick={() => { navigate(`/loyaltyProgram/CouponPage`, { state: { rule: item, referralRule: true, edit: true, navigateTo: 1 } }) }} variant="plain" primary>Edit</Button>
                                                                 <div className="toggle-container" style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
                                                                     <label className="switch">
                                                                         <input
@@ -232,6 +268,7 @@ const Referral = () => {
                                                                         <span className="slider"></span>
                                                                     </label>
                                                                 </div>
+                                                                <Button onClick={() => { navigate(`/loyaltyProgram/CouponPage`, { state: { rule: item, referralRule: true, edit: true, navigateTo: 1 } }) }}>Edit</Button>
                                                             </Box>
                                                         </Box>
                                                     </ResourceItem>

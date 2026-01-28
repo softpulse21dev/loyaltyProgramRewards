@@ -5,70 +5,45 @@ import { useNavigate } from 'react-router-dom';
 import { fetchData } from '../../action';
 import { iconsMap } from '../../utils';
 import { useDispatch, useSelector } from 'react-redux';
-import { ClearTierFormData, GetVipTierData, MasterRewardsList, removeData, RemoveTierId, TierId } from '../../redux/action';
+import { ClearTierFormData, removeData, RemoveTierId, TierId } from '../../redux/action';
 
-const VipTier = () => {
+const VipTier = ({ entryMethod, tierProgressExpiry, setEntryMethod, setTierProgressExpiry, vipStatus, setVipStatus, loadingTiers, onRefreshData }) => {
     const navigate = useNavigate();
-    const [selectedEntry, setSelectedEntry] = useState(1);
-    const [selectedTierProgressExpiry, setSelectedTierProgressExpiry] = useState(1);
-    const [vipStatus, setVipStatus] = useState(false);
     const [loading, setLoading] = useState(false);
-    const [loadingTiers, setLoadingTiers] = useState(false);
     const vipTierData = useSelector((state) => state.merchantSettings.vipTierData);
     console.log('vipTierData', vipTierData)
 
     const dispatch = useDispatch();
 
-    const GetVipTierAPI = async () => {
-        setLoadingTiers(true);
-        try {
-            const formData = new FormData();
-            const response = await fetchData("/get-tiers", formData);
-            console.log('response vip Tier', response);
-            if (response.status) {
-                setVipStatus(response?.data?.status === '1' ? true : false);
-                dispatch(GetVipTierData(response?.data?.tier_settings));
-                dispatch(MasterRewardsList(response?.master_rewards));
-                setLoadingTiers(false);
-            } else {
-                shopify.toast.show(response?.message, { duration: 2000, isError: true });
-                setLoadingTiers(false);
-            }
-        } catch (error) {
-            console.error('Error fetching VIP tiers:', error);
-            shopify.toast.show(error?.message, { duration: 2000, isError: true });
-            setLoadingTiers(false);
-        }
-    }
-
     useEffect(() => {
-        GetVipTierAPI();
+        // Only clean up Redux state when component mounts, don't fetch data here
         dispatch(RemoveTierId());
         dispatch(removeData());
         dispatch(ClearTierFormData());
         console.log('removed tierid')
-    }, []);
+    }, [dispatch]);
 
     const UpdateVipTierAPI = async () => {
         try {
             setLoading(true);
-
             const formData = new FormData();
-            formData.append("tier_method", selectedEntry);
-            formData.append("tier_expiry", selectedTierProgressExpiry);
             formData.append("status", !vipStatus);
-
             const response = await fetchData("/tier-setting", formData);
             console.log('responseStatus', response);
 
             if (response?.status) {
                 setVipStatus(!vipStatus);
-                GetVipTierAPI();
+                // Optionally refresh data if needed
+                if (onRefreshData) {
+                    onRefreshData();
+                }
             } else {
                 console.log('response?.message', response?.message)
+                shopify.toast.show(response?.message || 'Failed to update VIP Tier status', { duration: 2000, isError: true });
             }
         } catch (err) {
             console.error("Error updating VIP Tier:", err);
+            shopify.toast.show(err?.message || 'Error updating VIP Tier status', { duration: 2000, isError: true });
         } finally {
             setLoading(false);
         }
@@ -80,13 +55,6 @@ const VipTier = () => {
         navigate(`/loyaltyProgram/tierview`, { state: { navigateTo: 2 } });
     };
 
-    const handleSelectedEntry = (value) => {
-        setSelectedEntry(value);
-    }
-
-    const handleSelectedTierProgressExpiry = (value) => {
-        setSelectedTierProgressExpiry(value);
-    }
     return (
         <div style={{ marginBottom: '30px' }} className="annotatedSection-border">
             <Layout.AnnotatedSection
@@ -102,7 +70,8 @@ const VipTier = () => {
                             <Button
                                 primary={!vipStatus}
                                 destructive={vipStatus}
-                                onClick={UpdateVipTierAPI}
+                                tone={vipStatus ? "critical" : "success"}
+                                onClick={() => UpdateVipTierAPI(true)}
                                 loading={loading}
                             >
                                 {vipStatus ? "Deactivate" : "Activate"}
@@ -193,24 +162,24 @@ const VipTier = () => {
                             <BlockStack >
                                 <RadioButton
                                     label="Points Earned"
-                                    checked={selectedEntry === 1}
+                                    checked={entryMethod == 1}
                                     id="points-earned"
                                     name="entry-method"
-                                    onChange={() => handleSelectedEntry(1)}
+                                    onChange={() => setEntryMethod(1)}
                                 />
                                 <RadioButton
                                     label="Orders Placed"
-                                    checked={selectedEntry === 2}
+                                    checked={entryMethod == 2}
                                     id="orders-placed"
                                     name="entry-method"
-                                    onChange={() => handleSelectedEntry(2)}
+                                    onChange={() => setEntryMethod(2)}
                                 />
                                 <RadioButton
                                     label="Amount Spent"
-                                    checked={selectedEntry === 3}
+                                    checked={entryMethod == 3}
                                     id="amount-spent"
                                     name="entry-method"
-                                    onChange={() => handleSelectedEntry(3)}
+                                    onChange={() => setEntryMethod(3)}
                                 />
                             </BlockStack>
                         </Box>
@@ -226,18 +195,18 @@ const VipTier = () => {
                             <BlockStack >
                                 <RadioButton
                                     label="A lifetime, once they are a loyalty program member"
-                                    checked={selectedTierProgressExpiry === 1}
-                                    onChange={() => handleSelectedTierProgressExpiry(1)}
+                                    checked={tierProgressExpiry == 1}
+                                    onChange={() => setTierProgressExpiry(1)}
                                 />
                                 <RadioButton
                                     label="A full calendar year"
-                                    checked={selectedTierProgressExpiry === 2}
-                                    onChange={() => handleSelectedTierProgressExpiry(2)}
+                                    checked={tierProgressExpiry == 2}
+                                    onChange={() => setTierProgressExpiry(2)}
                                 />
                                 <RadioButton
                                     label="A rolling year"
-                                    checked={selectedTierProgressExpiry === 3}
-                                    onChange={() => handleSelectedTierProgressExpiry(3)}
+                                    checked={tierProgressExpiry == 3}
+                                    onChange={() => setTierProgressExpiry(3)}
                                 />
                             </BlockStack>
                         </Box>

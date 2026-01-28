@@ -6,71 +6,19 @@ import ColorPickerInput from '../../../components/ColorPickerInput';
 import { AsterikIcon, BadgeIcon, CrownIcon, DollarIcon, FlowerIcon, GemIcon, GiftIcon, HeartIcon, HoldingHeartIcon, KiteIcon, OctogramIcon, StarIcon, TulipFlowerIcon } from '../../../assets/svg/svg';
 
 const iconList = [
-    {
-        id: 1,
-        name: 'Asterik',
-        icon: <AsterikIcon />
-    },
-    {
-        id: 2,
-        name: 'Badge',
-        icon: <BadgeIcon />
-    },
-    {
-        id: 3,
-        name: 'Crown',
-        icon: <CrownIcon />
-    },
-    {
-        id: 4,
-        name: 'Dollar',
-        icon: <DollarIcon />
-    },
-    {
-        id: 5,
-        name: 'Holding Heart',
-        icon: <HoldingHeartIcon />
-    },
-    {
-        id: 6,
-        name: 'Flower',
-        icon: <FlowerIcon />
-    },
-    {
-        id: 7,
-        name: 'Tulip Flower',
-        icon: <TulipFlowerIcon />
-    },
-    {
-        id: 8,
-        name: 'Gift',
-        icon: <GiftIcon />
-    },
-    {
-        id: 9,
-        name: 'Gem',
-        icon: <GemIcon />
-    },
-    {
-        id: 10,
-        name: 'Heart',
-        icon: <HeartIcon />
-    },
-    {
-        id: 11,
-        name: 'Kite',
-        icon: <KiteIcon />
-    },
-    {
-        id: 12,
-        name: 'Star',
-        icon: <StarIcon />
-    },
-    {
-        id: 13,
-        name: 'Octogram',
-        icon: <OctogramIcon />
-    }
+    { id: 1, name: 'Asterik', icon: <AsterikIcon /> },
+    { id: 2, name: 'Badge', icon: <BadgeIcon /> },
+    { id: 3, name: 'Crown', icon: <CrownIcon /> },
+    { id: 4, name: 'Dollar', icon: <DollarIcon /> },
+    { id: 5, name: 'Holding Heart', icon: <HoldingHeartIcon /> },
+    { id: 6, name: 'Flower', icon: <FlowerIcon /> },
+    { id: 7, name: 'Tulip Flower', icon: <TulipFlowerIcon /> },
+    { id: 8, name: 'Gift', icon: <GiftIcon /> },
+    { id: 9, name: 'Gem', icon: <GemIcon /> },
+    { id: 10, name: 'Heart', icon: <HeartIcon /> },
+    { id: 11, name: 'Kite', icon: <KiteIcon /> },
+    { id: 12, name: 'Star', icon: <StarIcon /> },
+    { id: 13, name: 'Octogram', icon: <OctogramIcon /> }
 ];
 
 const Launcher = ({ widgetData, setWidgetData, errors = {}, clearError }) => {
@@ -475,48 +423,58 @@ const Launcher = ({ widgetData, setWidgetData, errors = {}, clearError }) => {
                                 style={{
                                     height: '100%',
                                     width: '100%',
-                                    overflowY: 'auto',
-                                    overflowX: 'hidden',
-                                    position: 'relative',
-                                    zIndex: 10
+                                    position: 'relative', // Acts as the anchor frame
+                                    overflow: 'hidden'    // Prevents double scrollbars
                                 }}
                             >
+                                {/* 1. SCROLLABLE CONTENT LAYER */}
                                 <div style={{
-                                    height: '800px',
+                                    height: '100%',
                                     width: '100%',
-                                    position: 'relative'
+                                    overflowY: 'auto',    // The scrolling happens ONLY here
+                                    overflowX: 'hidden',
                                 }}>
-                                    {/* Bottom label type - Scrolls with content */}
-                                    {(position === 'bottom_left' || position === 'bottom_right') && (
-                                        <div style={{
-                                            position: 'absolute',
-                                            bottom: `${bottomSpacing}px`,
-                                            left: position === 'bottom_left' ? `${sideSpacing}px` : 'auto',
-                                            right: position === 'bottom_right' ? `${sideSpacing}px` : 'auto'
-                                        }}>
-                                            <button
-                                                style={{
-                                                    cursor: 'pointer',
-                                                    display: 'flex',
-                                                    alignItems: 'center',
-                                                    justifyContent: 'center',
-                                                    gap: '8px',
-                                                    background: getBackgroundStyle(),
-                                                    color: textColor,
-                                                    padding: '12px 24px',
-                                                    borderRadius: `${borderRadius}px`,
-                                                    border: 'none',
-                                                    boxShadow: '0 4px 12px rgba(0,0,0,0.15)',
-                                                    fontSize: '14px',
-                                                    fontWeight: '500'
-                                                }}
-                                            >
-                                                {renderIcon()}
-                                                {title}
-                                            </button>
-                                        </div>
-                                    )}
+                                    <div style={{
+                                        height: '800px', // Your long content
+                                        width: '100%',
+                                        position: 'relative'
+                                    }}>
+                                        {/* Your page content goes here */}
+                                    </div>
                                 </div>
+
+                                {/* 2. FLOATING BUTTON LAYER (Sibling to scrollable content) */}
+                                {(position === 'bottom_left' || position === 'bottom_right') && (
+                                    <div style={{
+                                        position: 'absolute',
+                                        zIndex: 20, // Ensure it sits on top of the scrollable content
+                                        bottom: '0', // Fixed to bottom edge
+                                        left: position === 'bottom_left' ? `${sideSpacing}px` : 'auto',
+                                        right: position === 'bottom_right' ? `${sideSpacing}px` : 'auto'
+                                    }}>
+                                        <button
+                                            style={{
+                                                cursor: 'pointer',
+                                                display: 'flex',
+                                                alignItems: 'center',
+                                                justifyContent: 'center',
+                                                gap: '8px',
+                                                background: getBackgroundStyle(),
+                                                color: textColor,
+                                                padding: '12px 24px',
+                                                // Flat on the bottom (0), rounded on Top-Left and Top-Right
+                                                borderRadius: `${borderRadius}px ${borderRadius}px 0 0`,
+                                                border: 'none',
+                                                boxShadow: '0 4px 12px rgba(0,0,0,0.15)',
+                                                fontSize: '14px',
+                                                fontWeight: '500'
+                                            }}
+                                        >
+                                            {renderIcon()}
+                                            {title}
+                                        </button>
+                                    </div>
+                                )}
                             </div>
 
                         </div>

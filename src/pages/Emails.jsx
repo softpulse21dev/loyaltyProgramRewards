@@ -145,8 +145,25 @@ const Emails = () => {
                                                 </InlineStack>
 
                                                 <InlineStack gap="400" blockAlign="center">
+                                                    {id === 'otp_page' ? null :
+                                                        (<div
+                                                            className="toggle-container"
+                                                            style={{ display: 'flex', alignItems: 'center' }}
+                                                            onClick={(e) => e.stopPropagation()}
+                                                        >
+                                                            <label className="switch">
+                                                                <input
+                                                                    type="checkbox"
+                                                                    // Handle both boolean true and integer 1
+                                                                    checked={is_enabled === 1 || is_enabled === true}
+                                                                    onChange={(e) => handleStatusChange(id, e.target.checked ? 1 : 0)}
+                                                                />
+                                                                <span className="slider"></span>
+                                                            </label>
+                                                        </div>)
+                                                    }
                                                     <Button
-                                                        variant="plain"
+                                                        variant="secondary"
                                                         onClick={(e) => {
                                                             e.stopPropagation();
                                                             // ✅ FIX 3: Since 'item' comes from renderItem, 
@@ -159,21 +176,6 @@ const Emails = () => {
                                                         Edit
                                                     </Button>
 
-                                                    <div
-                                                        className="toggle-container"
-                                                        style={{ display: 'flex', alignItems: 'center' }}
-                                                        onClick={(e) => e.stopPropagation()}
-                                                    >
-                                                        <label className="switch">
-                                                            <input
-                                                                type="checkbox"
-                                                                // Handle both boolean true and integer 1
-                                                                checked={is_enabled === 1 || is_enabled === true}
-                                                                onChange={(e) => handleStatusChange(id, e.target.checked ? 1 : 0)}
-                                                            />
-                                                            <span className="slider"></span>
-                                                        </label>
-                                                    </div>
                                                 </InlineStack>
 
                                             </Box>

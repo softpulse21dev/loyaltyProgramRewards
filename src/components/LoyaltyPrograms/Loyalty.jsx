@@ -54,7 +54,57 @@ const Loyalty = () => {
         const response = await fetchData(url, formData);
 
         if (response.status) {
-            fetchSettingsAPI();
+            // ✅ Update local state only (no refetch / no page reload)
+            setLoyaltyData((prev) => {
+                if (!prev) return prev;
+
+                // ---- EARNING RULES ----
+                if (isEarningRule) {
+                    const otherRules = prev?.earning_rules?.active_rules?.other_rules || [];
+                    const socialRules = prev?.earning_rules?.active_rules?.social_rules || [];
+
+                    const updatedOtherRules = Array.isArray(otherRules)
+                        ? otherRules.map((r) =>
+                            r.rule_id === ruleId ? { ...r, status: isActive } : r
+                        )
+                        : otherRules;
+
+                    const updatedSocialRules = Array.isArray(socialRules)
+                        ? socialRules.map((r) =>
+                            r.rule_id === ruleId ? { ...r, status: isActive } : r
+                        )
+                        : socialRules;
+
+                    return {
+                        ...prev,
+                        earning_rules: {
+                            ...prev.earning_rules,
+                            active_rules: {
+                                ...prev.earning_rules?.active_rules,
+                                other_rules: updatedOtherRules,
+                                social_rules: updatedSocialRules,
+                            },
+                        },
+                    };
+                }
+
+                // ---- REDEEMING RULES ----
+                const redeemingRules = prev?.redeeming_rules?.active_rules || [];
+                const updatedRedeemingRules = Array.isArray(redeemingRules)
+                    ? redeemingRules.map((r) =>
+                        r.id === ruleId ? { ...r, status: isActive } : r
+                    )
+                    : redeemingRules;
+
+                return {
+                    ...prev,
+                    redeeming_rules: {
+                        ...prev.redeeming_rules,
+                        active_rules: updatedRedeemingRules,
+                    },
+                };
+            });
+
             shopify.toast.show(response?.message, { duration: 2000 });
         } else {
             shopify.toast.show(response?.message, { duration: 2000, isError: true });
@@ -130,13 +180,6 @@ const Loyalty = () => {
                                                         </Box>
                                                     </Box>
                                                     <Box style={{ display: "flex", alignItems: "center", gap: "15px" }}>
-                                                        <Button onClick={() => {
-
-                                                            localStorage.setItem('loyaltyEditData', JSON.stringify({ rule_id: item.rule_id, edit: true }));
-                                                            navigate(NavigateMap[item.display_use_type], {
-                                                                state: { rule: item, edit: true },
-                                                            });
-                                                        }} variant="plain">Edit</Button>
                                                         <div className="toggle-container" style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
                                                             <label className="switch">
                                                                 <input
@@ -150,6 +193,13 @@ const Loyalty = () => {
                                                                 <span className="slider"></span>
                                                             </label>
                                                         </div>
+
+                                                        <Button onClick={() => {
+                                                            localStorage.setItem('loyaltyEditData', JSON.stringify({ rule_id: item.rule_id, edit: true }));
+                                                            navigate(NavigateMap[item.display_use_type], {
+                                                                state: { rule: item, edit: true },
+                                                            });
+                                                        }} >Edit</Button>
                                                     </Box>
                                                 </Box>
                                             </ResourceItem>
@@ -175,11 +225,6 @@ const Loyalty = () => {
                                                         </Box>
                                                     </Box>
                                                     <Box style={{ display: "flex", alignItems: "center", gap: "15px" }}>
-                                                        <Button onClick={() =>
-                                                            navigate(NavigateMap[item.display_use_type], {
-                                                                state: { rule: item, edit: true },
-                                                            })
-                                                        } variant="plain">Edit</Button>
                                                         <div className="toggle-container" style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
                                                             <label className="switch">
                                                                 <input
@@ -193,6 +238,11 @@ const Loyalty = () => {
                                                                 <span className="slider"></span>
                                                             </label>
                                                         </div>
+                                                        <Button onClick={() =>
+                                                            navigate(NavigateMap[item.display_use_type], {
+                                                                state: { rule: item, edit: true },
+                                                            })
+                                                        } >Edit</Button>
                                                     </Box>
                                                 </Box>
                                             </ResourceItem>
@@ -243,7 +293,6 @@ const Loyalty = () => {
                                                     </Box>
                                                 </Box>
                                                 <Box style={{ display: "flex", alignItems: "center", gap: "15px" }}>
-                                                    <Button variant="plain" onClick={() => navigate(`/loyaltyProgram/CouponPage`, { state: { rule: item, edit: true } })}>Edit</Button>
                                                     <div className="toggle-container" style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
                                                         <label className="switch">
                                                             <input
@@ -256,6 +305,7 @@ const Loyalty = () => {
                                                             <span className="slider"></span>
                                                         </label>
                                                     </div>
+                                                    <Button onClick={() => navigate(`/loyaltyProgram/CouponPage`, { state: { rule: item, edit: true } })}>Edit</Button>
                                                 </Box>
                                             </Box>
                                         </ResourceItem>

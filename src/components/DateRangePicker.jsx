@@ -221,6 +221,7 @@ function DateRangePicker({ inputValues, setInputValues, getDashboardData }) {
                 onChange={handleCalendarChange}
                 multiMonth={shouldShowMultiMonth}
                 allowRange
+                disableDatesAfter={today}
             />
         </BlockStack>
     );

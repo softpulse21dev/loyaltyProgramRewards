@@ -36,6 +36,13 @@ const CustomerView = () => {
         rewards: false,
     });
 
+    const statusToneMap = {
+        active: 'success',
+        redeemed: 'critical',
+        expired: 'warning',
+        refunded: 'attention',
+    };
+
     // --- EFFECT: If we have an ID from location.state (new navigation), update localStorage ---
     useEffect(() => {
         if (location.state?.id) {
@@ -230,7 +237,7 @@ const CustomerView = () => {
             </IndexTable.Cell>
             <IndexTable.Cell>{order.order_total_with_tax}</IndexTable.Cell>
             <IndexTable.Cell>
-                <Badge tone={order.payment_status === 'paid' ? 'success' : 'enabled'}>{capitalizeFirst(order.payment_status)}</Badge>
+                <Badge tone={order.payment_status === 'paid' ? 'success' : 'attention'}>{capitalizeFirst(order.payment_status)}</Badge>
             </IndexTable.Cell>
             <IndexTable.Cell flush>
                 <Text variant='bodyMd' as="span">{formatShortDate(order.created_at)}</Text>
@@ -283,10 +290,28 @@ const CustomerView = () => {
     const redeemRows = useMemo(() => customerRedeemData?.data?.map((redeem) => (
         <IndexTable.Row key={redeem?.id}>
             <IndexTable.Cell>
-                <Text variant='bodyMd' as="span">{redeem?.email}</Text>
+                <Text variant="bodyMd" as="span">
+                    {redeem?.order_name ? (
+                        <Link
+                            removeUnderline
+                            target="_blank"
+                            url={redeem?.shopify_order_id}
+                        >
+                            {redeem.order_name}
+                        </Link>
+                    ) : (
+                        '-'
+                    )}
+                </Text>
             </IndexTable.Cell>
             <IndexTable.Cell>
-                <Text variant='bodyMd' as="span">{redeem?.total_orders}</Text>
+                <Text variant='bodyMd' as="span">{redeem?.points_cost}</Text>
+            </IndexTable.Cell>
+            <IndexTable.Cell>
+                <Text variant='bodyMd' as="span">{redeem?.source}</Text>
+            </IndexTable.Cell>
+            <IndexTable.Cell>
+                <Text variant='bodyMd' as="span">{redeem?.code}</Text>
             </IndexTable.Cell>
             <IndexTable.Cell>
                 <Text variant='bodyMd' as="span">{formatShortDate(redeem?.created_at)}</Text>
@@ -297,16 +322,18 @@ const CustomerView = () => {
     const rewardRows = useMemo(() => customerRewardsData?.data?.map((reward) => (
         <IndexTable.Row key={reward?.id}>
             <IndexTable.Cell>
-                <Text variant='bodyMd' as="span">{reward?.source}</Text>
+                <Text variant='bodyMd' as="span">{reward?.points_cost}</Text>
             </IndexTable.Cell>
             <IndexTable.Cell>
-                <Text variant='bodyMd' as="span">{reward?.points_cost}</Text>
+                <Text variant='bodyMd' as="span">{reward?.source}</Text>
             </IndexTable.Cell>
             <IndexTable.Cell>
                 <Text variant='bodyMd' as="span">{reward?.code}</Text>
             </IndexTable.Cell>
             <IndexTable.Cell>
-                <Badge tone={reward?.status === 'active' ? 'success' : 'critical'}>{capitalizeFirst(reward?.status)}</Badge>
+                <Badge tone={statusToneMap[reward?.status] || 'default'}>
+                    {capitalizeFirst(reward?.status)}
+                </Badge>
             </IndexTable.Cell>
             <IndexTable.Cell>
                 <Text variant='bodyMd' as="span">{formatShortDate(reward?.created_at)}</Text>
@@ -351,7 +378,7 @@ const CustomerView = () => {
                 </SkeletonPage>
                 :
                 <Page
-                    title={customerData?.name}
+                    title={customerData?.name === '-' ? customerData?.email : customerData?.name}
                     subtitle={`Joined on: ${formatShortDate(customerData?.created_at)}`}
                     titleMetadata={
                         <Badge tone={customerData?.is_excluded === '1' ? 'critical' : 'success'}>
@@ -402,7 +429,7 @@ const CustomerView = () => {
                                                 <Box>
                                                     <Icon source={PinIcon} />
                                                 </Box>
-                                                <Text> Referred a total of 0 customers</Text>
+                                                <Text> Referred a total of {customerData?.referral_used} customers</Text>
                                             </Box>
                                         </Card>
 
@@ -633,10 +660,10 @@ const CustomerView = () => {
                                                         itemCount={loadingMore.redeem ? 5 : (customerRedeemData.data?.length || 0)}
                                                         selectable={false}
                                                         headings={[
-                                                            { title: 'Order Total' },
+                                                            { title: 'Order Name' },
                                                             { title: 'Points' },
+                                                            { title: 'Source' },
                                                             { title: 'Code' },
-                                                            { title: 'Status' },
                                                             { title: 'Date' },
                                                         ]}
                                                         pagination={(!loadingMore.redeem && (customerRedeemData?.pagination?.has_next || customerRedeemData?.pagination?.has_previous)) ? (
@@ -685,8 +712,8 @@ const CustomerView = () => {
                                                         itemCount={loadingMore.rewards ? 5 : (customerRewardsData.data?.length || 0)}
                                                         selectable={false}
                                                         headings={[
-                                                            { title: 'Order Total' },
                                                             { title: 'Points' },
+                                                            { title: 'Source' },
                                                             { title: 'Code' },
                                                             { title: 'Status' },
                                                             { title: 'Date' },
@@ -733,9 +760,16 @@ const CustomerView = () => {
                                                 <Box style={{ margin: '0px 0px 16px 0px' }}>
                                                     <Text variant='headingMd' as="span">Details</Text>
                                                 </Box>
-                                                <Text variant='bodyMd' as="span">{customerData?.name}</Text>
+                                                {customerData?.name === '-' ? (
+                                                    null
+                                                ) : (
+                                                    <Text variant='bodyMd' as="span">{customerData?.name}</Text>
+                                                )}
                                                 <Text variant='bodyMd' as="span">{customerData?.email}</Text>
-                                                <Text variant='bodyMd' as="span">Diamond World, Mini - Bazzar</Text>
+                                                <Text variant='bodyMd' as="span">{customerData?.default_address?.address1}</Text>
+                                                <Text variant='bodyMd' as="span">{customerData?.default_address?.address2}</Text>
+                                                <Text variant='bodyMd' as="span">{customerData?.default_address?.zip}, {customerData?.default_address?.city}  {customerData?.default_address?.state}</Text>
+                                                <Text variant='bodyMd' as="span">{customerData?.default_address?.country}</Text>
                                             </BlockStack>
                                         </Card>
                                         <Card>
