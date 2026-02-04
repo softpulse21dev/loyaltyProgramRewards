@@ -1,12 +1,12 @@
 import { Badge, BlockStack, Box, Button, Card, Grid, Icon, IndexTable, InlineGrid, Layout, Link, Page, SkeletonBodyText, SkeletonDisplayText, SkeletonPage, Tabs, Text, TextField } from '@shopify/polaris'
-import { ClipboardIcon, EditIcon, PinIcon, ViewIcon } from '@shopify/polaris-icons';
+import { ClipboardIcon, EditIcon, PinIcon, RewardIcon, ViewIcon } from '@shopify/polaris-icons';
 import { useCallback, useEffect, useMemo, useState } from 'react'
 import { useLocation, useNavigate } from 'react-router-dom';
 import { BronzeIcon } from '../../assets/svg/svg';
 import TierModal from '../../components/TierModal';
 import PointsModal from '../../components/PointsModal';
 import { fetchData } from '../../action';
-import { capitalizeFirst, formatShortDate } from '../../utils';
+import { capitalizeFirst, FormatAddress, formatShortDate, iconsMap } from '../../utils';
 
 const CustomerView = () => {
     const navigate = useNavigate();
@@ -216,7 +216,7 @@ const CustomerView = () => {
     // --- CHANGED: Handler to clear storage on exit ---
     const handleBackNavigation = () => {
         localStorage.removeItem("current_customer_view_id");
-        navigate('/Customer');
+        navigate('/Customers');
     };
 
     const tabs = [
@@ -426,9 +426,9 @@ const CustomerView = () => {
                                             </Box>
 
                                             <Box style={{ display: 'flex', alignItems: 'center', gap: '10px', padding: '0px 16px 16px 16px' }} tone="subdued">
-                                                <Box>
-                                                    <Icon source={PinIcon} />
-                                                </Box>
+                                                    {/* <Box>
+                                                        <Icon source={PinIcon} />
+                                                    </Box> */}
                                                 <Text> Referred a total of {customerData?.referral_used} customers</Text>
                                             </Box>
                                         </Card>
@@ -768,20 +768,33 @@ const CustomerView = () => {
                                                 <Text variant='bodyMd' as="span">{customerData?.email}</Text>
                                                 <Text variant='bodyMd' as="span">{customerData?.default_address?.address1}</Text>
                                                 <Text variant='bodyMd' as="span">{customerData?.default_address?.address2}</Text>
-                                                <Text variant='bodyMd' as="span">{customerData?.default_address?.zip}, {customerData?.default_address?.city}  {customerData?.default_address?.state}</Text>
+                                                <Text variant="bodyMd" as="span">
+                                                    {FormatAddress(
+                                                        customerData?.default_address?.zip,
+                                                        customerData?.default_address?.city,
+                                                        customerData?.default_address?.state
+                                                    )}
+                                                </Text>
                                                 <Text variant='bodyMd' as="span">{customerData?.default_address?.country}</Text>
                                             </BlockStack>
                                         </Card>
+                                        {console.log('customerData', customerData)}
                                         <Card>
                                             <BlockStack>
                                                 <Text variant='headingMd' as="span">VIP Tier</Text>
                                                 <Box style={{ margin: '15px 0px 10px 0px', display: 'flex', alignItems: 'center', gap: '10px' }}>
                                                     <Box style={{ display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                                                        <img
-                                                            height={25}
-                                                            width={25}
-                                                            src={customerData?.current_tier_info?.icon}
-                                                        />
+                                                        {customerData?.current_tier_info?.icon_type === 'default' ? (
+                                                            <Box style={{ transform: 'scale(1.4)' }}>
+                                                                <Icon source={RewardIcon} />
+                                                            </Box>
+                                                        ) : (
+                                                            <img
+                                                                height={25}
+                                                                width={25}
+                                                                src={customerData?.current_tier_info?.icon}
+                                                            />
+                                                        )}
                                                     </Box>
                                                     <Box style={{ display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
                                                         <Text variant='headingLg' fontWeight='bold' alignment='center'>

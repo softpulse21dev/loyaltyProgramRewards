@@ -31,10 +31,30 @@ function DateRangePicker({ inputValues, setInputValues, getDashboardData }) {
         return new Date(year, month - 1, day);
     };
 
-    const isValidDate = (dateString) => {
+    const minDate = useMemo(() => {
+        const d = new Date(today);
+        d.setFullYear(today.getFullYear() - 100);
+        return d;
+    }, [today]);
+
+    const isValidDate = useCallback((dateString) => {
+        const parts = dateString.split("-");
+        if (parts.length !== 3) return false;
+        const [year, month, day] = parts;
+        if (year.length !== 4 || month.length !== 2 || day.length !== 2) return false;
+
         const date = parseYearMonthDayDateString(dateString);
-        return date instanceof Date && !isNaN(date);
-    };
+        if (!(date instanceof Date && !isNaN(date))) return false;
+
+        // Ensure it's a real date (e.g. no Feb 31)
+        if (date.getFullYear() !== parseInt(year, 10) ||
+            (date.getMonth() + 1) !== parseInt(month, 10) ||
+            date.getDate() !== parseInt(day, 10)) {
+            return false;
+        }
+
+        return true;
+    }, []);
 
     const ranges = useCallback(() => [
         { title: 'Today', alias: "today", period: { since: today, until: today } },
@@ -75,48 +95,88 @@ function DateRangePicker({ inputValues, setInputValues, getDashboardData }) {
     const handleMonthChange = useCallback((month, year) => setDate({ month, year }), []);
 
     const handleStartInputValueChange = useCallback((value) => {
-        // Clear error on type
+        let sanitizedValue = value.replace(/[^0-9-]/g, '');
+        const parts = sanitizedValue.split('-');
+        if (parts[0] && parts[0].length > 4) return;
+        if (parts[1] && parseInt(parts[1], 10) > 12) return;
+        if (parts[2] && parseInt(parts[2], 10) > 31) return;
+        if (sanitizedValue.length > 10) return;
+
         if (validationErrors.since) {
             setValidationErrors(prev => ({ ...prev, since: '' }));
         }
-        setDraftInputValues((prevState) => ({ ...prevState, since: value }));
-        if (isValidDate(value)) {
-            const newSince = parseYearMonthDayDateString(value);
-            setDraftDateRange((prevState) => {
-                const newPeriod = prevState.period && newSince <= prevState.period.until
-                    ? { since: newSince, until: prevState.period.until }
-                    : { since: newSince, until: newSince };
-                return { ...prevState, alias: 'custom', period: newPeriod };
-            });
+        setDraftInputValues((prevState) => ({ ...prevState, since: sanitizedValue }));
+        if (isValidDate(sanitizedValue)) {
+            const newSince = parseYearMonthDayDateString(sanitizedValue);
+            if (newSince >= minDate && newSince <= today) {
+                setDraftDateRange((prevState) => {
+                    const newPeriod = prevState.period && newSince <= prevState.period.until
+                        ? { since: newSince, until: prevState.period.until }
+                        : { since: newSince, until: newSince };
+                    return { ...prevState, alias: 'custom', period: newPeriod };
+                });
+            }
         }
-    }, [validationErrors.since]);
+    }, [validationErrors.since, isValidDate, minDate, today]);
 
     const handleEndInputValueChange = useCallback((value) => {
-        // Clear error on type
+        let sanitizedValue = value.replace(/[^0-9-]/g, '');
+        const parts = sanitizedValue.split('-');
+        if (parts[0] && parts[0].length > 4) return;
+        if (parts[1] && parseInt(parts[1], 10) > 12) return;
+        if (parts[2] && parseInt(parts[2], 10) > 31) return;
+        if (sanitizedValue.length > 10) return;
+
         if (validationErrors.until) {
             setValidationErrors(prev => ({ ...prev, until: '' }));
         }
-        setDraftInputValues((prevState) => ({ ...prevState, until: value }));
-        if (isValidDate(value)) {
-            const newUntil = parseYearMonthDayDateString(value);
-            setDraftDateRange((prevState) => {
-                const newPeriod = prevState.period && newUntil >= prevState.period.since
-                    ? { since: prevState.period.since, until: newUntil }
-                    : { since: newUntil, until: newUntil };
-                return { ...prevState, alias: 'custom', period: newPeriod };
-            });
+        setDraftInputValues((prevState) => ({ ...prevState, until: sanitizedValue }));
+        if (isValidDate(sanitizedValue)) {
+            const newUntil = parseYearMonthDayDateString(sanitizedValue);
+            if (newUntil <= today) {
+                setDraftDateRange((prevState) => {
+                    const newPeriod = prevState.period && newUntil >= prevState.period.since
+                        ? { since: prevState.period.since, until: newUntil }
+                        : { since: newUntil, until: newUntil };
+                    return { ...prevState, alias: 'custom', period: newPeriod };
+                });
+            }
         }
-    }, [validationErrors.until]);
+    }, [validationErrors.until, isValidDate, today]);
 
     // NEW: Validation on blur
     const handleInputBlur = useCallback((field) => {
         const value = draftInputValues[field];
-        if (value && !isValidDate(value)) {
-            setValidationErrors(prev => ({ ...prev, [field]: 'Invalid format. Use YYYY-MM-DD.' }));
-        } else {
-            setValidationErrors(prev => ({ ...prev, [field]: '' }));
+        if (!value) return;
+
+        let error = '';
+        const parts = value.split("-");
+        const year = parts[0] || '';
+        const month = parts[1] || '';
+
+        if (year.length > 4) {
+            if (field === 'since') {
+                error = 'search in the 100 years from current date';
+            } else {
+                error = 'Year cannot exceed 4 digits';
+            }
+        } else if (month && parseInt(month, 10) > 12) {
+            error = 'Month cannot be more than 12';
+        } else if (isValidDate(value)) {
+            const date = parseYearMonthDayDateString(value);
+            if (field === 'since' && date < minDate) {
+                error = 'search in the 100 years from current date';
+            } else if (date > today) {
+                error = 'Date cannot exceed current date';
+            } else if (field === 'until' && draftDateRange?.period?.since && date < draftDateRange.period.since) {
+                error = 'End date cannot be before start date';
+            }
+        } else if (parts.length !== 3 || year.length !== 4 || month.length !== 2 || (parts[2] || '').length !== 2) {
+            error = 'Invalid format. Use YYYY-MM-DD.';
         }
-    }, [draftInputValues]);
+
+        setValidationErrors(prev => ({ ...prev, [field]: error }));
+    }, [draftInputValues, minDate, today, draftDateRange, isValidDate]);
 
     const handleCalendarChange = useCallback(({ start, end }) => {
         const newDateRange = ranges().find((range) =>

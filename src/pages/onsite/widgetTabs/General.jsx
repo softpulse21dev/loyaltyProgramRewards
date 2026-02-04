@@ -4,8 +4,12 @@ import '../../../widget.css';
 import { UploadIcon, DeleteIcon } from '@shopify/polaris-icons';
 import ColorPickerInput from '../../../components/ColorPickerInput';
 import { BoldArrowRightIcon, BoldCopyIcon, BoldCrownIcon, BoldDiscountIcon, BoldFillStarIcon, BoldGiftIcon, BoldRewardsIcon, BoldStarIcon, BoldTrophyIcon, BoldTruckIcon, StarIcon } from '../../../assets/svg/svg';
+import { useSelector } from 'react-redux';
 
 const General = ({ widgetData, setWidgetData, errors = {}, clearError, openCollapsible, setOpenCollapsible, loading }) => {
+
+    const defaultData = useSelector((state) => state.defaultData);
+    const referlinkData = JSON.parse(defaultData);
 
     useEffect(() => {
         console.log('widgetData', widgetData)
@@ -65,6 +69,7 @@ const General = ({ widgetData, setWidgetData, errors = {}, clearError, openColla
     const sectionBorderWidth = advancedData.section?.card_border_width;
     const sectionBorderRadius = advancedData.section?.border_radius;
     const inputFieldColor = advancedData.input?.input_color;
+    const inputFieldBorderColor = advancedData.input?.input_border_color;
     const inputBorderRadius = advancedData.input?.input_border_radius;
     const boxBackgroundColor = advancedData.box?.background_color;
     const boxBorderColor = advancedData.box?.border_color;
@@ -76,7 +81,6 @@ const General = ({ widgetData, setWidgetData, errors = {}, clearError, openColla
     const headerBarText = storefrontData?.header?.header_bar_text;
     const headerText = storefrontData?.header?.header_text;
     const headerContent = storefrontData?.header?.header_content;
-    const balanceText = storefrontData?.header?.balance_text;
     const imagePosition = storefrontData?.new_member_card?.image_position;
     const newMemberCardImage = storefrontData?.new_member_card?.new_member_image;
     const newMemberCardTitle = storefrontData?.new_member_card?.translations?.title;
@@ -90,6 +94,9 @@ const General = ({ widgetData, setWidgetData, errors = {}, clearError, openColla
     const pointsCardMyRewardsText = storefrontData?.points_card?.my_rewards;
     const referralCardTitle = storefrontData?.referrals_card?.title;
     const referralCardMessage = storefrontData?.referrals_card?.message;
+    const referrerTitle = storefrontData?.referrals_card?.referrer_title;
+    const refereeTitle = storefrontData?.referrals_card?.referee_title;
+    const referralCardLinkTitle = storefrontData?.referrals_card?.link_title;
     const referralCardMyDiscountText = storefrontData?.referrals_card?.my_discount_text;
     const vipTierCardTitle = storefrontData?.vip_tiers_card?.title;
     const vipTierCardMessage = storefrontData?.vip_tiers_card?.message;
@@ -164,7 +171,7 @@ const General = ({ widgetData, setWidgetData, errors = {}, clearError, openColla
             case 'solid':
                 return { background: headerColor };
             case 'gradient':
-                return { background: `linear-gradient(270deg, ${headerGradientColor1} 0%, ${headerGradientColor2} 100%)` };
+                return { background: `linear-gradient(135deg, ${headerGradientColor1} 0%, ${headerGradientColor2} 100%)` };
             case 'image':
                 return headerImageUrl
                     ? { backgroundImage: `url(${headerImageUrl})`, backgroundSize: 'cover', backgroundPosition: 'center' }
@@ -215,8 +222,8 @@ const General = ({ widgetData, setWidgetData, errors = {}, clearError, openColla
                     </Box>
 
                     <Box style={{ marginTop: '1rem' }}>
-                        <Grid columns={{ xs: 6, sm: 6, md: 6, lg: 12, xl: 12 }}>
-                            <Grid.Cell columnSpan={{ xs: 6, sm: 6, md: 2, lg: 4, xl: 4 }}>
+                        <Grid columns={{ xs: 6, sm: 6, md: 7, lg: 12, xl: 12 }}>
+                            <Grid.Cell columnSpan={{ xs: 6, sm: 6, md: 3, lg: 5, xl: 5 }}>
 
 
                                 <div className="accordian-title" style={{ backgroundColor: '#f0f0f0', padding: '5px 10px', borderRadius: '5px', marginBottom: '5px' }}>
@@ -239,7 +246,10 @@ const General = ({ widgetData, setWidgetData, errors = {}, clearError, openColla
                                     expandOnPrint
                                 >
                                     <BlockStack gap="300" style={{ display: 'flex', flexDirection: 'column', padding: '10px', gap: '10px' }}>
-                                        <BlockStack gap="200">
+
+                                        {/* presentation options */}
+
+                                        {/* <BlockStack gap="200">
                                             <Text variant="bodyLg" fontWeight='semibold'>Presentation</Text>
                                             <Box style={{ display: 'flex', flexDirection: 'column', }}>
                                                 <RadioButton
@@ -270,7 +280,7 @@ const General = ({ widgetData, setWidgetData, errors = {}, clearError, openColla
                                             </Box>
                                         </BlockStack>
 
-                                        <Divider />
+                                        <Divider /> */}
 
                                         <Text variant="bodyLg" fontWeight='semibold'>Header</Text>
                                         <BlockStack gap="300">
@@ -835,6 +845,14 @@ const General = ({ widgetData, setWidgetData, errors = {}, clearError, openColla
                                                 onClearError={() => clearError('general.advanced.input.input_color')}
                                                 onFocus={() => setIsEnabled(false)}
                                             />
+                                            <ColorPickerInput
+                                                label="Input field border color"
+                                                value={inputFieldBorderColor}
+                                                onChange={(value) => setWidgetData({ ...widgetData, general: { ...widgetData.general, advanced: { ...widgetData.general.advanced, input: { ...widgetData.general.advanced.input, input_border_color: value } } } })}
+                                                error={getErrorMessage('general.advanced.input.input_border_color')}
+                                                onClearError={() => clearError('general.advanced.input.input_border_color')}
+                                                onFocus={() => setIsEnabled(false)}
+                                            />
                                             <RangeSlider
                                                 label="Input field border radius"
                                                 max={36}
@@ -868,7 +886,7 @@ const General = ({ widgetData, setWidgetData, errors = {}, clearError, openColla
                                 </Collapsible>
                             </Grid.Cell>
 
-                            <Grid.Cell columnSpan={{ xs: 6, sm: 6, md: 4, lg: 8, xl: 8 }}>
+                            <Grid.Cell columnSpan={{ xs: 6, sm: 6, md: 4, lg: 7, xl: 7 }}>
                                 <div style={{ position: 'sticky', top: '20px' }}>
                                     {/* --- THIS IS THE MAGIC CONTAINER --- */}
                                     <div
@@ -1032,15 +1050,14 @@ const General = ({ widgetData, setWidgetData, errors = {}, clearError, openColla
                                                                         backgroundColor: boxBackgroundColor,
                                                                         borderRadius: '12px',
                                                                         cursor: 'pointer',
-                                                                        transition: 'background 0.2s, opacity 0.2s',
-                                                                        opacity: 1
+                                                                        transition: 'all 0.3s ease'
                                                                     }}
-                                                                    onMouseEnter={e => { e.currentTarget.style.opacity = '0.9'; }}
-                                                                    onMouseLeave={e => { e.currentTarget.style.opacity = '1'; }}
+                                                                    onMouseEnter={e => { e.currentTarget.style.opacity = '0.7'; e.target.style.transform = "translateY(-2px)"; }}
+                                                                    onMouseLeave={e => { e.currentTarget.style.opacity = '1'; e.target.style.transform = "translateY(0)"; }}
                                                                 >
 
                                                                     <BoldStarIcon color={iconColor} width='22' height='22' />
-                                                                    <text style={{ flex: 1, fontWeight: 500, fontSize: '14px', color: textColor }}>{pointsCardWaysToEarnText}</text>
+                                                                    <text style={{ flex: 1, fontWeight: 500, fontSize: '14px', color: headingColor }}>{pointsCardWaysToEarnText}</text>
                                                                     <BoldArrowRightIcon color={iconColor} height='14' width='14' />
                                                                 </div>
 
@@ -1055,13 +1072,13 @@ const General = ({ widgetData, setWidgetData, errors = {}, clearError, openColla
                                                                         backgroundColor: boxBackgroundColor,
                                                                         borderRadius: '12px',
                                                                         cursor: 'pointer',
-                                                                        transition: 'background 0.2s'
+                                                                        transition: 'all 0.3s ease'
                                                                     }}
-                                                                    onMouseEnter={e => { e.currentTarget.style.opacity = '0.9'; }}
-                                                                    onMouseLeave={e => { e.currentTarget.style.opacity = '1'; }}
+                                                                    onMouseEnter={e => { e.currentTarget.style.opacity = '0.7'; e.target.style.transform = "translateY(-2px)"; }}
+                                                                    onMouseLeave={e => { e.currentTarget.style.opacity = '1'; e.target.style.transform = "translateY(0)"; }}
                                                                 >
                                                                     <BoldGiftIcon color={iconColor} width='22' height='22' />
-                                                                    <span style={{ flex: 1, fontWeight: 500, fontSize: '14px', color: textColor }}>{pointsCardWaysToRedeemText}</span>
+                                                                    <span style={{ flex: 1, fontWeight: 500, fontSize: '14px', color: headingColor }}>{pointsCardWaysToRedeemText}</span>
                                                                     <BoldArrowRightIcon color={iconColor} height='14' width='14' />
                                                                 </div>
                                                             </BlockStack>
@@ -1080,9 +1097,10 @@ const General = ({ widgetData, setWidgetData, errors = {}, clearError, openColla
                                                         >
                                                             {/* Header */}
                                                             <div style={{ textAlign: 'center', marginBottom: '16px' }}>
-                                                                <h3 style={{ fontSize: '16px', fontWeight: 500, color: headingColor, margin: '0 0 8px 0' }}>
+                                                                <text style={{ color: headingColor, fontSize: '16px', textAlign: 'center', fontWeight: '700', fontFamily: 'sans-serif' }}>
                                                                     {referralCardTitle}
-                                                                </h3>
+                                                                </text>
+
                                                                 <p style={{ fontSize: '13px', color: textColor, margin: 0, wordBreak: 'break-word' }}>
                                                                     {referralCardMessage}
                                                                 </p>
@@ -1090,25 +1108,21 @@ const General = ({ widgetData, setWidgetData, errors = {}, clearError, openColla
 
                                                             <Box style={{ display: 'flex', flexDirection: 'column', gap: '10px', marginBottom: '10px' }}>
                                                                 {/* You get */}
-                                                                <div style={{ display: 'flex', flexDirection: 'row', gap: '10px', alignItems: 'center', backgroundColor: boxBackgroundColor, border: `1px solid ${boxBorderColor}`, padding: '10px', borderRadius: '10px', opacity: 1 }}
-                                                                    onMouseEnter={e => { e.currentTarget.style.opacity = '0.9'; }}
-                                                                    onMouseLeave={e => { e.currentTarget.style.opacity = '1'; }}
+                                                                <div style={{ display: 'flex', flexDirection: 'row', gap: '10px', alignItems: 'center', backgroundColor: boxBackgroundColor, border: `1px solid ${boxBorderColor}`, padding: '10px', borderRadius: '10px' }}
                                                                 >
                                                                     <BoldTruckIcon color={iconColor} width='22' height='22' />
                                                                     <div style={{ display: 'flex', flexDirection: 'column' }}>
-                                                                        <span style={{ fontSize: '14px', fontWeight: 500, color: headingColor }}>You get</span>
+                                                                        <span style={{ fontSize: '14px', fontWeight: 500, color: headingColor }}>{referrerTitle}</span>
                                                                         <text style={{ fontSize: '13px', color: textColor }}>Earn Points S1</text>
                                                                     </div>
                                                                 </div>
 
                                                                 {/* Your friend gets */}
                                                                 <div style={{ display: 'flex', flexDirection: 'row', gap: '10px', alignItems: 'center', backgroundColor: boxBackgroundColor, border: `1px solid ${boxBorderColor}`, padding: '10px', borderRadius: '10px' }}
-                                                                    onMouseEnter={e => { e.currentTarget.style.opacity = '0.9'; }}
-                                                                    onMouseLeave={e => { e.currentTarget.style.opacity = '1'; }}
                                                                 >
                                                                     <BoldDiscountIcon color={iconColor} width='22' height='22' />
                                                                     <div style={{ display: 'flex', flexDirection: 'column' }}>
-                                                                        <span style={{ fontSize: '14px', fontWeight: 500, color: headingColor }}>Your friend gets</span>
+                                                                        <span style={{ fontSize: '14px', fontWeight: 500, color: headingColor }}>{refereeTitle}</span>
                                                                         <text style={{ fontSize: '13px', color: textColor }}>test 2</text>
                                                                     </div>
                                                                 </div>
@@ -1137,13 +1151,13 @@ const General = ({ widgetData, setWidgetData, errors = {}, clearError, openColla
                                                     <>
                                                         <div style={{ marginTop: '-60px', backgroundColor: sectionBackgroundColor, border: `${sectionBorderWidth}px solid ${sectionBorderColor}`, padding: '16px', borderRadius: sectionBorderRadius, boxShadow: '0 4px 12px rgba(0,0,0,0.15)', overflow: 'hidden' }}>
                                                             <BlockStack gap="400" align="center">
-                                                                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', backgroundColor: boxBackgroundColor, border: `1px solid ${boxBorderColor}`, padding: '10px', borderRadius: '10px', cursor: 'pointer' }}
-                                                                    onMouseEnter={e => { e.currentTarget.style.opacity = '0.9'; }}
-                                                                    onMouseLeave={e => { e.currentTarget.style.opacity = '1'; }}
+                                                                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', backgroundColor: boxBackgroundColor, border: `1px solid ${boxBorderColor}`, padding: '10px', borderRadius: '10px', cursor: 'pointer', transition: 'all 0.3s ease' }}
+                                                                    onMouseEnter={e => { e.currentTarget.style.opacity = '0.7'; e.target.style.transform = "translateY(-2px)"; }}
+                                                                    onMouseLeave={e => { e.currentTarget.style.opacity = '1'; e.target.style.transform = "translateY(0)"; }}
                                                                 >
                                                                     <div style={{ display: 'flex', alignItems: 'center', gap: '10px', padding: '8px' }}>
                                                                         <BoldStarIcon color={iconColor} width='22' height='22' />
-                                                                        <span style={{ color: textColor }}>
+                                                                        <span style={{ color: headingColor }}>
                                                                             <Text variant="bodyLg">4456 points</Text>
                                                                         </span>
                                                                     </div>
@@ -1194,7 +1208,7 @@ const General = ({ widgetData, setWidgetData, errors = {}, clearError, openColla
                                                                     <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', cursor: 'pointer' }}>
                                                                         <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
                                                                             <BoldFillStarIcon color={iconColor} />
-                                                                            <text style={{ textAlign: "center", fontSize: '14px', fontWeight: '500', color: textColor, }}>{vipTierCardAllTier}</text>
+                                                                            <text style={{ textAlign: "center", fontSize: '14px', fontWeight: '500', color: headingColor, }}>{vipTierCardAllTier}</text>
                                                                         </div>
                                                                         <BoldArrowRightIcon color={iconColor} height='14' width='14' />
                                                                     </div>
@@ -1211,13 +1225,13 @@ const General = ({ widgetData, setWidgetData, errors = {}, clearError, openColla
                                                                         backgroundColor: boxBackgroundColor,
                                                                         borderRadius: '12px',
                                                                         cursor: 'pointer',
-                                                                        transition: 'background 0.2s'
+                                                                        transition: 'all 0.3s ease'
                                                                     }}
-                                                                    onMouseEnter={e => { e.currentTarget.style.opacity = '0.9'; }}
-                                                                    onMouseLeave={e => { e.currentTarget.style.opacity = '1'; }}
+                                                                    onMouseEnter={e => { e.currentTarget.style.opacity = '0.7'; e.target.style.transform = "translateY(-2px)"; }}
+                                                                    onMouseLeave={e => { e.currentTarget.style.opacity = '1'; e.target.style.transform = "translateY(0)"; }}
                                                                 >
                                                                     <BoldTrophyIcon color={iconColor} width='22' height='22' />
-                                                                    <text style={{ flex: 1, fontWeight: 500, fontSize: '14px', color: textColor }}>{pointsCardMyRewardsText}</text>
+                                                                    <text style={{ flex: 1, fontWeight: 500, fontSize: '14px', color: headingColor }}>{pointsCardMyRewardsText}</text>
                                                                     <BoldArrowRightIcon color={iconColor} height='14' width='14' />
                                                                 </div>
 
@@ -1232,13 +1246,13 @@ const General = ({ widgetData, setWidgetData, errors = {}, clearError, openColla
                                                                         backgroundColor: boxBackgroundColor,
                                                                         borderRadius: '12px',
                                                                         cursor: 'pointer',
-                                                                        transition: 'background 0.2s'
+                                                                        transition: 'all 0.3s ease'
                                                                     }}
-                                                                    onMouseEnter={e => { e.currentTarget.style.opacity = '0.9'; }}
-                                                                    onMouseLeave={e => { e.currentTarget.style.opacity = '1'; }}
+                                                                    onMouseEnter={e => { e.currentTarget.style.opacity = '0.7'; e.target.style.transform = "translateY(-2px)"; }}
+                                                                    onMouseLeave={e => { e.currentTarget.style.opacity = '1'; e.target.style.transform = "translateY(0)"; }}
                                                                 >
                                                                     <BoldStarIcon color={iconColor} width='22' height='22' />
-                                                                    <text style={{ flex: 1, fontWeight: 500, fontSize: '14px', color: textColor }}>{pointsCardWaysToEarnText}</text>
+                                                                    <text style={{ flex: 1, fontWeight: 500, fontSize: '14px', color: headingColor }}>{pointsCardWaysToEarnText}</text>
                                                                     <BoldArrowRightIcon color={iconColor} height='14' width='14' />
                                                                 </div>
 
@@ -1253,13 +1267,13 @@ const General = ({ widgetData, setWidgetData, errors = {}, clearError, openColla
                                                                         backgroundColor: boxBackgroundColor,
                                                                         borderRadius: '12px',
                                                                         cursor: 'pointer',
-                                                                        transition: 'background 0.2s'
+                                                                        transition: 'all 0.3s ease'
                                                                     }}
-                                                                    onMouseEnter={e => { e.currentTarget.style.opacity = '0.9'; }}
-                                                                    onMouseLeave={e => { e.currentTarget.style.opacity = '1'; }}
+                                                                    onMouseEnter={e => { e.currentTarget.style.opacity = '0.7'; e.target.style.transform = "translateY(-2px)"; }}
+                                                                    onMouseLeave={e => { e.currentTarget.style.opacity = '1'; e.target.style.transform = "translateY(0)"; }}
                                                                 >
                                                                     <BoldGiftIcon color={iconColor} width='22' height='22' />
-                                                                    <text style={{ flex: 1, fontWeight: 500, fontSize: '14px', color: textColor }}>{pointsCardWaysToRedeemText}</text>
+                                                                    <text style={{ flex: 1, fontWeight: 500, fontSize: '14px', color: headingColor }}>{pointsCardWaysToRedeemText}</text>
                                                                     <BoldArrowRightIcon color={iconColor} height='14' width='14' />
                                                                 </div>
 
@@ -1297,9 +1311,9 @@ const General = ({ widgetData, setWidgetData, errors = {}, clearError, openColla
                                                         >
                                                             {/* Header */}
                                                             <div style={{ textAlign: 'center', marginBottom: '16px' }}>
-                                                                <h3 style={{ fontSize: '16px', fontWeight: 500, color: headingColor, margin: '0 0 8px 0' }}>
+                                                                <text style={{ color: headingColor, fontSize: '16px', textAlign: 'center', fontWeight: '700', fontFamily: 'sans-serif' }}>
                                                                     {referralCardTitle}
-                                                                </h3>
+                                                                </text>
                                                                 <p style={{ fontSize: '13px', color: textColor, margin: 0, wordBreak: 'break-word' }}>
                                                                     {referralCardMessage}
                                                                 </p>
@@ -1307,25 +1321,19 @@ const General = ({ widgetData, setWidgetData, errors = {}, clearError, openColla
 
                                                             <Box style={{ display: 'flex', flexDirection: 'column', gap: '10px', marginBottom: '10px' }}>
                                                                 {/* You get */}
-                                                                <div style={{ display: 'flex', flexDirection: 'row', gap: '10px', alignItems: 'center', backgroundColor: boxBackgroundColor, border: `1px solid ${boxBorderColor}`, padding: '10px', borderRadius: '10px' }}
-                                                                    onMouseEnter={e => { e.currentTarget.style.opacity = '0.9'; }}
-                                                                    onMouseLeave={e => { e.currentTarget.style.opacity = '1'; }}
-                                                                >
+                                                                <div style={{ display: 'flex', flexDirection: 'row', gap: '10px', alignItems: 'center', backgroundColor: boxBackgroundColor, border: `1px solid ${boxBorderColor}`, padding: '10px', borderRadius: '10px' }} >
                                                                     <BoldTruckIcon color={iconColor} width='22' height='22' />
                                                                     <div style={{ display: 'flex', flexDirection: 'column' }} >
-                                                                        <span style={{ fontSize: '14px', fontWeight: 500, color: headingColor }}>You get</span>
+                                                                        <span style={{ fontSize: '14px', fontWeight: 500, color: headingColor }}>{referrerTitle}</span>
                                                                         <text style={{ fontSize: '13px', color: textColor }}>Earn Points S1</text>
                                                                     </div>
                                                                 </div>
 
                                                                 {/* Your friend gets */}
-                                                                <div style={{ display: 'flex', flexDirection: 'row', gap: '10px', alignItems: 'center', backgroundColor: boxBackgroundColor, border: `1px solid ${boxBorderColor}`, padding: '10px', borderRadius: '10px' }}
-                                                                    onMouseEnter={e => { e.currentTarget.style.opacity = '0.9'; }}
-                                                                    onMouseLeave={e => { e.currentTarget.style.opacity = '1'; }}
-                                                                >
+                                                                <div style={{ display: 'flex', flexDirection: 'row', gap: '10px', alignItems: 'center', backgroundColor: boxBackgroundColor, border: `1px solid ${boxBorderColor}`, padding: '10px', borderRadius: '10px' }} >
                                                                     <BoldDiscountIcon color={iconColor} width='22' height='22' />
                                                                     <div style={{ display: 'flex', flexDirection: 'column' }}>
-                                                                        <span style={{ fontSize: '14px', fontWeight: 500, color: headingColor }}>Your friend gets</span>
+                                                                        <span style={{ fontSize: '14px', fontWeight: 500, color: headingColor }}>{refereeTitle}</span>
                                                                         <text style={{ fontSize: '13px', color: textColor }}>test 2</text>
                                                                     </div>
                                                                 </div>
@@ -1333,19 +1341,22 @@ const General = ({ widgetData, setWidgetData, errors = {}, clearError, openColla
 
                                                             {/* Your link */}
                                                             <div style={{ marginBottom: '16px' }}>
-                                                                <div style={{ textAlign: 'center', fontSize: '13px', color: headingColor, marginBottom: '8px' }}>
-                                                                    Your link
+                                                                <div style={{ textAlign: 'center', marginBottom: '8px' }}>
+                                                                    <text style={{ color: headingColor, fontSize: '16px', fontWeight: '700' }}>
+                                                                        {referralCardLinkTitle}
+                                                                    </text>
                                                                 </div>
 
                                                                 {/* CONTAINER: padding removed, overflow hidden added */}
                                                                 <div style={{
                                                                     display: 'flex',
                                                                     alignItems: 'stretch',
-                                                                    border: `1px solid ${inputFieldColor}`,
+                                                                    border: `1px solid ${inputFieldBorderColor}`,
                                                                     borderRadius: inputBorderRadius,
-                                                                    backgroundColor: boxBackgroundColor,
+                                                                    backgroundColor: inputFieldColor,
                                                                     overflow: 'hidden'
-                                                                }}>
+                                                                }}
+                                                                >
                                                                     {/* TEXT: padding added here */}
                                                                     <span style={{
                                                                         flex: 1,
@@ -1357,14 +1368,14 @@ const General = ({ widgetData, setWidgetData, errors = {}, clearError, openColla
                                                                         display: 'flex',
                                                                         alignItems: 'center'
                                                                     }}>
-                                                                        <text style={{ textWrap: 'nowrap' }}> # https://kg-store-demo.myshopify.com?</text>
+                                                                        <text style={{ textWrap: 'nowrap' }}> {referlinkData?.referral_link}</text>
                                                                     </span>
 
                                                                     {/* BUTTON: border-left added, padding adjusted */}
                                                                     <button style={{
                                                                         background: 'none',
                                                                         border: 'none',
-                                                                        borderLeft: `1px solid ${inputFieldColor}`,
+                                                                        borderLeft: `1px solid ${inputFieldBorderColor}`,
                                                                         cursor: 'pointer',
                                                                         padding: '0 10px',
                                                                         display: 'flex',
@@ -1372,7 +1383,11 @@ const General = ({ widgetData, setWidgetData, errors = {}, clearError, openColla
                                                                         justifyContent: 'center',
                                                                         margin: 0,
                                                                         borderRadius: 0
-                                                                    }}>
+
+                                                                    }}
+                                                                        onMouseEnter={e => { e.currentTarget.style.opacity = '0.7'; }}
+                                                                        onMouseLeave={e => { e.currentTarget.style.opacity = '1'; }}
+                                                                    >
                                                                         <BoldCopyIcon color={iconColor} width='20' height='20' />
                                                                     </button>
                                                                 </div>
@@ -1380,17 +1395,15 @@ const General = ({ widgetData, setWidgetData, errors = {}, clearError, openColla
                                                             {/* My Discounts card */}
                                                             <div
                                                                 style={{
-                                                                    border: `1px solid ${boxBorderColor}`,
+                                                                    borderTop: `1px solid ${boxBorderColor}`,
                                                                     display: 'flex',
                                                                     alignItems: 'center',
                                                                     gap: '12px',
                                                                     padding: '14px 16px',
-                                                                    backgroundColor: boxBackgroundColor,
-                                                                    borderRadius: '12px',
                                                                     cursor: 'pointer',
                                                                     transition: 'background 0.2s'
                                                                 }}
-                                                                onMouseEnter={e => { e.currentTarget.style.opacity = '0.9'; }}
+                                                                onMouseEnter={e => { e.currentTarget.style.opacity = '0.7'; }}
                                                                 onMouseLeave={e => { e.currentTarget.style.opacity = '1'; }}
                                                             >
                                                                 <BoldRewardsIcon color={iconColor} width='22' height='22' />

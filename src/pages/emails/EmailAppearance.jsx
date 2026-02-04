@@ -4,7 +4,7 @@ import { DeleteIcon, PinIcon, UploadIcon } from '@shopify/polaris-icons';
 import React, { useState, useMemo, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom';
 import ColorPickerInput from '../../components/ColorPickerInput';
-import { darkenColor } from '../../utils';
+import { darkenColor, FormatPlaceholder } from '../../utils';
 import { fetchData } from '../../action';
 
 const EmailAppearance = () => {
@@ -25,6 +25,47 @@ const EmailAppearance = () => {
     const [getLoading, setGetLoading] = useState(false);
     const [emailSettings, setEmailSettings] = useState(null);
     const [availableVariables, setAvailableVariables] = useState([]);
+    const [errors, setErrors] = useState({});
+
+    const isValidHexColor = (color) => {
+        return color && /^#[0-9A-Fa-f]{6}$/.test(color);
+    };
+
+    const validateFields = () => {
+        const newErrors = {};
+        if (!disclaimer?.trim()) newErrors.disclaimer = 'Disclaimer is required';
+
+        const colorMap = {
+            backgroundColor,
+            headingColor,
+            textColor,
+            borderColor,
+            buttonTextColor,
+            buttonBackgroundColor,
+            linkColor,
+            footerTextColor
+        };
+
+        Object.keys(colorMap).forEach(field => {
+            const val = colorMap[field];
+            if (!isValidHexColor(val)) {
+                newErrors[field] = 'Invalid hex color';
+            }
+        });
+
+        setErrors(newErrors);
+        return Object.keys(newErrors).length === 0;
+    };
+
+    const clearError = (field) => {
+        if (errors[field]) {
+            setErrors(prev => {
+                const newErrors = { ...prev };
+                delete newErrors[field];
+                return newErrors;
+            });
+        }
+    };
     // Memoize object URL to prevent recreation on every render
     const emailImageUrl = useMemo(() => {
         if (!emailImage) return null;
@@ -50,6 +91,12 @@ const EmailAppearance = () => {
     }, [emailImageUrl, emailImage]);
 
     const SaveEmailAppearanceAPI = async () => {
+        const normalizedDisclaimer = disclaimer?.trim() || '';
+        setDisclaimer(normalizedDisclaimer);
+
+        if (!validateFields()) {
+            return;
+        }
         setSaveLoading(true);
         try {
             // Construct emailSettings object from current state variables
@@ -65,8 +112,8 @@ const EmailAppearance = () => {
                     heading_color: headingColor
                 },
                 footer: {
-                    disclaimer: disclaimer,
-                    unsubscribe_text: unsubscribeText
+                    disclaimer: normalizedDisclaimer,
+                    // unsubscribe_text: unsubscribeText
                 },
                 accent_colors: {
                     link_color: linkColor,
@@ -287,41 +334,29 @@ const EmailAppearance = () => {
                                 <ColorPickerInput
                                     label="Background color"
                                     value={backgroundColor}
-                                    onChange={(value) => setBackgroundColor(value)}
-                                // onChange={(value) => setWidgetData({ ...widgetData, general: { ...widgetData.general, advanced: { ...widgetData.general.advanced, input: { ...widgetData.general.advanced.input, input_color: value } } } })}
-                                // error={getErrorMessage('general.advanced.input.input_color')}
-                                // onClearError={() => clearError('general.advanced.input.input_color')}
-                                // onFocus={() => setIsEnabled(false)}
+                                    onChange={(value) => { setBackgroundColor(value); clearError('backgroundColor'); }}
+                                    error={errors.backgroundColor}
                                 />
 
                                 <ColorPickerInput
                                     label="Heading color"
                                     value={headingColor}
-                                    onChange={(value) => setHeadingColor(value)}
-                                // onChange={(value) => setWidgetData({ ...widgetData, general: { ...widgetData.general, advanced: { ...widgetData.general.advanced, input: { ...widgetData.general.advanced.input, input_color: value } } } })}
-                                // error={getErrorMessage('general.advanced.input.input_color')}
-                                // onClearError={() => clearError('general.advanced.input.input_color')}
-                                // onFocus={() => setIsEnabled(false)}
+                                    onChange={(value) => { setHeadingColor(value); clearError('headingColor'); }}
+                                    error={errors.headingColor}
                                 />
 
                                 <ColorPickerInput
                                     label="Text color"
                                     value={textColor}
-                                    onChange={(value) => setTextColor(value)}
-                                // onChange={(value) => setWidgetData({ ...widgetData, general: { ...widgetData.general, advanced: { ...widgetData.general.advanced, input: { ...widgetData.general.advanced.input, input_color: value } } } })}
-                                // error={getErrorMessage('general.advanced.input.input_color')}
-                                // onClearError={() => clearError('general.advanced.input.input_color')}
-                                // onFocus={() => setIsEnabled(false)}
+                                    onChange={(value) => { setTextColor(value); clearError('textColor'); }}
+                                    error={errors.textColor}
                                 />
 
                                 <ColorPickerInput
                                     label="Border color"
                                     value={borderColor}
-                                    onChange={(value) => setBorderColor(value)}
-                                // onChange={(value) => setWidgetData({ ...widgetData, general: { ...widgetData.general, advanced: { ...widgetData.general.advanced, input: { ...widgetData.general.advanced.input, input_color: value } } } })}
-                                // error={getErrorMessage('general.advanced.input.input_color')}
-                                // onClearError={() => clearError('general.advanced.input.input_color')}
-                                // onFocus={() => setIsEnabled(false)}
+                                    onChange={(value) => { setBorderColor(value); clearError('borderColor'); }}
+                                    error={errors.borderColor}
                                 />
 
                                 <Divider />
@@ -331,22 +366,26 @@ const EmailAppearance = () => {
                                 <ColorPickerInput
                                     label="Button text color"
                                     value={buttonTextColor}
-                                    onChange={(value) => setButtonTextColor(value)}
+                                    onChange={(value) => { setButtonTextColor(value); clearError('buttonTextColor'); }}
+                                    error={errors.buttonTextColor}
                                 />
                                 <ColorPickerInput
                                     label="Button background color"
                                     value={buttonBackgroundColor}
-                                    onChange={(value) => setButtonBackgroundColor(value)}
+                                    onChange={(value) => { setButtonBackgroundColor(value); clearError('buttonBackgroundColor'); }}
+                                    error={errors.buttonBackgroundColor}
                                 />
                                 <ColorPickerInput
                                     label="Link color"
                                     value={linkColor}
-                                    onChange={(value) => setLinkColor(value)}
+                                    onChange={(value) => { setLinkColor(value); clearError('linkColor'); }}
+                                    error={errors.linkColor}
                                 />
                                 <ColorPickerInput
                                     label="Footer text color"
                                     value={footerTextColor}
-                                    onChange={(value) => setFooterTextColor(value)}
+                                    onChange={(value) => { setFooterTextColor(value); clearError('footerTextColor'); }}
+                                    error={errors.footerTextColor}
                                 />
 
                                 <Divider />
@@ -355,8 +394,9 @@ const EmailAppearance = () => {
                                 <TextField
                                     label="Disclaimer"
                                     value={disclaimer}
-                                    onChange={(value) => setDisclaimer(value)}
+                                    onChange={(value) => { setDisclaimer(value); clearError('disclaimer'); }}
                                     multiline={3}
+                                    error={errors.disclaimer ? true : false}
                                 />
                                 {/* <TextField
                                 label="Unsubscribe text"
@@ -373,10 +413,10 @@ const EmailAppearance = () => {
                                 <Text variant="bodyMd" fontWeight='semibold'>Available template variables</Text>
                                 {availableVariables?.map((item, index) => (
                                     <Box key={index} style={{ display: 'flex', flexDirection: 'row', gap: '10px', alignItems: 'center' }}>
-                                        <Box>
+                                        {/* <Box>
                                             <Icon source={PinIcon} />
-                                        </Box>
-                                        <Text tone="subdued" variant="bodyMd">{item}</Text>
+                                        </Box> */}
+                                        <Text tone="subdued" variant="bodyMd">{FormatPlaceholder(item)}</Text>
                                     </Box>
                                 ))}
                             </BlockStack>
@@ -463,7 +503,7 @@ const EmailAppearance = () => {
 
                                         <Box style={{ display: 'flex', flexDirection: 'column', gap: '8px', marginBottom: '20px' }}>
                                             <div style={{ color: footerTextColor }}>
-                                                <Text alignment='center' variant='bodyXs' >This email was sent to  "Email" because you signed up for "store_name" Rewards.</Text>
+                                                <Text alignment='center' variant='bodyXs' >{disclaimer}</Text>
                                             </div>
                                             {/* <div style={{ color: footerTextColor }}>
                                                 <Text alignment='center' variant='bodyXs'>Don't want to receive these emails anymore? <a style={{ color: linkColor }} href="#">Unsubscribe</a></Text>

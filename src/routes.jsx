@@ -33,7 +33,7 @@ export default function Routes({ pages }) {
                 element={<Navigate to={`/dashboard${location.search}`} replace />}
             />
             <Route path="/customer/customerView" element={<CustomerView />} />
-            <Route path="/onsite/widget" element={<Widget />} />
+            <Route path="/onsite" element={<Widget />} />
 
             {routeComponents}
 

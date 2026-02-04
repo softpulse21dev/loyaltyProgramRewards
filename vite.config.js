@@ -10,7 +10,7 @@ export default defineConfig({
   server: {
     historyApiFallback: true,
     hmr: {
-      host: "simon-clay-crest-heel.trycloudflare.com",
+      host: "asia-sept-swim-satisfied.trycloudflare.com",
       protocol: "wss",
     },
   },

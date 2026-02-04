@@ -4,11 +4,15 @@ import { useState, useEffect, useCallback, useMemo } from 'react'
 import { useNavigate, useLocation } from 'react-router-dom';
 import { fetchData } from '../../action';
 import ConfirmationModal from '../../components/ConfirmationModal';
+import { NoLeadingZero } from '../../utils';
 
 const PREFIXES = {
     social_share_facebook: "https://www.facebook.com/sharer/sharer.php?u=",
     social_share_twitter: "https://twitter.com/intent/tweet?url=",
     social_share_tiktok: "",
+    social_follow_instagram: "https://www.instagram.com/",
+    social_follow_twitter: "https://twitter.com/",
+    social_follow_tiktok: "https://www.tiktok.com/@",
 };
 
 const LoyaltySocialView = () => {
@@ -53,7 +57,7 @@ const LoyaltySocialView = () => {
 
     const [earningpoints, setEarningpoints] = useState('');
     const [status, setStatus] = useState('inactive');
-    const [pageTitle, setPageTitle] = useState('Social Rule');
+    const [pageTitle, setPageTitle] = useState('');
     const [conditionalJson, setConditionalJson] = useState({
         follow_twitter_username: '',
         follow_instagram_username: '',
@@ -68,6 +72,20 @@ const LoyaltySocialView = () => {
     const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
     const [deleteLoading, setDeleteLoading] = useState(false);
     const [hasCalledAPI, setHasCalledAPI] = useState(false);
+
+    // Helper: Get platform-specific title
+    const getPlatformTitle = useCallback((displayUseType) => {
+        switch (displayUseType) {
+            case 'social_follow_twitter': return 'Follow on Twitter';
+            case 'social_follow_instagram': return 'Follow on Instagram';
+            case 'social_follow_tiktok': return 'Follow on TikTok';
+            case 'social_share_facebook': return 'Share on Facebook';
+            case 'social_share_twitter': return 'Share on Twitter';
+            case 'social_share_tiktok': return 'Share on TikTok';
+            case 'url_visit': return 'Visit URL';
+            default: return 'Social Rule';
+        }
+    }, []);
 
     // Determine the field name dynamically based on platform
     const getFieldNameForPlatformFromType = useCallback((displayUseType) => {
@@ -110,8 +128,13 @@ const LoyaltySocialView = () => {
     const formatUrlForSaving = (cleanUrl, type) => {
         if (!cleanUrl) return '';
         const prefix = PREFIXES[type];
+        const trimmed = cleanUrl.trim();
         if (prefix) {
-            return prefix + cleanUrl;
+            // If it's already a full URL or looks like one, don't prepend the prefix
+            if (/^https?:\/\//i.test(trimmed) || trimmed.includes('www.') || (trimmed.includes('.com') && trimmed.includes('/'))) {
+                return /^https?:\/\//i.test(trimmed) ? trimmed : `https://${trimmed}`;
+            }
+            return prefix + trimmed;
         }
         return cleanUrl;
     };
@@ -141,10 +164,10 @@ const LoyaltySocialView = () => {
                 return prev;
             });
 
-            const titleFromAPI = getdatabyID?.title || getdatabyID?.master_rule?.title || 'Social Rule';
+            const displayUseType = deriveDisplayType(getdatabyID);
+            const titleFromAPI = getdatabyID?.title || getdatabyID?.master_rule?.title || getPlatformTitle(displayUseType);
             setPageTitle(titleFromAPI);
 
-            const displayUseType = deriveDisplayType(getdatabyID);
             const platformField = getFieldNameForPlatformFromType(displayUseType);
 
             if (platformField) {
@@ -160,7 +183,7 @@ const LoyaltySocialView = () => {
             setStatus(getdatabyID?.status ?? false);
             setLoading(false);
         }
-    }, [getdatabyID, getFieldNameForPlatformFromType]);
+    }, [getdatabyID, getFieldNameForPlatformFromType, getPlatformTitle]);
 
     const deleteEarningRuleAPI = async (ruleId) => {
         setDeleteLoading(true);
@@ -276,7 +299,8 @@ const LoyaltySocialView = () => {
         } else {
             setLoading(false);
             if (rule) {
-                setPageTitle(rule.title || 'Social Rule');
+                const fallbackTitle = rule.title || getPlatformTitle(activeDisplayUseType);
+                setPageTitle(fallbackTitle);
                 setStatus(rule.status ?? false);
             }
         }
@@ -302,7 +326,8 @@ const LoyaltySocialView = () => {
                 newErrors.url = 'Please enter a value.';
             }
             else {
-                const isUsernameField = fieldName.includes('username');
+                const isFollowRule = activeDisplayUseType && activeDisplayUseType.includes('follow');
+                const isUsernameField = fieldName.includes('username') || isFollowRule;
                 if (!isUsernameField && !urlRegex.test(cleanValue)) {
                     newErrors.url = 'Please enter a valid URL.';
                 }
@@ -316,7 +341,8 @@ const LoyaltySocialView = () => {
     const handleSave = () => {
         // 1. Get current input value
         let currentValue = conditionalJson[fieldName] || '';
-        const isUsernameField = fieldName && fieldName.includes('username');
+        const isFollowRule = activeDisplayUseType && activeDisplayUseType.includes('follow');
+        const isUsernameField = (fieldName && fieldName.includes('username')) || isFollowRule;
 
         // 2. AUTO-FIX: If it's a URL field and missing protocol, add https://
         // e.g., "asd.com" -> "https://asd.com"
@@ -396,7 +422,28 @@ const LoyaltySocialView = () => {
                                 </Badge>
                             </Box>
                         }
-                        secondaryActions={edit ? <Button variant='secondary' tone='critical' icon={DeleteIcon} onClick={() => { setIsDeleteModalOpen(true) }}>Delete</Button> : undefined}
+                        secondaryActions={edit ?
+                            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '5px' }}>
+                                <label className="switch">
+                                    <input
+                                        type="checkbox"
+                                        checked={status === true}
+                                        onChange={handleStatusChange}
+                                    />
+                                    <span className="slider"></span>
+                                </label>
+                                <Button variant='secondary' tone='critical' icon={DeleteIcon} onClick={() => { setIsDeleteModalOpen(true) }}>Delete</Button>
+                            </div>
+                            :
+                            <label className="switch">
+                                <input
+                                    type="checkbox"
+                                    checked={status === true}
+                                    onChange={handleStatusChange}
+                                />
+                                <span className="slider"></span>
+                            </label>
+                        }
                         primaryAction={{ content: 'Save', onAction: handleSave }}
                     >
                         <Layout>
@@ -439,7 +486,7 @@ const LoyaltySocialView = () => {
                                                             inputMode="numeric"
                                                             onChange={(value) => {
                                                                 if (/^\d*$/.test(value)) {
-                                                                    setEarningpoints(value);
+                                                                    setEarningpoints(NoLeadingZero(value));
                                                                 }
                                                                 if (errors.points) setErrors(prev => ({ ...prev, points: undefined }));
                                                             }}
@@ -456,7 +503,7 @@ const LoyaltySocialView = () => {
                                         <BlockStack gap={400}>
                                             <Card>
                                                 <BlockStack gap={200}>
-                                                    <Box style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+                                                    {/* <Box style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
                                                         <Text variant='headingMd' as="h2">Status</Text>
                                                         <Badge tone={status === true ? "success" : "critical"}>
                                                             {status ? "Active" : "Inactive"}
@@ -475,7 +522,34 @@ const LoyaltySocialView = () => {
                                                                 <span className="slider"></span>
                                                             </label>
                                                         </div>
-                                                    )}
+                                                    )} */}
+
+                                                    <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+                                                        <Text variant="headingMd" as="span">
+                                                            Summary
+                                                        </Text>
+                                                        {rule?.type === 'url_visit' && (
+                                                            <Text>Customers will automatically earn points once they visit a specific URL.</Text>
+                                                        )}
+                                                        {activeDisplayUseType === 'social_follow_instagram' && (
+                                                            <Text>Customers earn points for following your Instagram account.</Text>
+                                                        )}
+                                                        {activeDisplayUseType === 'social_follow_twitter' && (
+                                                            <Text>Customers earn points for following your Twitter account.</Text>
+                                                        )}
+                                                        {activeDisplayUseType === 'social_follow_tiktok' && (
+                                                            <Text>Customers earn points for following your TikTok account.</Text>
+                                                        )}
+                                                        {activeDisplayUseType === 'social_share_facebook' && (
+                                                            <Text>Customers earn points for sharing your link on Facebook.</Text>
+                                                        )}
+                                                        {activeDisplayUseType === 'social_share_twitter' && (
+                                                            <Text>Customers earn points for sharing your link on Twitter.</Text>
+                                                        )}
+                                                        {activeDisplayUseType === 'social_share_tiktok' && (
+                                                            <Text>Customers earn points for sharing your link on TikTok.</Text>
+                                                        )}
+                                                    </div>
                                                 </BlockStack>
                                             </Card>
                                         </BlockStack>

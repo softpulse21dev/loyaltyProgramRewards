@@ -32,7 +32,7 @@ function AppLayout({ pages }) {
           {/* Use location.search instead of window.location.search */}
           <Link to={`/dashboard${location.search}`} rel="home">Dashboard</Link>
           <Link to={`/loyaltyProgram${location.search}`}>Loyalty Program</Link>
-          <Link to={`/customer${location.search}`}>Customer</Link>
+          <Link to={`/customers${location.search}`}>Customers</Link>
           <Link to={`/settings${location.search}`}>Settings</Link>
           <Link to={`/analytics${location.search}`}>Analytics</Link>
           <Link to={`/onsite${location.search}`}>Onsite</Link>

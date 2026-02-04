@@ -145,6 +145,7 @@ const Loyalty = () => {
                     <>
                         <Box>
                             <p>Customize how your customers will earn points</p>
+                            <p>Customers will earn points through the actions below</p>
                         </Box>
                         {loyaltyData?.earning_rules?.master_rules?.length > 0 && (
                             <Box style={{ marginTop: 7, marginLeft: 0 }}>
@@ -156,9 +157,9 @@ const Loyalty = () => {
             >
                 <div className="icon-size">
                     <Card padding={0}>
-                        <Box style={{ padding: '16px 16px 16px 16px', backgroundColor: "#F5F5F5" }}>
+                        {/* <Box style={{ padding: '16px 16px 16px 16px', backgroundColor: "#F5F5F5" }}>
                             <Text variant="headingMd" as="h6">Customers will earn points through the actions below</Text>
-                        </Box>
+                        </Box> */}
                         {loadingMasterRules ? <Box style={{ padding: '16px' }}>
                             <SkeletonBodyText lines={15} />
                         </Box> : (
@@ -173,7 +174,7 @@ const Loyalty = () => {
                                             <ResourceItem key={rule_id}>
                                                 <Box style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
                                                     <Box style={{ display: "flex", alignItems: "center", gap: "15px" }}>
-                                                        <Icon source={IconSource} />
+                                                        {/* <Icon source={IconSource} /> */}
                                                         <Box>
                                                             <Text variant="bodyMd">{title}</Text>
                                                             <Text variant="bodyMd">{points} points</Text>
@@ -218,7 +219,7 @@ const Loyalty = () => {
                                             <ResourceItem key={rule_id}>
                                                 <Box style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
                                                     <Box style={{ display: "flex", alignItems: "center", gap: "15px" }}>
-                                                        <Icon source={IconSource} />
+                                                        {/* <Icon source={IconSource} /> */}
                                                         <Box>
                                                             <Text variant="bodyMd">{title}</Text>
                                                             <Text variant="bodyMd">{points} points</Text>
@@ -261,6 +262,7 @@ const Loyalty = () => {
                     <>
                         <Box>
                             <p>Let customer redeem their earned points</p>
+                            <p>Customers can redeem these rewards using their points</p>
                         </Box>
                         <Box style={{ marginTop: 7, marginLeft: 0 }}>
                             <Button variant="primary" onClick={() => setRedeemModalActive(true)}>Add new rule</Button>
@@ -270,9 +272,9 @@ const Loyalty = () => {
             >
                 <div className="icon-size">
                     <Card padding={0}>
-                        <Box style={{ padding: '16px 16px 16px 16px' }}>
+                        {/* <Box style={{ padding: '16px 16px 16px 16px' }}>
                             <Text variant="headingMd" as="h6">Customers can redeem these rewards using their points</Text>
-                        </Box>
+                        </Box> */}
                         {loadingMasterRules ? <Box style={{ padding: '16px' }}>
                             <SkeletonBodyText lines={15} />
                         </Box> : (
@@ -286,7 +288,7 @@ const Loyalty = () => {
                                         <ResourceItem key={id}>
                                             <Box style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
                                                 <Box style={{ display: "flex", alignItems: "center", gap: "15px" }}>
-                                                    <Icon source={IconSource} />
+                                                    {/* <Icon source={IconSource} /> */}
                                                     <Box>
                                                         <Text variant="bodyMd">{title}</Text>
                                                         <Text variant="bodyMd">{points} points</Text>
@@ -355,9 +357,9 @@ const Loyalty = () => {
                                 <ResourceItem id={id}>
                                     <InlineStack align="space-between" blockAlign="center">
                                         <Box style={{ display: "flex", alignItems: "center", gap: "10px" }}>
-                                            <Box>
+                                            {/* <Box>
                                                 <Icon source={RewardIcon} />
-                                            </Box>
+                                            </Box> */}
                                             <Text>{title}</Text>
                                         </Box>
                                         <Button onClick={() =>

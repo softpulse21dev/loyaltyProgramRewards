@@ -7,6 +7,8 @@ import { fetchData } from '../../action';
 import ProductModal from '../../components/ProductModal';
 import { useDispatch, useSelector } from 'react-redux';
 import { addData, DeleteData, UpdateData } from '../../redux/action';
+import { NoLeadingZero, SingleLeadingZero } from '../../utils';
+import ConfirmationModal from '../../components/ConfirmationModal';
 
 const CouponPage = () => {
     const navigate = useNavigate();
@@ -51,6 +53,7 @@ const CouponPage = () => {
     const [ruleType, setRuleType] = useState('');
     const [clientId, setClientId] = useState(null);
     const [validationError, setValidationError] = useState();
+    const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
     const Data = useSelector((state) => state.merchantSettings.Data);
     const dispatch = useDispatch();
 
@@ -452,8 +455,8 @@ const CouponPage = () => {
 
         // FIX: Added optional chaining
         if (rule?.type !== "store_credit") {
-            if (rewardExpiration === '' || rewardExpiration === null || Number(rewardExpiration) <= 0 || Number(rewardExpiration) > 365) {
-                newErrors.rewardExpiration = "Reward expiration must be a number greater than 0 and less than 365";
+            if (rewardExpiration === '' || rewardExpiration === null || Number(rewardExpiration) < 0 || Number(rewardExpiration) > 365) {
+                newErrors.rewardExpiration = "Reward expiration must be a number between 0 and 365";
                 isError = true;
             }
         }
@@ -521,20 +524,32 @@ const CouponPage = () => {
                             </Box>
                         }
                         secondaryActions={edit ?
-                            <Button
-                                tone='critical'
-                                icon={DeleteIcon}
-                                onClick={() => {
-                                    if (isTierRewardEdit) {
-                                        handleDeleteLocalData();
-                                    } else {
-                                        referralRule ? DeleteReferralRuleAPI(ruleId) : DeleteRedeemRuleAPI(ruleId);
-                                    }
-                                }}
-                                loading={deleteLoading}
-                            >Delete
-                            </Button>
-                            : ''}
+                            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '5px' }}>
+                                <label className="switch">
+                                    <input
+                                        type="checkbox"
+                                        checked={status === true}
+                                        onChange={handleStatusChange}
+                                    />
+                                    <span className="slider"></span>
+                                </label>
+                                <Button
+                                    tone='critical'
+                                    icon={DeleteIcon}
+                                    onClick={() => setIsDeleteModalOpen(true)}
+                                    loading={deleteLoading}
+                                >Delete
+                                </Button>
+                            </div>
+                            :
+                            <label className="switch">
+                                <input
+                                    type="checkbox"
+                                    checked={status === true}
+                                    onChange={handleStatusChange}
+                                />
+                                <span className="slider"></span>
+                            </label>}
                         primaryAction={{
                             content: edit ? "Update" : "Save",
                             loading: submitLoading,
@@ -624,10 +639,10 @@ const CouponPage = () => {
                                                                                 {showPointsSystem && (
                                                                                     <TextField
                                                                                         label="Points amount"
-                                                                                        type="number"
+                                                                                        type="text"
                                                                                         value={pointsAmount}
                                                                                         onChange={(value) => {
-                                                                                            setPointsAmount(value);
+                                                                                            setPointsAmount(NoLeadingZero(value));
                                                                                             setValidationError({ ...validationError, pointsAmount: '' })
                                                                                         }}
                                                                                         error={validationError?.pointsAmount}
@@ -639,7 +654,7 @@ const CouponPage = () => {
                                                                                 {rule?.type !== "free_shipping" && (
                                                                                     <TextField
                                                                                         label="Discount"
-                                                                                        type="number"
+                                                                                        type="text"
                                                                                         prefix={rule?.type !== "percentage_discount" ? "$" : ""}
                                                                                         suffix={rule?.type === "percentage_discount" ? "%" : ""}
                                                                                         value={settings_json.reward_value}
@@ -651,7 +666,7 @@ const CouponPage = () => {
                                                                                                 (isPercentage && !value.includes('.') && floatValue >= 1 && floatValue <= 100) ||
                                                                                                 (!isPercentage && floatValue >= 1)
                                                                                             ) {
-                                                                                                setSettingsJson({ ...settings_json, reward_value: value });
+                                                                                                setSettingsJson({ ...settings_json, reward_value: NoLeadingZero(value) });
                                                                                                 setValidationError({ ...validationError, rewardValue: '' });
                                                                                             }
                                                                                         }}
@@ -673,10 +688,10 @@ const CouponPage = () => {
                                                                             <FormLayout.Group>
                                                                                 <TextField
                                                                                     label="Increment points value"
-                                                                                    type="number"
+                                                                                    type="text"
                                                                                     value={pointsAmount}
                                                                                     onChange={(value) => {
-                                                                                        setPointsAmount(value);
+                                                                                        setPointsAmount(NoLeadingZero(value));
                                                                                         setValidationError({ ...validationError, pointsAmount: '' })
                                                                                     }}
                                                                                     error={validationError?.pointsAmount}
@@ -685,11 +700,11 @@ const CouponPage = () => {
                                                                                 />
                                                                                 <TextField
                                                                                     label="Customer gets"
-                                                                                    type="number"
+                                                                                    type="text"
                                                                                     prefix="$"
                                                                                     value={settings_json.reward_value}
                                                                                     onChange={(value) => {
-                                                                                        setSettingsJson({ ...settings_json, reward_value: value });
+                                                                                        setSettingsJson({ ...settings_json, reward_value: NoLeadingZero(value) });
                                                                                         setValidationError({ ...validationError, rewardValue: '' })
                                                                                     }}
                                                                                     error={validationError?.rewardValue}
@@ -706,10 +721,10 @@ const CouponPage = () => {
                                                                         />
                                                                         {settings_json.min_points_to_redeem && (
                                                                             <TextField
-                                                                                type="number"
+                                                                                type="text"
                                                                                 value={settings_json.min_points_to_redeem_value}
                                                                                 onChange={(value) => {
-                                                                                    setSettingsJson({ ...settings_json, min_points_to_redeem_value: value });
+                                                                                    setSettingsJson({ ...settings_json, min_points_to_redeem_value: NoLeadingZero(value) });
                                                                                     setValidationError({ ...validationError, minPointsToRedeemValue: '' })
                                                                                 }}
                                                                                 error={validationError?.minPointsToRedeemValue}
@@ -724,10 +739,10 @@ const CouponPage = () => {
                                                                         />
                                                                         {settings_json.max_points_to_spend && (
                                                                             <TextField
-                                                                                type="number"
+                                                                                type="text"
                                                                                 value={settings_json.max_points_to_spend_value}
                                                                                 onChange={(value) => {
-                                                                                    setSettingsJson({ ...settings_json, max_points_to_spend_value: value });
+                                                                                    setSettingsJson({ ...settings_json, max_points_to_spend_value: NoLeadingZero(value) });
                                                                                     setValidationError({ ...validationError, maxPointsToSpendValue: '' })
                                                                                 }}
                                                                                 error={validationError?.maxPointsToSpendValue}
@@ -742,10 +757,10 @@ const CouponPage = () => {
                                                         {rule?.type === "store_credit" && (
                                                             <TextField
                                                                 label="Points amount"
-                                                                type="number"
+                                                                type="text"
                                                                 value={pointsAmount}
                                                                 onChange={(value) => {
-                                                                    setPointsAmount(value);
+                                                                    setPointsAmount(NoLeadingZero(value));
                                                                     setValidationError({ ...validationError, pointsAmount: '' })
                                                                 }}
                                                                 error={validationError?.pointsAmount}
@@ -764,10 +779,10 @@ const CouponPage = () => {
 
                                                                 {settings_json.max_points_to_spend && (
                                                                     <TextField
-                                                                        type="number"
+                                                                        type="text"
                                                                         value={settings_json.max_points_to_spend_value}
                                                                         onChange={(value) => {
-                                                                            setSettingsJson({ ...settings_json, max_points_to_spend_value: value });
+                                                                            setSettingsJson({ ...settings_json, max_points_to_spend_value: NoLeadingZero(value) });
                                                                             setValidationError({ ...validationError, maxPointsToSpendValue: '' })
                                                                         }}
                                                                         error={validationError?.maxPointsToSpendValue}
@@ -838,10 +853,10 @@ const CouponPage = () => {
                                                         {settings_json.min_requirement === 'min_purchase_amount' && (
                                                             <span style={{ marginTop: 5 }}>
                                                                 <TextField
-                                                                    type="number"
+                                                                    type="text"
                                                                     value={settings_json.min_order_value_in_cents}
                                                                     onChange={(value) => {
-                                                                        setSettingsJson({ ...settings_json, min_order_value_in_cents: value });
+                                                                        setSettingsJson({ ...settings_json, min_order_value_in_cents: NoLeadingZero(value) });
                                                                         setValidationError({ ...validationError, minOrderValueInCents: '' })
                                                                     }}
                                                                     error={validationError?.minOrderValueInCents}
@@ -885,10 +900,10 @@ const CouponPage = () => {
                                                         <BlockStack gap={300}>
                                                             <Text variant='headingSm' as="span">Recurring Payment Options</Text>
                                                             <TextField
-                                                                type="number"
+                                                                type="text"
                                                                 value={settings_json?.number_of_times_on_recurring_purchases}
                                                                 onChange={(value) => {
-                                                                    setSettingsJson({ ...settings_json, number_of_times_on_recurring_purchases: value });
+                                                                    setSettingsJson({ ...settings_json, number_of_times_on_recurring_purchases: SingleLeadingZero(value) });
                                                                     setValidationError({ ...validationError, numberOfTimesOnRecurringPurchases: '' })
                                                                 }}
                                                                 error={validationError?.numberOfTimesOnRecurringPurchases}
@@ -904,11 +919,11 @@ const CouponPage = () => {
                                                     <BlockStack gap={300}>
                                                         <Text variant='headingMd' >Reward Expiration</Text>
                                                         <TextField
-                                                            type="number"
-                                                            helpText="The number of days after which the reward expires"
+                                                            type="text"
+                                                            helpText="The number of days after which the reward expires. If you specify 0, then the discount applies indefinitely."
                                                             value={rewardExpiration}
                                                             onChange={(value) => {
-                                                                setRewardExpiration(value);
+                                                                setRewardExpiration(SingleLeadingZero(value));
                                                                 setValidationError({ ...validationError, rewardExpiration: '' })
                                                             }}
                                                             error={validationError?.rewardExpiration}
@@ -924,13 +939,53 @@ const CouponPage = () => {
                                     <Grid.Cell columnSpan={{ xs: 6, sm: 2, md: 2, lg: 4, xl: 4 }}>
                                         <BlockStack gap={300}>
                                             <Card>
-                                                <Text variant='headingMd' as="span">Reward Summary</Text>
-                                                <ul style={{ listStyle: 'inherit', paddingInline: 20 }}>
+                                                <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+                                                    <Text variant='headingMd' as="span">Reward Summary</Text>
+                                                    {/* <ul style={{ listStyle: 'inherit', paddingInline: 20 }}>
                                                     <li><p>Applies to all orders</p></li>
-                                                </ul>
+                                                </ul> */}
+                                                    {rule?.type === "amount_discount" && (
+                                                        <div>
+                                                            <Text>Customer spends a set number of points.</Text>
+                                                            <Text>They get a fixed amount off (e.g., 100 points = ₹1 off).</Text>
+                                                            <Text>Discount can apply to the entire order or a specific collection.</Text>
+                                                            <Text>Optional minimum cart value can be set.</Text>
+                                                        </div>
+                                                    )}
+                                                    {rule?.type === "percentage_discount" && (
+                                                        <div>
+                                                            <Text>Customer spends points to get a % off (e.g., 100 points = 1% off).</Text>
+                                                            <Text>Discount applies to the entire order or a selected collection.</Text>
+                                                            <Text>Discount can apply to the entire order or a specific collection.</Text>
+                                                            <Text>Optional minimum cart requirement can be added.</Text>
+                                                        </div>
+                                                    )}
+                                                    {rule?.type === "free_shipping" && (
+                                                        <div>
+                                                            <Text>Customer spends a set number of points.</Text>
+                                                            <Text>They get free shipping on their order.</Text>
+                                                            <Text>Optional maximum shipping amount and minimum cart value can be set.</Text>
+                                                            <Text>Applicable to one-time purchases, subscriptions, or both.</Text>
+                                                        </div>
+                                                    )}
+                                                    {rule?.type === "free_product" && (
+                                                        <div>
+                                                            <Text>Customer redeems points for a selected product.</Text>
+                                                            <Text>Product is added to the cart at no cost.</Text>
+                                                            <Text>Can be limited by availability, cart rules, or collections.</Text>
+                                                        </div>
+                                                    )}
+                                                    {rule?.type === "store_credit" && (
+                                                        <div>
+                                                            <Text>Customer earns a set number of points.</Text>
+                                                            <Text>Points are credited to the customer’s account.</Text>
+                                                            <Text>Points can be limited by minimum cart value, availability, or collections.</Text>
+                                                        </div>
+                                                    )}
+                                                </div>
                                             </Card>
 
-                                            <Card>
+                                            {/* <Card>
                                                 <BlockStack gap={300}>
                                                     <Box style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
                                                         <Text variant='headingMd'>Status</Text>
@@ -951,7 +1006,7 @@ const CouponPage = () => {
                                                         </div>
                                                     </Box>
                                                 </BlockStack>
-                                            </Card>
+                                            </Card> */}
                                         </BlockStack>
                                     </Grid.Cell>
                                 </Grid>
@@ -983,6 +1038,23 @@ const CouponPage = () => {
                                     products: selected,
                                 })
                             }}
+                        />
+
+                        <ConfirmationModal
+                            isOpen={isDeleteModalOpen}
+                            setIsOpen={setIsDeleteModalOpen}
+                            text={'Are you sure you want to delete this rule?'}
+                            title={'Delete Rule'}
+                            buttonText={'Delete'}
+                            buttonAction={() => {
+                                if (isTierRewardEdit) {
+                                    handleDeleteLocalData();
+                                } else {
+                                    referralRule ? DeleteReferralRuleAPI(ruleId) : DeleteRedeemRuleAPI(ruleId);
+                                }
+                            }}
+                            destructive={true}
+                            buttonLoader={deleteLoading}
                         />
                     </Page >
                 )

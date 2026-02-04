@@ -99,8 +99,8 @@ const Launcher = ({ widgetData, setWidgetData, errors = {}, clearError }) => {
 
     return (
         <Card>
-            <Grid columns={{ xs: 6, sm: 6, md: 6, lg: 12, xl: 12 }}>
-                <Grid.Cell columnSpan={{ xs: 6, sm: 6, md: 2, lg: 4, xl: 4 }}>
+            <Grid columns={{ xs: 6, sm: 6, md: 12, lg: 12, xl: 12 }}>
+                <Grid.Cell columnSpan={{ xs: 6, sm: 6, md: 6, lg: 6, xl: 6 }}>
                     <Box style={{ marginBottom: '15px' }}>
                         <Text as="h1" variant="headingMd" >Layout</Text>
                     </Box>
@@ -298,7 +298,7 @@ const Launcher = ({ widgetData, setWidgetData, errors = {}, clearError }) => {
                 </Grid.Cell>
 
 
-                <Grid.Cell columnSpan={{ xs: 6, sm: 6, md: 4, lg: 8, xl: 8 }}>
+                <Grid.Cell columnSpan={{ xs: 6, sm: 6, md: 6, lg: 6, xl: 6 }}>
 
                     <div style={{ position: 'sticky', top: '20px' }}>
 

@@ -182,7 +182,7 @@ const Referral = () => {
                                                                 <Icon source={IconSource} />
                                                                 <Box>
                                                                     <Text variant="bodyMd">{title}</Text>
-                                                                    <InlineStack gap="100" align="center">
+                                                                    <InlineStack gap="100" align="left">
                                                                         {/* <Text variant="bodyMd">{points} points</Text>
                                                                         <Text variant="bodyMd" fontWeight="bold">|</Text> */}
                                                                         <Text variant="bodyMd">{redeemed_so_far || 0} redeemed so far</Text>

@@ -2,6 +2,7 @@ import { Badge, BlockStack, Box, Card, Grid, InlineGrid, Layout, Page, RadioButt
 import { useEffect, useState, useCallback } from 'react'
 import { useLocation, useNavigate } from 'react-router-dom';
 import { fetchData } from '../../action';
+import { NoLeadingZero } from '../../utils';
 
 const OrderPoints = () => {
     const navigate = useNavigate();
@@ -192,6 +193,16 @@ const OrderPoints = () => {
                         content: edit ? "Update" : "Save",
                         onAction: handleUpdateRuleAPI
                     }}
+                    secondaryActions={
+                        <label className="switch">
+                            <input
+                                type="checkbox"
+                                checked={status === true}
+                                onChange={handleStatusChange}
+                            />
+                            <span className="slider"></span>
+                        </label>
+                    }
                 >
                     <Layout>
                         <Layout.Section>
@@ -222,9 +233,9 @@ const OrderPoints = () => {
                                                 <Box style={{ display: orderPointsMethod === 'multiplier' ? 'flex' : 'block', alignItems: 'center', justifyContent: 'space-between' }}>
                                                     <TextField
                                                         label=""
-                                                        type="number"
+                                                        type="text"
                                                         value={earningPoints}
-                                                        onChange={(value) => setEarningPoints(value)}
+                                                        onChange={(value) => setEarningPoints(NoLeadingZero(value))}
                                                         suffix="Points"
                                                     />
                                                     {orderPointsMethod === 'multiplier' && (
@@ -232,9 +243,9 @@ const OrderPoints = () => {
                                                             <Text variant="headingMd">=</Text>
                                                             <TextField
                                                                 label=""
-                                                                type="number"
+                                                                type="text"
                                                                 value={moneySpent}
-                                                                onChange={(value) => setMoneySpent(value)}
+                                                                onChange={(value) => setMoneySpent(NoLeadingZero(value))}
                                                                 prefix="₹"
                                                                 suffix="spent"
                                                             />
@@ -255,13 +266,16 @@ const OrderPoints = () => {
                                 <Grid.Cell columnSpan={{ xs: 6, sm: 2, md: 2, lg: 4, xl: 4 }}>
                                     <BlockStack gap={400}>
                                         <Card>
-                                            <Text variant="headingMd" as="span" >Summary</Text>
-                                            <ul style={{ listStyle: "inherit", paddingInline: 20 }}>
+                                            <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+                                                <Text variant="headingMd" as="span" >Summary</Text>
+                                                <Text>Customers earn points for every Rs. 1 spent</Text>
+                                            </div>
+                                            {/* <ul style={{ listStyle: "inherit", paddingInline: 20 }}>
                                                 <li>Customers earn points for every Rs. 1 spent</li>
-                                            </ul>
+                                            </ul> */}
                                         </Card>
 
-                                        <Card>
+                                        {/* <Card>
                                             <BlockStack gap={300}>
                                                 <Box style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
                                                     <Text variant='headingMd' as="span">Status</Text>
@@ -282,7 +296,7 @@ const OrderPoints = () => {
                                                     </div>
                                                 </Box>
                                             </BlockStack>
-                                        </Card>
+                                        </Card> */}
                                     </BlockStack>
                                 </Grid.Cell>
                             </Grid>

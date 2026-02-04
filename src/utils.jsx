@@ -113,10 +113,12 @@ export const openSocialShare = (platform, urlToShare) => {
     }
 };
 
-export const cleanStrictWhitespace = (value) => {
-    if (!value) return "";
-    return value.replace(/\s+/g, "");
+export const cleanStrictWhitespace = (value = "") => {
+    return String(value)
+        .replace(/\s+/g, "")
+        .toUpperCase();
 };
+
 // Helper functions to convert between Hex and HSB
 export const hexToHsb = (hex) => {
     // Remove # if present
@@ -193,4 +195,59 @@ export const darkenColor = (hex, amount = 0.3) => {
 
     return `rgb(${r}, ${g}, ${b})`;
 };
+
+export const NoLeadingZero = (value) => {
+    if (!value) return "";
+    let sanitized = value.replace(/[^0-9]/g, '');
+    // Remove all leading zeros
+    sanitized = sanitized.replace(/^0+/, '');
+    return sanitized;
+};
+
+export const SingleLeadingZero = (value) => {
+    if (!value) return "";
+    let sanitized = value.replace(/[^0-9]/g, '');
+    // If value has more than one digit, remove leading zeros
+    if (sanitized.length > 1) {
+        sanitized = sanitized.replace(/^0+/, '');
+    }
+    return sanitized;
+};
+
+export const sanitizeNumberWithDecimal = (value) => {
+    if (!value) return "";
+    // Remove everything except digits and dot
+    let sanitized = value.replace(/[^0-9.]/g, '');
+    // Allow only one dot
+    const parts = sanitized.split('.');
+    if (parts.length > 2) {
+        sanitized = parts[0] + '.' + parts.slice(1).join('');
+    }
+    // Remove leading zeros unless before decimal
+    sanitized = sanitized.replace(/^0+(?=\d)/, '');
+    // Limit to 2 decimal places
+    if (sanitized.includes('.')) {
+        const [intPart, decPart] = sanitized.split('.');
+        sanitized = intPart + '.' + decPart.slice(0, 2);
+    }
+    return sanitized;
+};
+
+
+export const FormatAddress = (...parts) => {
+    return parts.filter(Boolean).join(', ');
+};
+
+export function FormatPlaceholder(input) {
+    const [key, value] = input.split(":");
+
+    return (
+        <div>
+            <div style={{ fontWeight: "600" }}>{key.trim()} :</div>
+            <div>{value.trim()}</div>
+        </div>
+    );
+}
+
+
 // https://docs.google.com/document/d/11SHYSidCKFvxceiOE4-DTzvc3UthlGxb2JsLCY6i5rc/edit?hl=en-GB&forcehl=1&tab=t.sxv4ttgt6n4c

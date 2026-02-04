@@ -133,7 +133,7 @@ const Emails = () => {
                                             <Box style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', width: '100%' }}>
 
                                                 <InlineStack gap="400" blockAlign="center">
-                                                    <Icon source={EmailIcon} tone="base" />
+                                                    {/* <Icon source={EmailIcon} tone="base" /> */}
                                                     <Box style={{ display: 'flex', flexDirection: 'column', gap: '2px' }}>
                                                         <Text as="h3" variant="headingSm" fontWeight="bold">
                                                             {name}

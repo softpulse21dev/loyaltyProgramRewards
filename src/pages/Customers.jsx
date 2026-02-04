@@ -5,7 +5,7 @@ import { useNavigate } from "react-router-dom";
 import { fetchData } from "../action";
 import { capitalizeFirst, formatShortDate } from "../utils";
 
-const Customer = () => {
+const Customers = () => {
     const navigate = useNavigate();
 
     // --- Core Data State ---
@@ -63,6 +63,17 @@ const Customer = () => {
     const last7Days = new Date(new Date().setDate(today.getDate() - 7));
     const last30Days = new Date(new Date().setDate(today.getDate() - 30));
     const last60Days = new Date(new Date().setDate(today.getDate() - 60));
+
+    const getRangeLabel = (range) => {
+        if (range.min && range.max) {
+            return `is between ${range.min} and ${range.max}`;
+        } else if (range.min) {
+            return `is more than ${range.min}`;
+        } else if (range.max) {
+            return `is less than ${range.max}`;
+        }
+        return "";
+    };
 
     useEffect(() => {
         localStorage.removeItem("current_customer_view_id");
@@ -516,13 +527,13 @@ const Customer = () => {
     );
 
     // --- FIX: Create a NEW array for VIP options, do not mutate global options ---
+    // --- FIX: Add a default option so the first real tier isn't auto-selected ---
     const vipTierOptions = useMemo(() => {
-        // Create a FRESH array
-        const generatedOptions = [];
+        // Initialize with a default "All" option with an empty value
+        const generatedOptions = [{ label: 'All', value: '' }];
 
         if (Array.isArray(vipTierList) && vipTierList.length > 0) {
             vipTierList.forEach(tier => {
-                console.log('tier', tier)
                 // Extract 'title' for label and 'uid' for value
                 const tierName = tier?.title ? String(tier.title).trim() : '';
                 const tierId = tier?.uid ? String(tier.uid).trim() : '';
@@ -811,4 +822,4 @@ const Customer = () => {
     );
 };
 
-export default Customer;
+export default Customers;

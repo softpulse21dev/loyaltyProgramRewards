@@ -9,7 +9,12 @@ export const SET_DATA = "SET_DATA";
 export const REMOVE_TIER_ID = "REMOVE_TIER_ID";
 export const UPDATE_DATA = "UPDATE_DATA";
 export const DELETE_DATA = "DELETE_DATA";
+export const DEFAULT_DATA = "DEFAULT_DATA";
 
+export const DefaultData = (data) => ({
+    type: DEFAULT_DATA,
+    payload: data,
+});
 
 export const SetData = (data) => ({
     type: SET_DATA,

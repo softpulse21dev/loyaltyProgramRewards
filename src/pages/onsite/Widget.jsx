@@ -203,6 +203,12 @@ const Widget = () => {
         if (!isValidHexColor(data.general?.advanced?.section?.card_border_color)) {
             newErrors['general.advanced.section.card_border_color'] = 'Invalid hex color';
         }
+        if (!isValidHexColor(data.general?.advanced?.box?.background_color)) {
+            newErrors['general.advanced.box.background_color'] = 'Invalid hex color';
+        }
+        if (!isValidHexColor(data.general?.advanced?.box?.border_color)) {
+            newErrors['general.advanced.box.border_color'] = 'Invalid hex color';
+        }
         if (!isValidHexColor(data.general?.advanced?.card?.background_color)) {
             newErrors['general.advanced.card.background_color'] = 'Invalid hex color';
         }
@@ -218,6 +224,9 @@ const Widget = () => {
         if (!isValidHexColor(data.general?.advanced?.input?.input_color)) {
             newErrors['general.advanced.input.input_color'] = 'Invalid hex color';
         }
+        if (!isValidHexColor(data.general?.advanced?.input?.input_border_color)) {
+            newErrors['general.advanced.input.input_border_color'] = 'Invalid hex color';
+        }
 
         // StoreFront Tab - Header validation
         if (!data.storefront_app?.header?.header_bar_text?.trim()) {
@@ -229,9 +238,12 @@ const Widget = () => {
         if (!data.storefront_app?.header?.header_content?.trim()) {
             newErrors['storefront.header.header_content'] = 'Header content is required';
         }
-        if (!data.storefront_app?.header?.balance_text?.trim()) {
-            newErrors['storefront.header.balance_text'] = 'Balance text is required';
+        if (!data.storefront_app?.header?.history_button_text?.trim()) {
+            newErrors['storefront.header.history_button_text'] = 'Header button text is required';
         }
+        // if (!data.storefront_app?.header?.balance_text?.trim()) {
+        //     newErrors['storefront.header.balance_text'] = 'Balance text is required';
+        // }
 
         // StoreFront Tab - New Member Card validation
         if (!data.storefront_app?.new_member_card?.translations?.title?.trim()) {
@@ -270,6 +282,18 @@ const Widget = () => {
         }
         if (!data.storefront_app?.referrals_card?.message?.trim()) {
             newErrors['storefront.referrals_card.message'] = 'Referral card message is required';
+        }
+        if (!data.storefront_app?.referrals_card?.referrer_title?.trim()) {
+            newErrors['storefront.referrals_card.referrer_title'] = 'Referrer title is required';
+        }
+        if (!data.storefront_app?.referrals_card?.referee_title?.trim()) {
+            newErrors['storefront.referrals_card.referee_title'] = 'Referee title is required';
+        }
+        if (!data.storefront_app?.referrals_card?.link_title?.trim()) {
+            newErrors['storefront.referrals_card.link_title'] = 'Link title is required';
+        }
+        if (!data.storefront_app?.referrals_card?.my_discount_text?.trim()) {
+            newErrors['storefront.referrals_card.my_discount_text'] = 'Discount title is required';
         }
 
         // StoreFront Tab - VIP Tiers Card validation
@@ -438,7 +462,7 @@ const Widget = () => {
             (
                 <>
                     <Page
-                        backAction={{ content: 'Back', onAction: () => navigate('/onsite') }}
+                        // backAction={{ content: 'Back', onAction: () => navigate('/onsite') }}
                         title={
                             <Box style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: '10px' }}>
                                 <Text as="h1" variant="headingLg">Loyalty widget</Text>

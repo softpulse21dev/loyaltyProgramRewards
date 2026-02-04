@@ -3,6 +3,8 @@ import { PlayCircleIcon } from '@shopify/polaris-icons';
 import { useCallback, useEffect, useState } from 'react'
 import { fetchData } from '../action';
 import DateRangePicker from '../components/DateRangePicker';
+import { useDispatch } from 'react-redux';
+import { DefaultData } from '../redux/action';
 
 const Dashboard = () => {
     const [active, setActive] = useState(false);
@@ -32,8 +34,23 @@ const Dashboard = () => {
         since: formatDate(since),
         until: formatDate(today),
     });
+    const dispatch = useDispatch();
 
-
+    const getDefaultDataApi = async () => {
+        try {
+            const formData = new FormData();
+            const response = await fetchData("/get-shop-details", formData);
+            if (response?.status === true) {
+                // Save to Redux
+                dispatch(DefaultData(response.data));
+            } else {
+                shopify.toast.show(response?.message, { duration: 2000, isError: true, });
+            }
+            console.log("getDefaultDataApi", response);
+        } catch (error) {
+            console.error("Error fetching default data:", error);
+        }
+    };
 
     const fetchDashboardAPI = useCallback(async () => {
         setDashboardLoading(true);
@@ -81,6 +98,10 @@ const Dashboard = () => {
     useEffect(() => {
         fetchDashboardAPI();
     }, [fetchDashboardAPI]);
+
+    useEffect(() => {
+        getDefaultDataApi();
+    }, []);
 
     return (
         <>

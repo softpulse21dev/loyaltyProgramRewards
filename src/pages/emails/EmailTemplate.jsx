@@ -3,7 +3,7 @@ import { PinIcon } from '@shopify/polaris-icons';
 import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { fetchData } from '../../action';
-import { darkenColor } from '../../utils';
+import { darkenColor, FormatPlaceholder } from '../../utils';
 import TestMailModal from '../../components/TestMailModal';
 
 const EmailTemplate = () => {
@@ -23,6 +23,38 @@ const EmailTemplate = () => {
   const [emailContent, setEmailContent] = useState(EmailData?.content);
   const [emailAction, setEmailAction] = useState(EmailData?.action_text);
   const [emailActionUrl, setEmailActionUrl] = useState(EmailData?.redirect_url);
+  const [errors, setErrors] = useState({});
+
+  const validateFields = (urlToValidate) => {
+    const newErrors = {};
+    if (!emailSubject?.trim()) newErrors.subject = 'Subject is required';
+    if (!emailHeading?.trim()) newErrors.heading = 'Heading is required';
+    if (!emailContent?.trim()) newErrors.content = 'Content is required';
+
+    if (EmailData?.id !== 'otp_page') {
+      if (!emailAction?.trim()) newErrors.action = 'Action text is required';
+      
+      const urlValue = urlToValidate !== undefined ? urlToValidate : emailActionUrl;
+      const cleanUrl = urlValue?.trim();
+      
+      if (cleanUrl && !/^(https?:\/\/)?([\da-z.-]+)\.([a-z.]{2,6})([/\w .-]*)*\/?$/.test(cleanUrl)) {
+        newErrors.actionUrl = 'Invalid URL format';
+      }
+    }
+
+    setErrors(newErrors);
+    return Object.keys(newErrors).length === 0;
+  };
+
+  const clearError = (field) => {
+    if (errors[field]) {
+      setErrors(prev => {
+        const newErrors = { ...prev };
+        delete newErrors[field];
+        return newErrors;
+      });
+    }
+  };
 
   // --- Handler: Send Test Email ---
   const handleSendTestEmail = async () => {
@@ -91,11 +123,44 @@ const EmailTemplate = () => {
   }
 
   const saveEmailTemplateAPI = async () => {
+    const normalizedUrl = emailActionUrl?.trim() || '';
+    const normalizedSubject = emailSubject?.trim() || '';
+    const normalizedHeading = emailHeading?.trim() || '';
+    const normalizedContent = emailContent?.trim() || '';
+    const normalizedAction = emailAction?.trim() || '';
+
+    let finalUrl = normalizedUrl;
+    // Auto-fix URL: Add https:// if missing and not blank
+    if (finalUrl !== '' && !/^https?:\/\//i.test(finalUrl)) {
+      finalUrl = `https://${finalUrl}`;
+    }
+
+    // Update state so UI reflects the trimmed/normalized values
+    setEmailActionUrl(finalUrl);
+    setEmailSubject(normalizedSubject);
+    setEmailHeading(normalizedHeading);
+    setEmailContent(normalizedContent);
+    setEmailAction(normalizedAction);
+
+    if (!validateFields(finalUrl)) {
+      return;
+    }
+
     setSaveLoading(true);
     try {
-      console.log('settingsData')
+      const currentSettings = {
+        is_enabled: status,
+        subject: normalizedSubject,
+        heading: normalizedHeading,
+        content: normalizedContent,
+        action_text: normalizedAction,
+        redirect_url: finalUrl,
+        decription: EmailData?.decription,
+        name: EmailData?.name,
+      };
+
       const formData = new FormData();
-      formData.append('settings', JSON.stringify(settingsData));
+      formData.append('settings', JSON.stringify(currentSettings));
       formData.append('template_key', EmailData?.id);
       const response = await fetchData('/add-email-notifications-settings', formData);
       console.log('response', response)
@@ -194,8 +259,9 @@ const EmailTemplate = () => {
                     <TextField
                       label="Subject"
                       value={emailSubject}
-                      onChange={(value) => setEmailSubject(value)}
+                      onChange={(value) => { setEmailSubject(value); clearError('subject'); }}
                       autoComplete="off"
+                      error={errors.subject ? true : false}
                     />
 
                     <Box style={{ marginTop: '15px' }}>
@@ -209,15 +275,17 @@ const EmailTemplate = () => {
                         <TextField
                           label="Heading"
                           value={emailHeading}
-                          onChange={(value) => setEmailHeading(value)}
+                          onChange={(value) => { setEmailHeading(value); clearError('heading'); }}
                           autoComplete="off"
+                          error={errors.heading ? true : false}
                         />
                         <TextField
                           label="Content"
                           multiline={3}
                           value={emailContent}
-                          onChange={(value) => setEmailContent(value)}
+                          onChange={(value) => { setEmailContent(value); clearError('content'); }}
                           autoComplete="off"
+                          error={errors.content ? true : false}
                         />
 
                         {EmailData?.id !== 'otp_page' && (
@@ -225,16 +293,18 @@ const EmailTemplate = () => {
                             <TextField
                               label="Action"
                               value={emailAction}
-                              onChange={(value) => setEmailAction(value)}
+                              onChange={(value) => { setEmailAction(value); clearError('action'); }}
                               autoComplete="off"
+                              error={errors.action ? true : false}
                             />
 
                             <TextField
                               label="Action URL"
                               helpText='Redirects to your store when left blank'
                               value={emailActionUrl}
-                              onChange={(value) => setEmailActionUrl(value)}
+                              onChange={(value) => { setEmailActionUrl(value); clearError('actionUrl'); }}
                               autoComplete="off"
+                              error={errors.actionUrl}
                             />
                           </>
                         )}
@@ -249,10 +319,10 @@ const EmailTemplate = () => {
                     <Text variant="bodyMd" fontWeight='semibold'>Available template variables</Text>
                     {EmailData?.available_variables?.map((item, index) => (
                       <Box key={index} style={{ display: 'flex', flexDirection: 'row', gap: '10px', alignItems: 'center' }}>
-                        <Box>
+                        {/* <Box>
                           <Icon source={PinIcon} />
-                        </Box>
-                        <Text tone="subdued" variant="bodyMd">{item}</Text>
+                        </Box> */}
+                        <Text tone="subdued" variant="bodyMd">{FormatPlaceholder(item)}</Text>
                       </Box>
                     ))}
                   </BlockStack>
@@ -352,7 +422,7 @@ const EmailTemplate = () => {
 
                       <Box style={{ display: 'flex', flexDirection: 'column', gap: '8px', marginBottom: '20px' }}>
                         <div style={{ color: emailSettings?.accent_colors?.footer_text_color }}>
-                          <Text alignment='center' variant='bodyXs' >This email was sent to "admin@example.com" because you signed up for "My Store" Rewards.</Text>
+                          <Text alignment='center' variant='bodyXs' >{emailSettings?.footer?.disclaimer}</Text>
                         </div>
                         {/* <div style={{ color: emailSettings?.accent_colors?.footer_text_color }}>
                           <Text alignment='center' variant='bodyXs' >Don't want to receive these emails anymore? <a href="#" style={{ color: emailSettings?.accent_colors?.link_color }}>Unsubscribe</a></Text>

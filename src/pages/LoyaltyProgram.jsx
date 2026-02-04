@@ -15,7 +15,17 @@ const LoyaltyProgram = () => {
     const location = useLocation();
     const { navigateTo } = location.state || {};
     console.log('navigateTo', navigateTo)
-    const [selectedTab, setSelectedTab] = useState(0);
+    
+    // Initialize selectedTab from navigateTo or localStorage, default to 0
+    const [selectedTab, setSelectedTab] = useState(() => {
+        if (navigateTo !== undefined) {
+            localStorage.setItem('loyaltyProgramTab', navigateTo);
+            return navigateTo;
+        }
+        const stored = localStorage.getItem('loyaltyProgramTab');
+        return stored !== null ? parseInt(stored, 10) : 0;
+    });
+    
     const [entryMethod, setEntryMethod] = useState(2);
     const [tierProgressExpiry, setTierProgressExpiry] = useState(1);
     const [loadingSave, setLoadingSave] = useState(false);
@@ -77,10 +87,28 @@ const LoyaltyProgram = () => {
     };
 
     useEffect(() => {
-        if (navigateTo) {
+        if (navigateTo !== undefined) {
             setSelectedTab(navigateTo);
+            localStorage.setItem('loyaltyProgramTab', navigateTo);
         }
     }, [navigateTo]);
+
+    // Update localStorage when tab changes
+    const handleTabChange = (index) => {
+        setSelectedTab(index);
+        localStorage.setItem('loyaltyProgramTab', index);
+    };
+
+    // Clear localStorage when leaving the page via other means
+    useEffect(() => {
+        return () => {
+            // Only clear if we're actually leaving the loyalty program section
+            const currentPath = window.location.pathname;
+            if (!currentPath.includes('/loyaltyProgram')) {
+                localStorage.removeItem('loyaltyProgramTab');
+            }
+        };
+    }, []);
 
     const tabs = [
         {
@@ -111,7 +139,7 @@ const LoyaltyProgram = () => {
             <Tabs
                 tabs={tabs}
                 selected={selectedTab}
-                onSelect={(index) => setSelectedTab(index)}
+                onSelect={handleTabChange}
             >
                 {selectedTab === 0 && (
                     <Loyalty />

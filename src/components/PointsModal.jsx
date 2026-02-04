@@ -1,5 +1,6 @@
 import { Modal, Text, TextField, RadioButton, BlockStack, InlineStack, } from '@shopify/polaris'
 import { useState, useEffect } from 'react'
+import { NoLeadingZero } from '../utils'
 
 const PointsModal = ({ open, onClose, customerPoints, onSave, isLoading }) => {
     const [pointsAmount, setPointsAmount] = useState('')
@@ -50,7 +51,7 @@ const PointsModal = ({ open, onClose, customerPoints, onSave, isLoading }) => {
     const handlePointsChange = (value) => {
         const regex = /^[0-9]*(\.[0-9]{0,2})?$/;
         if (value === '' || regex.test(value)) {
-            setPointsAmount(value);
+            setPointsAmount(NoLeadingZero(value));
         }
         if (pointsAmountError) {
             setPointsAmountError('');

@@ -6,7 +6,7 @@ import RedeemModal from '../../components/RedeemModal';
 import { fetchData } from '../../action';
 import { useDispatch, useSelector } from 'react-redux';
 import { ClearTierFormData, SetData, UpdateData, UpdateTierFormData, TierId, MasterRewardsList, GetVipTierData } from '../../redux/action';
-import { iconsMap } from '../../utils';
+import { iconsMap, NoLeadingZero, sanitizeNumberWithDecimal, SingleLeadingZero } from '../../utils';
 import SvgPreview from '../../components/SvgPreview';
 
 const TierView = () => {
@@ -350,10 +350,10 @@ const TierView = () => {
                                                 <Box style={{ maxWidth: 300 }}>
                                                     <TextField
                                                         value={goalValue}
-                                                        type='number'
+                                                        type='text'
                                                         label='Amount spent since start date'
                                                         requiredIndicator={true}
-                                                        onChange={(value) => dispatch(UpdateTierFormData({ ...tierFormData, goalValue: value }), setValidation({ ...validation, goalValue: '' }))}
+                                                        onChange={(value) => dispatch(UpdateTierFormData({ ...tierFormData, goalValue: SingleLeadingZero(value) }), setValidation({ ...validation, goalValue: '' }))}
                                                         error={validation.goalValue}
                                                     />
                                                 </Box>
@@ -366,10 +366,10 @@ const TierView = () => {
                                                 <Box style={{ maxWidth: 300 }}>
                                                     <TextField
                                                         value={pointsMultiplier}
-                                                        type='number'
+                                                        type='text'
                                                         label='Points earned will be multiplied by this value'
                                                         requiredIndicator={true}
-                                                        onChange={(value) => dispatch(UpdateTierFormData({ ...tierFormData, pointsMultiplier: value }), setValidation({ ...validation, pointsMultiplier: '' }))}
+                                                        onChange={(value) => dispatch(UpdateTierFormData({ ...tierFormData, pointsMultiplier: sanitizeNumberWithDecimal(value) }), setValidation({ ...validation, pointsMultiplier: '' }))}
                                                         error={validation.pointsMultiplier}
                                                     />
                                                 </Box>
@@ -429,11 +429,15 @@ const TierView = () => {
                                 <Grid.Cell columnSpan={{ xs: 6, sm: 2, md: 2, lg: 4, xl: 4 }}>
                                     <BlockStack gap={400}>
                                         <Card>
-                                            <Text variant='headingMd' as="span">Details</Text>
-                                            <ul style={{ listStyle: 'inherit', paddingInline: 20 }}>
-                                                <li><p>0 amount spent since start date</p></li>
-                                                <li><p>0 rewards unlocked</p></li>
-                                            </ul>
+                                            <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
+                                                <Text variant='headingMd' as="span">Summary</Text>
+                                                <div>
+                                                    <Text>Set a VIP tier name.</Text>
+                                                    <Text>Define the spending amount required to achieve the tier.</Text>
+                                                    <Text>Configure a points multiplier for the tier.</Text>
+                                                    <Text>Unlock rewards when the tier is achieved.</Text>
+                                                </div>
+                                            </div>
                                         </Card>
 
                                         <Card>

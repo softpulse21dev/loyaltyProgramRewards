@@ -10,7 +10,7 @@ function ConfirmationModal({ isOpen, setIsOpen, text, title, buttonText, buttonA
             primaryAction={{ content: buttonText, onAction: () => buttonAction(), destructive: destructive, loading: buttonLoader }}
             secondaryActions={[
                 {
-                    content: 'cancel',
+                    content: 'Cancel',
                     onAction: () => setIsOpen(false),
                 },
             ]}

@@ -4,6 +4,7 @@ import { Badge, BlockStack, Box, Card, Grid, Layout, Page, Text, TextField, Skel
 import { fetchData } from "../../action";
 import { DeleteIcon } from "@shopify/polaris-icons";
 import ConfirmationModal from "../../components/ConfirmationModal";
+import { NoLeadingZero } from "../../utils";
 
 const LoyaltySignupView = () => {
     const navigate = useNavigate();
@@ -264,7 +265,7 @@ const LoyaltySignupView = () => {
     const handleEarningPointsChange = (value) => {
         // Allow only numbers for typing 
         if (/^\d*$/.test(value)) {
-            setEarningpoints(value);
+            setEarningpoints(NoLeadingZero(value));
         }
         if (earningPointsError) {
             setEarningPointsError("");
@@ -275,7 +276,7 @@ const LoyaltySignupView = () => {
         if (/^\d*$/.test(value)) {
             setConditionalJson({
                 ...conditionalJson,
-                birthday_updated_waiting_threshold_days: value,
+                birthday_updated_waiting_threshold_days: NoLeadingZero(value),
             });
         }
         if (birthdayError) {
@@ -344,7 +345,45 @@ const LoyaltySignupView = () => {
                             </Box>
                         }
                         primaryAction={{ content: edit ? "Update" : "Save", onAction: handleSave }}
-                        secondaryActions={(getdatabyID?.default_rules === '0' && edit) ? <Button variant='secondary' tone='critical' icon={DeleteIcon} onClick={() => { setIsDeleteModalOpen(true) }}>Delete</Button> : undefined}
+                        secondaryActions={
+                            edit ? (
+                                (getdatabyID?.default_rules === '0') ? (
+                                    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '5px' }}>
+                                        <label className="switch">
+                                            <input
+                                                type="checkbox"
+                                                checked={status === true}
+                                                onChange={handleStatusChange}
+                                            />
+                                            <span className="slider"></span>
+                                        </label>
+                                        <Button variant='secondary' tone='critical' icon={DeleteIcon} onClick={() => { setIsDeleteModalOpen(true) }}>Delete</Button>
+                                    </div>
+                                ) : (
+                                    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '5px' }}>
+                                        <label className="switch">
+                                            <input
+                                                type="checkbox"
+                                                checked={status === true}
+                                                onChange={handleStatusChange}
+                                            />
+                                            <span className="slider"></span>
+                                        </label>
+                                    </div>
+                                )
+                            ) : (
+                                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '5px' }}>
+                                    <label className="switch">
+                                        <input
+                                            type="checkbox"
+                                            checked={status === true}
+                                            onChange={handleStatusChange}
+                                        />
+                                        <span className="slider"></span>
+                                    </label>
+                                </div>
+                            )
+                        }
                     >
                         <Layout>
                             <Layout.Section>
@@ -388,10 +427,27 @@ const LoyaltySignupView = () => {
                                     <Grid.Cell columnSpan={{ xs: 6, sm: 2, md: 2, lg: 4, xl: 4 }}>
                                         <BlockStack gap={400}>
                                             <Card>
-                                                <Text variant="headingMd" as="span">
-                                                    Summary
-                                                </Text>
-                                                <ul style={{ listStyle: "inherit", paddingInline: 20 }}>
+                                                <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+                                                    <Text variant="headingMd" as="span">
+                                                        Summary
+                                                    </Text>
+
+                                                    {rule?.type === 'loyalty_anniversary' && (
+                                                        <Text>Customers will automatically earn points each year on the anniversary of the date they joined the loyalty program.</Text>
+                                                    )}
+                                                    {rule?.type === 'birthday' && (
+                                                        <div>
+                                                            <Text>Customers earn bonus points on their birthday each year.</Text>
+                                                            <Text>Rewards are granted automatically if the birthday is provided before the eligibility cutoff. </Text>
+                                                            <Text>Points are added once per year to celebrate the customer’s birthday.</Text>
+                                                        </div>
+                                                    )}
+                                                    {rule?.type === 'signup' && (
+                                                        <Text>Customers earn points for signing up for the loyalty program.</Text>
+                                                    )}
+                                                </div>
+
+                                                {/* <ul style={{ listStyle: "inherit", paddingInline: 20 }}>
                                                     {rule?.type === 'loyalty_anniversary' && (
                                                         <li>
                                                             <p>Customers will automatically earn points each year on the anniversary of the date they joined the loyalty program.</p>
@@ -404,9 +460,9 @@ const LoyaltySignupView = () => {
                                                             <li>Points are added once per year to celebrate the customer’s birthday.</li>
                                                         </>
                                                     )}
-                                                </ul>
+                                                </ul> */}
                                             </Card>
-                                            <Card>
+                                            {/* <Card>
                                                 <BlockStack gap={200}>
                                                     <Box
                                                         style={{
@@ -439,7 +495,7 @@ const LoyaltySignupView = () => {
                                                         </Box>
                                                     )}
                                                 </BlockStack>
-                                            </Card>
+                                            </Card> */}
                                         </BlockStack>
                                     </Grid.Cell>
                                 </Grid>

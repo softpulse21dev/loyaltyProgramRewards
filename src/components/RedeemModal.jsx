@@ -27,9 +27,9 @@ const RedeemModal = ({ active, setActive, data, referralRule, navigateTo, localS
                             <ResourceItem id={item.master_rule_id}>
                                 <InlineStack align="space-between" blockAlign="center">
                                     <Box style={{ display: "flex", alignItems: "center", gap: "10px" }}>
-                                        <Box>
+                                        {/* <Box>
                                             <Icon source={IconSource} />
-                                        </Box>
+                                        </Box> */}
                                         <Text>{item.title}</Text>
                                     </Box>
                                     <Button
