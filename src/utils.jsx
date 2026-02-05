@@ -115,13 +115,15 @@ export const openSocialShare = (platform, urlToShare) => {
 
 export const cleanStrictWhitespace = (value = "") => {
     return String(value)
-        .replace(/\s+/g, "")
-        .toUpperCase();
+        .replace(/\s+/g, "")               // remove all whitespace
+        .replace(/[^a-zA-Z0-9_-]/g, "")    // allow A–Z, 0–9, - and _
+        .toUpperCase()
+        .slice(0, 8);                      // max 8 characters
 };
 
 // Helper functions to convert between Hex and HSB
 export const hexToHsb = (hex) => {
-    // Remove # if present
+    // Remove # if present 
     hex = hex.replace('#', '');
 
     // Parse hex to RGB
