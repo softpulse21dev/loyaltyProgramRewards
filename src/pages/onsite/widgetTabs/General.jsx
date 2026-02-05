@@ -8,12 +8,15 @@ import { useSelector } from 'react-redux';
 
 const General = ({ widgetData, setWidgetData, errors = {}, clearError, openCollapsible, setOpenCollapsible, loading }) => {
 
-    const defaultData = useSelector((state) => state.defaultData);
-    const referlinkData = JSON.parse(defaultData);
+    const defaultData = useSelector((state) => state.merchantSettings.defaultData);
 
     useEffect(() => {
         console.log('widgetData', widgetData)
     }, [widgetData])
+
+    useEffect(() => {
+        console.log("Current Redux defaultData:", defaultData);
+    }, [defaultData]);
 
     // Handler to toggle collapsibles - only one can be open at a time
     const handleToggle = useCallback((section) => {
@@ -1368,7 +1371,7 @@ const General = ({ widgetData, setWidgetData, errors = {}, clearError, openColla
                                                                         display: 'flex',
                                                                         alignItems: 'center'
                                                                     }}>
-                                                                        <text style={{ textWrap: 'nowrap' }}> {referlinkData?.referral_link}</text>
+                                                                        <text style={{ textWrap: 'nowrap' }}> {defaultData?.referral_link}</text>
                                                                     </span>
 
                                                                     {/* BUTTON: border-left added, padding adjusted */}

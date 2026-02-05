@@ -42,7 +42,8 @@ const Dashboard = () => {
             const response = await fetchData("/get-shop-details", formData);
             if (response?.status === true) {
                 // Save to Redux
-                dispatch(DefaultData(response.data));
+                console.log("getDefaultDataApi", response?.data);
+                dispatch(DefaultData(response?.data));
             } else {
                 shopify.toast.show(response?.message, { duration: 2000, isError: true, });
             }

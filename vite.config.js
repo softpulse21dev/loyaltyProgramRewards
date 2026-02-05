@@ -10,7 +10,7 @@ export default defineConfig({
   server: {
     historyApiFallback: true,
     hmr: {
-      host: "asia-sept-swim-satisfied.trycloudflare.com",
+      host: "webshots-shirts-main-conclude.trycloudflare.com",
       protocol: "wss",
     },
   },

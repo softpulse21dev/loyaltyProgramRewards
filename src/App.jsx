@@ -3,7 +3,8 @@ import { BrowserRouter, Link, useLocation } from "react-router-dom";
 import Routes from "./routes";
 import { PolarisProvider } from "./components/provider/PolarisProvider";
 import { Provider } from "react-redux";
-import store from "./redux/store";
+import { store, persistor } from "./redux/store";
+import { PersistGate } from "redux-persist/integration/react";
 import { Box } from "@shopify/polaris";
 
 function App() {
@@ -14,7 +15,9 @@ function App() {
     <>
       <BrowserRouter basename="/loyalty">
         <Provider store={store}>
-          <AppLayout pages={pages} />
+          <PersistGate loading={null} persistor={persistor}>
+            <AppLayout pages={pages} />
+          </PersistGate>
         </Provider>
       </BrowserRouter>
     </>
