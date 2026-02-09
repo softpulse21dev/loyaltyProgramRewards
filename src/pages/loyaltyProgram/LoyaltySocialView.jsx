@@ -68,6 +68,7 @@ const LoyaltySocialView = () => {
     });
     const [getdatabyID, setGetdatabyID] = useState();
     const [loading, setLoading] = useState(true);
+    const [saveLoading, setSaveLoading] = useState(false);
     const [errors, setErrors] = useState({});
     const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
     const [deleteLoading, setDeleteLoading] = useState(false);
@@ -224,22 +225,29 @@ const LoyaltySocialView = () => {
             return;
         }
 
-        // Pass fixedUrl to preparation function
-        const formattedJson = prepareDataForSave(fixedUrl);
+        setSaveLoading(true);
+        try {
+            // Pass fixedUrl to preparation function
+            const formattedJson = prepareDataForSave(fixedUrl);
 
-        const formData = new FormData();
-        formData.append("master_rule_id", rule.master_rule_id);
-        formData.append("type", rule.type);
-        formData.append("platform", rule.platform);
-        formData.append("points", earningpoints);
-        formData.append("status", status);
-        formData.append("condition_json", JSON.stringify(formattedJson));
-        const response = await fetchData("/add-merchant-earning-rules", formData);
-        if (response.status) {
-            localStorage.removeItem('loyaltyEditData');
-            navigate('/loyaltyProgram');
-        } else {
-            console.error('Add Url Error', response);
+            const formData = new FormData();
+            formData.append("master_rule_id", rule.master_rule_id);
+            formData.append("type", rule.type);
+            formData.append("platform", rule.platform);
+            formData.append("points", earningpoints);
+            formData.append("status", status);
+            formData.append("condition_json", JSON.stringify(formattedJson));
+            const response = await fetchData("/add-merchant-earning-rules", formData);
+            if (response.status) {
+                localStorage.removeItem('loyaltyEditData');
+                navigate('/loyaltyProgram');
+            } else {
+                console.error('Add Url Error', response);
+            }
+        } catch (error) {
+            console.error('Add Rule Error', error);
+        } finally {
+            setSaveLoading(false);
         }
     }
 
@@ -269,20 +277,27 @@ const LoyaltySocialView = () => {
 
     // FIX: Accepted 'fixedUrl' parameter
     const updateRuleAPI = async (ruleId, fixedUrl) => {
-        // Pass fixedUrl to preparation function
-        const formattedJson = prepareDataForSave(fixedUrl);
+        setSaveLoading(true);
+        try {
+            // Pass fixedUrl to preparation function
+            const formattedJson = prepareDataForSave(fixedUrl);
 
-        const formData = new FormData();
-        formData.append("rule_id", ruleId);
-        formData.append("points", earningpoints);
-        formData.append("status", status);
-        formData.append("condition_json", JSON.stringify(formattedJson));
-        const response = await fetchData("/update-merchant-earning-rules", formData);
-        if (response.status) {
-            localStorage.removeItem('loyaltyEditData');
-            navigate('/loyaltyProgram');
-        } else {
-            console.error('Update Url Error', response);
+            const formData = new FormData();
+            formData.append("rule_id", ruleId);
+            formData.append("points", earningpoints);
+            formData.append("status", status);
+            formData.append("condition_json", JSON.stringify(formattedJson));
+            const response = await fetchData("/update-merchant-earning-rules", formData);
+            if (response.status) {
+                localStorage.removeItem('loyaltyEditData');
+                navigate('/loyaltyProgram');
+            } else {
+                console.error('Update Url Error', response);
+            }
+        } catch (error) {
+            console.error('Update Rule Error', error);
+        } finally {
+            setSaveLoading(false);
         }
     }
 
@@ -444,7 +459,7 @@ const LoyaltySocialView = () => {
                                 <span className="slider"></span>
                             </label>
                         }
-                        primaryAction={{ content: 'Save', onAction: handleSave }}
+                        primaryAction={{ content: 'Save', onAction: handleSave, loading: saveLoading }}
                     >
                         <Layout>
                             <Layout.Section>

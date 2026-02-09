@@ -779,6 +779,7 @@ const CustomerView = () => {
                                             </BlockStack>
                                         </Card>
                                         {console.log('customerData', customerData)}
+                                        {/* vip tier change modal */}
                                         <Card>
                                             <BlockStack>
                                                 <Text variant='headingMd' as="span">VIP Tier</Text>
@@ -796,13 +797,13 @@ const CustomerView = () => {
                                                             />
                                                         )}
                                                     </Box>
-                                                    <Box style={{ display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                                                        <Text variant='headingLg' fontWeight='bold' alignment='center'>
+                                                    <Box style={{ display: 'flex', alignItems: 'center', justifyContent: 'left' }}>
+                                                        <Text variant='headingLg' fontWeight='bold' alignment='left'>
                                                             {customerData?.current_tier_info?.title}
                                                         </Text>
                                                     </Box>
                                                 </Box>
-                                                <Button
+                                                {/* <Button
                                                     variant='primary'
                                                     tone='success'
                                                     size='medium'
@@ -810,7 +811,7 @@ const CustomerView = () => {
                                                     icon={EditIcon}
                                                 >
                                                     Change Tier
-                                                </Button>
+                                                </Button> */}
                                             </BlockStack>
                                         </Card>
                                         <Card>

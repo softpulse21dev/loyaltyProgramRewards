@@ -185,6 +185,7 @@ const ProductModal = ({ open, onClose, onSave, selectedProducts }) => {
 
     const handleSave = () => {
         const groupedByProduct = {};
+        let totalPrice = 0;
 
         selectedItems.forEach(uniqueId => {
             const item = itemMap.get(uniqueId);
@@ -193,6 +194,9 @@ const ProductModal = ({ open, onClose, onSave, selectedProducts }) => {
             if (uniqueId.startsWith('variant-')) {
                 const parentId = item.parentProductId;
                 const variantId = item.variant_id || item.id;
+                if (item.price) {
+                    totalPrice += parseFloat(item.price) || 0;
+                }
 
                 if (!groupedByProduct[parentId]) {
                     const parentItem = itemMap.get(`product-${parentId}`);
@@ -208,6 +212,9 @@ const ProductModal = ({ open, onClose, onSave, selectedProducts }) => {
                 if (item.variants && item.variants.length === 1) {
                     const parentId = item.product_id;
                     const variantId = item.variants[0].variant_id || item.variants[0].id;
+                    if (item.price) {
+                        totalPrice += parseFloat(item.price) || 0;
+                    }
 
                     if (!groupedByProduct[parentId]) {
                         groupedByProduct[parentId] = {
@@ -229,7 +236,7 @@ const ProductModal = ({ open, onClose, onSave, selectedProducts }) => {
         }));
 
         console.log('Final Formatted Data:', formattedSelection);
-        onSave(formattedSelection);
+        onSave(formattedSelection, totalPrice.toFixed(2));
         onClose();
     };
 

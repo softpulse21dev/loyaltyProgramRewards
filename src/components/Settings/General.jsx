@@ -168,11 +168,11 @@ const General = ({ settingsData, setSettingsData, errors, clearError }) => {
         const ordinalSuffix = getOrdinalSuffix(day);
         const options = [
             {
-                value: "F dS Y",
+                value: "F d, Y",
                 format: `${date.toLocaleDateString("en-US", { month: "long" })} ${day}${ordinalSuffix}, ${date.getFullYear()}`,
             },
             {
-                value: "M dS Y",
+                value: "M dS, Y",
                 format: `${date.toLocaleDateString("en-US", { month: "short" })} ${day}${ordinalSuffix}, ${date.getFullYear()}`,
             },
             {

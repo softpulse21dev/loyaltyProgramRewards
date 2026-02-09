@@ -161,25 +161,32 @@ const VipTier = ({ entryMethod, tierProgressExpiry, setEntryMethod, setTierProgr
                             </Text>
                             <BlockStack >
                                 <RadioButton
-                                    label="Points Earned"
+                                    label="Lifetime Points Earned"
                                     checked={entryMethod == 1}
-                                    id="points-earned"
+                                    id="lifetime-points-earned"
                                     name="entry-method"
                                     onChange={() => setEntryMethod(1)}
                                 />
                                 <RadioButton
-                                    label="Orders Placed"
+                                    label="Total Orders Placed"
                                     checked={entryMethod == 2}
-                                    id="orders-placed"
+                                    id="total-orders-placed"
                                     name="entry-method"
                                     onChange={() => setEntryMethod(2)}
                                 />
                                 <RadioButton
-                                    label="Amount Spent"
+                                    label="Lifetime Amount Spent"
                                     checked={entryMethod == 3}
-                                    id="amount-spent"
+                                    id="lifetime-amount-spent"
                                     name="entry-method"
                                     onChange={() => setEntryMethod(3)}
+                                />
+                                <RadioButton
+                                    label="Lifetime Points Redeemed"
+                                    checked={entryMethod == 4}
+                                    id="lifettime-points-redeemed"
+                                    name="entry-method"
+                                    onChange={() => setEntryMethod(4)}
                                 />
                             </BlockStack>
                         </Box>
@@ -187,11 +194,11 @@ const VipTier = ({ entryMethod, tierProgressExpiry, setEntryMethod, setTierProgr
 
                     <Card>
                         <Box>
-                            <Text variant="headingMd">Tier Progress Expiry</Text>
+                            <Text variant="headingMd">Vip Tier Coupon Expiry</Text>
                         </Box>
                         <Box style={{ paddingTop: "10px" }}>
-                            <Text>A customer has a Lifetime to successfully achieve a VIP tier.</Text>
-                            <Text>Set how long you will allow customers to take to achieve a VIP Tier:</Text>
+                            <Text>Define how long VIP tier coupons remain valid after being issued.</Text>
+                            <Text>Choose how long VIP tier coupons are valid after being issued.</Text>
                             <BlockStack >
                                 <RadioButton
                                     label="A lifetime, once they are a loyalty program member"

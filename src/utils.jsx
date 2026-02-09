@@ -217,9 +217,13 @@ export const SingleLeadingZero = (value) => {
 };
 
 export const sanitizeNumberWithDecimal = (value) => {
-    if (!value) return "";
+    if (!value && value !== 0) return "";
+    // Convert to string if it's a number
+    const stringValue = typeof value === 'number' ? String(value) : value;
+    if (typeof stringValue !== 'string') return "";
+    
     // Remove everything except digits and dot
-    let sanitized = value.replace(/[^0-9.]/g, '');
+    let sanitized = stringValue.replace(/[^0-9.]/g, '');
     // Allow only one dot
     const parts = sanitized.split('.');
     if (parts.length > 2) {

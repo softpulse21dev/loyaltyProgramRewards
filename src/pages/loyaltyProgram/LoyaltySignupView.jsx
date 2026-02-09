@@ -48,6 +48,7 @@ const LoyaltySignupView = () => {
 
     const [earningpoints, setEarningpoints] = useState(1);
     const [earningPointsError, setEarningPointsError] = useState("");
+    const [saveLoading, setSaveLoading] = useState(false);
 
     const [pageTitle, setPageTitle] = useState("Sign Up");
     const [status, setStatus] = useState("false");
@@ -88,37 +89,51 @@ const LoyaltySignupView = () => {
             shopify.toast.show('Rule data is missing. Please refresh the page.', { duration: 2000, isError: true });
             return;
         }
-        const formData = new FormData();
-        formData.append("master_rule_id", rule.master_rule_id);
-        formData.append("type", rule.type);
-        formData.append("points", earningpoints);
-        formData.append("status", status);
-        // formData.append("condition_json", JSON.stringify(conditionalJson));
-        const response = await fetchData("/add-merchant-earning-rules", formData);
-        console.log('Add Rule Response', response);
-        if (response.status) {
-            // Clear localStorage on successful save
-            localStorage.removeItem('loyaltyEditData');
-            navigate('/loyaltyProgram');
-        } else {
-            console.error('Add Url Error', response);
+        setSaveLoading(true);
+        try {
+            const formData = new FormData();
+            formData.append("master_rule_id", rule.master_rule_id);
+            formData.append("type", rule.type);
+            formData.append("points", earningpoints);
+            formData.append("status", status);
+            // formData.append("condition_json", JSON.stringify(conditionalJson));
+            const response = await fetchData("/add-merchant-earning-rules", formData);
+            console.log('Add Rule Response', response);
+            if (response.status) {
+                // Clear localStorage on successful save
+                localStorage.removeItem('loyaltyEditData');
+                navigate('/loyaltyProgram');
+            } else {
+                console.error('Add Url Error', response);
+            }
+        } catch (error) {
+            console.error('Add Url Error', error);
+        } finally {
+            setSaveLoading(false);
         }
     }
 
     const updateRuleAPI = async (ruleId) => {
-        const formData = new FormData();
-        formData.append("rule_id", ruleId);
-        formData.append("points", earningpoints);
-        formData.append("status", status);
-        formData.append("condition_json", JSON.stringify(conditionalJson));
-        const response = await fetchData("/update-merchant-earning-rules", formData);
-        console.log('Update Rule By Id Response', response);
-        if (response.status) {
-            // Clear localStorage on successful update
-            localStorage.removeItem('loyaltyEditData');
-            navigate('/loyaltyProgram');
-        } else {
-            console.error('Update Url Error', response);
+        setSaveLoading(true);
+        try {
+            const formData = new FormData();
+            formData.append("rule_id", ruleId);
+            formData.append("points", earningpoints);
+            formData.append("status", status);
+            formData.append("condition_json", JSON.stringify(conditionalJson));
+            const response = await fetchData("/update-merchant-earning-rules", formData);
+            console.log('Update Rule By Id Response', response);
+            if (response.status) {
+                // Clear localStorage on successful update
+                localStorage.removeItem('loyaltyEditData');
+                navigate('/loyaltyProgram');
+            } else {
+                console.error('Update Url Error', response);
+            }
+        } catch (err) {
+            console.error('Update Url Error', err);
+        } finally {
+            setSaveLoading(false);
         }
     };
 
@@ -344,7 +359,7 @@ const LoyaltySignupView = () => {
                                 </Badge>
                             </Box>
                         }
-                        primaryAction={{ content: edit ? "Update" : "Save", onAction: handleSave }}
+                        primaryAction={{ content: edit ? "Update" : "Save", loading: saveLoading, onAction: handleSave }}
                         secondaryActions={
                             edit ? (
                                 (getdatabyID?.default_rules === '0') ? (

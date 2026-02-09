@@ -7,7 +7,7 @@ import { fetchData } from '../../action';
 import ProductModal from '../../components/ProductModal';
 import { useDispatch, useSelector } from 'react-redux';
 import { addData, DeleteData, UpdateData } from '../../redux/action';
-import { NoLeadingZero, SingleLeadingZero } from '../../utils';
+import { NoLeadingZero, sanitizeNumberWithDecimal, SingleLeadingZero } from '../../utils';
 import ConfirmationModal from '../../components/ConfirmationModal';
 
 const CouponPage = () => {
@@ -53,6 +53,7 @@ const CouponPage = () => {
     const [ruleType, setRuleType] = useState('');
     const [clientId, setClientId] = useState(null);
     const [validationError, setValidationError] = useState();
+    const [totalProductPrice, setTotalProductPrice] = useState(0);
     const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
     const Data = useSelector((state) => state.merchantSettings.Data);
     const dispatch = useDispatch();
@@ -394,6 +395,9 @@ const CouponPage = () => {
         if (settings_json.reward_value === '' || settings_json.reward_value === null || Number(settings_json.reward_value) <= 0) {
             newErrors.rewardValue = "Discount value must be a number greater than 0";
             isError = true;
+        } else if (rule?.type === "free_product" && totalProductPrice > 0 && Number(settings_json.reward_value) < totalProductPrice) {
+            newErrors.rewardValue = `Discount value cannot be less than the total product price (₹${totalProductPrice.toFixed(2)})`;
+            isError = true;
         }
 
         if (showPointsSystem && settings_json?.points_type === 'multiplier') {
@@ -666,18 +670,18 @@ const CouponPage = () => {
                                                                                                 (isPercentage && !value.includes('.') && floatValue >= 1 && floatValue <= 100) ||
                                                                                                 (!isPercentage && floatValue >= 1)
                                                                                             ) {
-                                                                                                setSettingsJson({ ...settings_json, reward_value: NoLeadingZero(value) });
+                                                                                                setSettingsJson({ ...settings_json, reward_value: sanitizeNumberWithDecimal(value) });
                                                                                                 setValidationError({ ...validationError, rewardValue: '' });
                                                                                             }
                                                                                         }}
-                                                                                        error={validationError?.rewardValue}
+                                                                                        error={validationError?.rewardValue ? validationError?.rewardValue : undefined}
                                                                                         autoComplete="off"
                                                                                     />
                                                                                 )}
                                                                             </FormLayout.Group>
                                                                         </FormLayout>
                                                                         {rule?.type !== "free_shipping" && showPointsSystem && (
-                                                                            <Text variant='bodyMd' tone='subdued'>Based on your cost per point, {pointsAmount} points is equal to Rs. {settings_json.reward_value}</Text>
+                                                                            <Text variant='bodyMd' tone='subdued'>Based on your cost per point, {pointsAmount} points is equal to {sanitizeNumberWithDecimal(settings_json?.reward_value)} % off</Text>
                                                                         )}
                                                                     </>
                                                                 )}
@@ -712,7 +716,7 @@ const CouponPage = () => {
                                                                                 />
                                                                             </FormLayout.Group>
                                                                         </FormLayout>
-                                                                        <Text variant='bodyMd' tone='subdued'>Based on your cost per point, {pointsAmount} points is equal to Rs. {settings_json.reward_value}</Text>
+                                                                        <Text variant='bodyMd' tone='subdued'>Based on your cost per point, {pointsAmount} points is equal asdsdo Rs. {settings_json.reward_value}</Text>
 
                                                                         <Checkbox
                                                                             label="Set a minimum amount of points required to redeem this reward"
@@ -1031,12 +1035,18 @@ const CouponPage = () => {
                             open={productModalOpen}
                             onClose={() => setProductModalOpen(false)}
                             selectedProducts={settings_json?.products}
-                            onSave={(selected) => {
+                            onSave={(selected, totalPrice) => {
                                 console.log('selected product12', selected)
+                                const numericTotal = parseFloat(totalPrice) || 0;
+                                setTotalProductPrice(numericTotal);
                                 setSettingsJson({
                                     ...settings_json,
                                     products: selected,
-                                })
+                                    reward_value: numericTotal > 0 ? String(numericTotal) : settings_json.reward_value
+                                });
+                                if (numericTotal > 0) {
+                                    setValidationError(prev => ({ ...prev, rewardValue: '' }));
+                                }
                             }}
                         />
 

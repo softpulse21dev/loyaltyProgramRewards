@@ -1,0 +1,464 @@
+{
+    "general": {
+        "styles": {
+            "accent": {
+                "link_color": "#000000",
+                "icons_color": "#0042d1",
+                "button_color": "#22C55E",
+                "button_radius": 28,
+                "button_text_color": "#000000"
+            },
+            "header": {
+                "solid": "#3c5e89",
+                "gradient": {
+                    "color1": "#ec3ee0",
+                    "color2": "#0021dc"
+                },
+                "text_color": "#ffffff",
+                "header_type": "gradient",
+                "header_image": "",
+                "header_bar_color": "#000000",
+                "header_bar_text_color": "#ec7a7a"
+            },
+            "content": {
+                "solid": "#F8FAFC",
+                "text_color": "#0F172A",
+                "content_image": "https://cdn.shopify.com/s/files/1/0632/8529/7214/files/DotBypasser-Hit-2025-12-26_10-45-20_1308de6b-5d97-4b67-a006-1ff3233055c3.png?v=1770199722",
+                "heading_color": "#f60808",
+                "background_type": "solid"
+            },
+            "position": "right",
+            "presentation": "popup",
+            "in_active_plan": true
+        },
+        "advanced": {
+            "box": {
+                "border_color": "#000000",
+                "background_color": "#fcbcbc"
+            },
+            "card": {
+                "border_color": "#e5e5e5",
+                "border_width": 3,
+                "border_radius": 12,
+                "background_color": "#FFFFFF"
+            },
+            "input": {
+                "input_color": "#e9e9e9",
+                "input_border_color": "#e0e0e0",
+                "input_border_radius": 9
+            },
+            "section": {
+                "border_radius": 11,
+                "background_color": "#f3faff",
+                "card_border_color": "#ffffff",
+                "card_border_width": 1,
+                "progress_bar_fill": "#383838",
+                "progress_bar_background": "#d7a9a9"
+            },
+            "in_active_plan": true
+        }
+    },
+    "launcher": {
+        "layout": {
+            "icon": 3,
+            "title": "Rewards",
+            "position": "bubble_left"
+        },
+        "appearance": {
+            "solid": "#3c56e9",
+            "gradient": {
+                "color1": "#3c56e9",
+                "color2": "#2035a7"
+            },
+            "text_color": "#ffffff",
+            "side_spacing": 30,
+            "border_radius": 12,
+            "bottom_spacing": 30,
+            "background_type": "solid"
+        },
+        "accessibility": {
+            "visible_on": "all"
+        },
+        "in_active_plan": true
+    },
+    "is_enabled": true,
+    "storefront_app": {
+        "header": {
+            "header_text": "Close to the Sun",
+            "balance_text": "Your balance",
+            "header_content": "Earn points, save, and unlock exclusive perks",
+            "in_active_plan": true,
+            "header_bar_text": "Welcome !",
+            "history_button_text": "History"
+        },
+        "points_card": {
+            "title": "Earn Points",
+            "message": "Earn points and turn these into rewards!",
+            "my_rewards": "My Rewards",
+            "in_active_plan": true,
+            "ways_to_earn_text": "Ways to earn",
+            "ways_to_redeem_text": "Ways to redeem"
+        },
+        "referrals_card": {
+            "title": "Referral Program",
+            "message": "Refer a friend who makes a purchase and both of you will claim perks!",
+            "link_title": "Referral Link",
+            "referee_text": "Your friend gets",
+            "referee_title": "Referee get",
+            "referrer_text": "You get",
+            "in_active_plan": true,
+            "referrer_title": "Referrer get",
+            "my_discount_text": "Disc",
+            "referee_reward_text": "{reward_title}",
+            "referrer_reward_text": "{reward_title}"
+        },
+        "vip_tiers_card": {
+            "title": "VIP Tiers",
+            "message": "Gain access to exclusive rewards.",
+            "all_tiers": {
+                "title": "All tiers",
+                "benefits": "Benefits",
+                "earn_points": "Earn {points} points",
+                "multiplier_text": "{ tier_multiplier }x points multiplier"
+            },
+            "button_text": "Join now",
+            "customer_tier": {
+                "max_tier": "You achieved the highest tier",
+                "next_tier": "points left to reach",
+                "current_tier": "Current Tier"
+            },
+            "in_active_plan": true
+        },
+        "new_member_card": {
+            "translations": {
+                "title": "Join and Earn Rewardss",
+                "message": "Unlock exciting perks, this is your all access to exclusive rewards",
+                "signin_msg": "Already have an account?",
+                "button_text": "Start Earning",
+                "signin_text": "Sign in"
+            },
+            "image_position": "full-width",
+            "in_active_plan": true,
+            "new_member_image": ""
+        },
+        "customer_reward_card": {
+            "claim_text": "Claim",
+            "next_reward": "Next reward",
+            "current_reward": "Next reward",
+            "in_active_plan": true,
+            "rewards_available": "You have {count} rewards available"
+        }
+    }
+}
+
+
+
+// dark premium look widget json
+{
+    "general": {
+        "styles": {
+            "accent": {
+                "link_color": "#ffffff",
+                "icons_color": "#F59E0B",
+                "button_color": "#D97706",
+                "button_radius": 17,
+                "button_text_color": "#111827"
+            },
+            "header": {
+                "solid": "#3c5e89",
+                "gradient": {
+                    "color1": "#D97706",
+                    "color2": "#c08e53"
+                },
+                "text_color": "#ffffff",
+                "header_type": "gradient",
+                "header_image": "",
+                "header_bar_color": "#000000",
+                "header_bar_text_color": "#E0E0E0"
+            },
+            "content": {
+                "solid": "#1E1E1E",
+                "text_color": "#A1A1AA",
+                "content_image": "https://cdn.shopify.com/s/files/1/0632/8529/7214/files/DotBypasser-Hit-2025-12-26_10-45-20_1308de6b-5d97-4b67-a006-1ff3233055c3.png?v=1770199722",
+                "heading_color": "#FFFFFF",
+                "background_type": "solid"
+            },
+            "position": "right",
+            "presentation": "popup",
+            "in_active_plan": true
+        },
+        "advanced": {
+            "box": {
+                "border_color": "#000000",
+                "background_color": "#2D2D2D"
+            },
+            "card": {
+                "border_color": "#e5e5e5",
+                "border_width": 1,
+                "border_radius": 15,
+                "background_color": "#2b2b2b"
+            },
+            "input": {
+                "input_color": "#e9e9e9",
+                "input_border_color": "#e0e0e0",
+                "input_border_radius": 9
+            },
+            "section": {
+                "border_radius": 11,
+                "background_color": "#515151",
+                "card_border_color": "#ffffff",
+                "card_border_width": 0,
+                "progress_bar_fill": "#383838",
+                "progress_bar_background": "#d7a9a9"
+            },
+            "in_active_plan": true
+        }
+    },
+    "launcher": {
+        "layout": {
+            "icon": 3,
+            "title": "Rewards",
+            "position": "bubble_left"
+        },
+        "appearance": {
+            "solid": "#3c56e9",
+            "gradient": {
+                "color1": "#3c56e9",
+                "color2": "#2035a7"
+            },
+            "text_color": "#ffffff",
+            "side_spacing": 30,
+            "border_radius": 12,
+            "bottom_spacing": 30,
+            "background_type": "solid"
+        },
+        "accessibility": {
+            "visible_on": "all"
+        },
+        "in_active_plan": true
+    },
+    "is_enabled": true,
+    "storefront_app": {
+        "header": {
+            "header_text": "Close to the Sun",
+            "balance_text": "Your balance",
+            "header_content": "Earn points, save, and unlock exclusive perks",
+            "in_active_plan": true,
+            "header_bar_text": "Welcome !",
+            "history_button_text": "History"
+        },
+        "points_card": {
+            "title": "Earn Points",
+            "message": "Earn points and turn these into rewards!",
+            "my_rewards": "My Rewards",
+            "in_active_plan": true,
+            "ways_to_earn_text": "Ways to earn",
+            "ways_to_redeem_text": "Ways to redeem"
+        },
+        "referrals_card": {
+            "title": "Referral Program",
+            "message": "Refer a friend who makes a purchase and both of you will claim perks!",
+            "link_title": "Referral Link",
+            "referee_text": "Your friend gets",
+            "referee_title": "Referee get",
+            "referrer_text": "You get",
+            "in_active_plan": true,
+            "referrer_title": "Referrer get",
+            "my_discount_text": "Disc",
+            "referee_reward_text": "{reward_title}",
+            "referrer_reward_text": "{reward_title}"
+        },
+        "vip_tiers_card": {
+            "title": "VIP Tiers",
+            "message": "Gain access to exclusive rewards.",
+            "all_tiers": {
+                "title": "All tiers",
+                "benefits": "Benefits",
+                "earn_points": "Earn {points} points",
+                "multiplier_text": "{ tier_multiplier }x points multiplier"
+            },
+            "button_text": "Join now",
+            "customer_tier": {
+                "max_tier": "You achieved the highest tier",
+                "next_tier": "points left to reach",
+                "current_tier": "Current Tier"
+            },
+            "in_active_plan": true
+        },
+        "new_member_card": {
+            "translations": {
+                "title": "Join and Earn Rewardss",
+                "message": "Unlock exciting perks, this is your all access to exclusive rewards",
+                "signin_msg": "Already have an account?",
+                "button_text": "Start Earning",
+                "signin_text": "Sign in"
+            },
+            "image_position": "full-width",
+            "in_active_plan": true,
+            "new_member_image": ""
+        },
+        "customer_reward_card": {
+            "claim_text": "Claim",
+            "next_reward": "Next reward",
+            "current_reward": "Next reward",
+            "in_active_plan": true,
+            "rewards_available": "You have {count} rewards available"
+        }
+    }
+}
+
+
+
+
+// blue-white color solid background 
+{
+    "general": {
+        "styles": {
+            "presentation": "popup",
+            "position": "right",
+            "header": {
+                "header_type": "solid",
+                "solid": "#3c5e89",
+                "gradient": {
+                    "color1": "#3c56e9",
+                    "color2": "#2035a7"
+                },
+                "header_image": "",
+                "header_bar_color": "#000000",
+                "header_bar_text_color": "#ffffff",
+                "text_color": "#ffffff"
+            },
+            "content": {
+                "background_type": "solid",
+                "solid": "#3c5e89",
+                "content_image": "",
+                "heading_color": "#1a1a1a",
+                "text_color": "#555555"
+            },
+            "accent": {
+                "button_text_color": "#ffffff",
+                "button_color": "#222222",
+                "button_radius": 30,
+                "link_color": "#000000",
+                "icons_color": "#3c5e89"
+            },
+            "in_active_plan": true
+        },
+        "advanced": {
+            "box": {
+                "background_color": "#ffffff",
+                "border_color": "#e5e5e5"
+            },
+            "section": {
+                "background_color": "#ffffff",
+                "card_border_color": "#e5e5e5",
+                "card_border_width": 1,
+                "border_radius": 20,
+                "progress_bar_fill": "#000000",
+                "progress_bar_background": "#e5e5e5"
+            },
+            "card": {
+                "background_color": "#ffffff",
+                "border_color": "#e5e5e5",
+                "border_width": 1,
+                "border_radius": 20
+            },
+            "input": {
+                "input_color": "#dddddd",
+                "input_border_radius": 8,
+                "input_border_color": ""
+            },
+            "in_active_plan": true
+        }
+    },
+    "storefront_app": {
+        "header": {
+            "header_bar_text": "Welcome !",
+            "header_text": "Close to the Sun",
+            "balance_text": "Your balance",
+            "header_content": "Earn points, save, and unlock exclusive perks",
+            "in_active_plan": true,
+            "history_button_text": ""
+        },
+        "new_member_card": {
+            "new_member_image": "",
+            "image_position": "full-width",
+            "translations": {
+                "title": "Join and Earn Rewards",
+                "message": "Unlock exciting perks, this is your all access to exclusive rewards",
+                "button_text": "Start Earning",
+                "signin_msg": "Already have an account?",
+                "signin_text": "Sign in"
+            },
+            "in_active_plan": true
+        },
+        "points_card": {
+            "title": "Earn points",
+            "message": "Earn points and turn these into rewards!",
+            "ways_to_earn_text": "Ways to earn",
+            "ways_to_redeem_text": "Ways to redeem",
+            "my_rewards": "My Rewards",
+            "in_active_plan": true
+        },
+        "referrals_card": {
+            "title": "Referral Program",
+            "message": "Refer a friend who makes a purchase and both of you will claim perks!",
+            "my_discount_text": "",
+            "referrer_text": "You get",
+            "referrer_reward_text": "{reward_title}",
+            "referee_text": "Your friend gets",
+            "referee_reward_text": "{reward_title}",
+            "in_active_plan": true,
+            "link_title": "",
+            "referrer_title": "",
+            "referee_title": ""
+        },
+        "vip_tiers_card": {
+            "title": "VIP Tiers",
+            "message": "Gain access to exclusive rewards.",
+            "button_text": "Join now",
+            "customer_tier": {
+                "current_tier": "Current Tier",
+                "next_tier": "points left to reach",
+                "max_tier": "You achieved the highest tier"
+            },
+            "all_tiers": {
+                "title": "All tiers",
+                "multiplier_text": "{ tier_multiplier }x points multiplier",
+                "earn_points": "Earn {points} points",
+                "benefits": "Benefits"
+            },
+            "in_active_plan": true
+        },
+        "customer_reward_card": {
+            "current_reward": "Next reward",
+            "next_reward": "Next reward",
+            "rewards_available": "You have {count} rewards available",
+            "claim_text": "Claim",
+            "in_active_plan": true
+        }
+    },
+    "launcher": {
+        "layout": {
+            "position": "bubble_left",
+            "icon": 1,
+            "title": "Rewards"
+        },
+        "appearance": {
+            "text_color": "#ffffff",
+            "background_type": "solid",
+            "solid": "#3c56e9",
+            "gradient": {
+                "color1": "#3c56e9",
+                "color2": "#2035a7"
+            },
+            "border_radius": 12,
+            "side_spacing": 30,
+            "bottom_spacing": 30
+        },
+        "accessibility": {
+            "visible_on": "all"
+        },
+        "in_active_plan": true
+    }
+}

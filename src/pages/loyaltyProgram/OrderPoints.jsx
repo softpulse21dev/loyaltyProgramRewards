@@ -8,6 +8,7 @@ const OrderPoints = () => {
     const navigate = useNavigate();
     const location = useLocation();
     const [loading, setLoading] = useState(false);
+    const [saveLoading, setSaveLoading] = useState(false);
     const { rule: locationRule, edit: locationEdit } = location.state || {};
 
     // Safely parse localStorage data
@@ -122,25 +123,32 @@ const OrderPoints = () => {
             return;
         }
 
-        const formData = new FormData();
-        formData.append("rule_id", idToUse);
-        formData.append("master_rule_id", masterRuleIdToUse);
-        formData.append("points", earningPoints || 0);
-        formData.append("status", status);
-        const conditionalData = {
-            order_earning_method: orderPointsMethod,
-            order_spent: moneySpent,
-        };
-        formData.append("condition_json", JSON.stringify(conditionalData));
+        setSaveLoading(true);
+        try {
+            const formData = new FormData();
+            formData.append("rule_id", idToUse);
+            formData.append("master_rule_id", masterRuleIdToUse);
+            formData.append("points", earningPoints || 0);
+            formData.append("status", status);
+            const conditionalData = {
+                order_earning_method: orderPointsMethod,
+                order_spent: moneySpent,
+            };
+            formData.append("condition_json", JSON.stringify(conditionalData));
 
-        const response = await fetchData("/update-merchant-earning-rules", formData);
-        if (response?.status) {
-            // Clear localStorage on successful update
-            localStorage.removeItem('loyaltyEditData');
-            navigate('/loyaltyProgram');
-            shopify.toast.show(response?.message, { duration: 2000 });
-        } else {
-            shopify.toast.show(response?.message, { duration: 2000, isError: true });
+            const response = await fetchData("/update-merchant-earning-rules", formData);
+            if (response?.status) {
+                // Clear localStorage on successful update
+                localStorage.removeItem('loyaltyEditData');
+                navigate('/loyaltyProgram');
+                shopify.toast.show(response?.message, { duration: 2000 });
+            } else {
+                shopify.toast.show(response?.message, { duration: 2000, isError: true });
+            }
+        } catch (error) {
+            console.error('Update Rule By Id Error', error);
+        } finally {
+            setSaveLoading(false);
         }
     };
 
@@ -191,6 +199,7 @@ const OrderPoints = () => {
                     }
                     primaryAction={{
                         content: edit ? "Update" : "Save",
+                        loading: saveLoading,
                         onAction: handleUpdateRuleAPI
                     }}
                     secondaryActions={

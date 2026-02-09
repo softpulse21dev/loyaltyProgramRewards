@@ -10,7 +10,7 @@ export default defineConfig({
   server: {
     historyApiFallback: true,
     hmr: {
-      host: "webshots-shirts-main-conclude.trycloudflare.com",
+      host: "player-happened-guided-dicke.trycloudflare.com",
       protocol: "wss",
     },
   },
