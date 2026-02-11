@@ -4,6 +4,7 @@ import React, { useRef, useEffect } from 'react'
 import '../../../widget.css';
 import ColorPickerInput from '../../../components/ColorPickerInput';
 import { AsterikIcon, BadgeIcon, CrownIcon, DollarIcon, FlowerIcon, GemIcon, GiftIcon, HeartIcon, HoldingHeartIcon, KiteIcon, OctogramIcon, StarIcon, TulipFlowerIcon } from '../../../assets/svg/svg';
+import { LimitText } from '../../../utils';
 
 const iconList = [
     { id: 1, name: 'Asterik', icon: <AsterikIcon /> },
@@ -98,9 +99,10 @@ const Launcher = ({ widgetData, setWidgetData, errors = {}, clearError }) => {
     };
 
     return (
-        <Card>
-            <Grid columns={{ xs: 6, sm: 6, md: 12, lg: 12, xl: 12 }}>
-                <Grid.Cell columnSpan={{ xs: 6, sm: 6, md: 6, lg: 6, xl: 6 }}>
+        <Box style={{ display: 'flex', flexDirection: 'row', gap: '10px', width: '100%' }}>
+
+            <Box style={{ width: '50%', }}>
+                <Card>
                     <Box style={{ marginBottom: '15px' }}>
                         <Text as="h1" variant="headingMd" >Layout</Text>
                     </Box>
@@ -177,7 +179,7 @@ const Launcher = ({ widgetData, setWidgetData, errors = {}, clearError }) => {
                         <TextField
                             label="Title"
                             value={title}
-                            onChange={(value) => handleFieldChange('launcher.layout.title', value, (v) => setWidgetData({ ...widgetData, launcher: { ...launcherData, layout: { ...launcherData.layout, title: v } } }))}
+                            onChange={(value) => handleFieldChange('launcher.layout.title', value, (v) => setWidgetData({ ...widgetData, launcher: { ...launcherData, layout: { ...launcherData.layout, title: LimitText(v, 22) } } }))}
                             error={getErrorMessage('launcher.layout.title') ? true : null}
                         />
 
@@ -295,11 +297,14 @@ const Launcher = ({ widgetData, setWidgetData, errors = {}, clearError }) => {
                         </Box>
 
                     </BlockStack>
-                </Grid.Cell>
+                </Card>
+            </Box>
 
-
-                <Grid.Cell columnSpan={{ xs: 6, sm: 6, md: 6, lg: 6, xl: 6 }}>
-
+            <Box style={{ width: '50%', position: 'sticky', top: '20px', alignSelf: 'flex-start' }}>
+                <Card>
+                    <Box style={{ marginBottom: '10px' }}>
+                        <Text as="h1" variant='headingMd'>Preview</Text>
+                    </Box>
                     <div style={{ position: 'sticky', top: '20px' }}>
 
                         {/* --- PREVIEW CONTAINER WRAPPER --- */}
@@ -492,9 +497,9 @@ const Launcher = ({ widgetData, setWidgetData, errors = {}, clearError }) => {
                             </Text>
                         </div>
                     </div>
-                </Grid.Cell>
-            </Grid>
-        </Card >
+                </Card>
+            </Box>
+        </Box>
     )
 }
 

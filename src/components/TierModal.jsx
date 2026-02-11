@@ -37,7 +37,7 @@ const TierModal = ({ open, onClose, tiers, selectedTier, onSave, isLoading }) =>
             <Modal.Section>
                 <BlockStack gap={200}>
                     <Select
-                        label="New VIP tier"
+                        label="New Reward tier"
                         helpText="Customers can only be placed into higher tiers."
                         options={tiers?.map(tier => ({
                             label: tier.content,

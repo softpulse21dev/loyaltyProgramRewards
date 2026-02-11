@@ -221,7 +221,7 @@ export const sanitizeNumberWithDecimal = (value) => {
     // Convert to string if it's a number
     const stringValue = typeof value === 'number' ? String(value) : value;
     if (typeof stringValue !== 'string') return "";
-    
+
     // Remove everything except digits and dot
     let sanitized = stringValue.replace(/[^0-9.]/g, '');
     // Allow only one dot
@@ -239,7 +239,6 @@ export const sanitizeNumberWithDecimal = (value) => {
     return sanitized;
 };
 
-
 export const FormatAddress = (...parts) => {
     return parts.filter(Boolean).join(', ');
 };
@@ -255,5 +254,15 @@ export function FormatPlaceholder(input) {
     );
 }
 
+export function LimitText(text, maxLength) {
+    if (!text) return "";
 
+    const singleSpacedText = text.replace(/\s+/g, " ");
+    return singleSpacedText.slice(0, maxLength);
+}
+
+
+export function LimitStaticText(text, maxLength) {
+    return text.length > maxLength ? text.slice(0, maxLength) + '...' : text;
+}
 // https://docs.google.com/document/d/11SHYSidCKFvxceiOE4-DTzvc3UthlGxb2JsLCY6i5rc/edit?hl=en-GB&forcehl=1&tab=t.sxv4ttgt6n4c

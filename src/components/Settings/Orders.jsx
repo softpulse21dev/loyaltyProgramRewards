@@ -145,7 +145,7 @@ const Orders = ({ settingsData, setSettingsData }) => {
                             onChange={(value) => setSettingsData([{ ...settingsData[0], discount_code_prefixes: { ...settingsData[0].discount_code_prefixes, loyalty_prefix: cleanStrictWhitespace(value) } }])}
                         />
                         <TextField
-                            label="VIP Tier Reward Prefix"
+                            label="Reward tier Reward Prefix"
                             helpText="This is the prefix for all VIP reward discount codes. Leave blank to use the global prefix"
                             value={vipTierRewardPrefix}
                             onChange={(value) => setSettingsData([{ ...settingsData[0], discount_code_prefixes: { ...settingsData[0].discount_code_prefixes, vip_prefix: cleanStrictWhitespace(value) } }])}

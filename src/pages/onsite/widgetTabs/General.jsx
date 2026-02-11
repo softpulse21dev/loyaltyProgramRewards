@@ -101,12 +101,12 @@ const General = ({ widgetData, setWidgetData, errors = {}, clearError, openColla
     const refereeTitle = storefrontData?.referrals_card?.referee_title;
     const referralCardLinkTitle = storefrontData?.referrals_card?.link_title;
     const referralCardMyDiscountText = storefrontData?.referrals_card?.my_discount_text;
-    const vipTierCardTitle = storefrontData?.vip_tiers_card?.title;
-    const vipTierCardMessage = storefrontData?.vip_tiers_card?.message;
-    const vipTierCardCurrentTier = storefrontData?.vip_tiers_card?.customer_tier?.current_tier;
-    const vipTierCardNextTier = storefrontData?.vip_tiers_card?.customer_tier?.next_tier;
-    const vipTierCardMaxTierReached = storefrontData?.vip_tiers_card?.customer_tier?.max_tier;
-    const vipTierCardAllTier = storefrontData?.vip_tiers_card?.all_tiers?.title;
+    const vipTierCardTitle = storefrontData?.reward_tiers_card?.title;
+    const vipTierCardMessage = storefrontData?.reward_tiers_card?.message;
+    const vipTierCardCurrentTier = storefrontData?.reward_tiers_card?.customer_tier?.current_tier;
+    const vipTierCardNextTier = storefrontData?.reward_tiers_card?.customer_tier?.next_tier;
+    const vipTierCardMaxTierReached = storefrontData?.reward_tiers_card?.customer_tier?.max_tier;
+    const vipTierCardAllTier = storefrontData?.reward_tiers_card?.all_tiers?.title;
 
     // Memoize object URLs to prevent recreation on every render
     const headerImageUrl = useMemo(() => {
@@ -201,11 +201,11 @@ const General = ({ widgetData, setWidgetData, errors = {}, clearError, openColla
     }, [contentBackgroundColorType, backgroundColor, backgroundImageUrl]);
 
     return (
-        <Card>
+        // <Card>
+        <Box style={{ }}>
             {loading ? (<SkeletonBodyText lines={1} />) : (
                 <>
-                    <Box style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                        <Text as="h1" variant='headingMd'>Preview</Text>
+                    <Box style={{ display: 'flex', justifyContent: 'end', alignItems: 'center' }}>
 
                         {/* --- SEGMENTED BUTTON GROUP --- */}
                         <ButtonGroup variant="segmented">
@@ -224,11 +224,9 @@ const General = ({ widgetData, setWidgetData, errors = {}, clearError, openColla
                         </ButtonGroup>
                     </Box>
 
-                    <Box style={{ marginTop: '1rem' }}>
-                        <Grid columns={{ xs: 6, sm: 6, md: 7, lg: 12, xl: 12 }}>
-                            <Grid.Cell columnSpan={{ xs: 6, sm: 6, md: 3, lg: 5, xl: 5 }}>
-
-
+                    <Box style={{ marginTop: '1rem', display: 'flex', flexDirection: 'row', width: '100%', gap: '10px' }}>
+                        <Box style={{ width: '50%', }}>
+                            <Card>
                                 <div className="accordian-title" style={{ backgroundColor: '#f0f0f0', padding: '5px 10px', borderRadius: '5px', marginBottom: '5px' }}>
                                     <Button
                                         variant="monochromePlain"
@@ -253,37 +251,37 @@ const General = ({ widgetData, setWidgetData, errors = {}, clearError, openColla
                                         {/* presentation options */}
 
                                         {/* <BlockStack gap="200">
-                                            <Text variant="bodyLg" fontWeight='semibold'>Presentation</Text>
-                                            <Box style={{ display: 'flex', flexDirection: 'column', }}>
-                                                <RadioButton
-                                                    label="Popup"
-                                                    checked={widgetData?.general?.styles?.presentation === 'popup'}
-                                                    onChange={() => setWidgetData({ ...widgetData, general: { ...widgetData.general, styles: { ...widgetData.general.styles, presentation: 'popup' } } })}
-                                                />
-                                                <RadioButton
-                                                    label="Sidebar"
-                                                    checked={widgetData?.general?.styles?.presentation === 'sidebar'}
-                                                    onChange={() => setWidgetData({ ...widgetData, general: { ...widgetData.general, styles: { ...widgetData.general.styles, presentation: 'sidebar' } } })}
-                                                />
-                                            </Box>
-                                        </BlockStack>
+                                                <Text variant="bodyLg" fontWeight='semibold'>Presentation</Text>
+                                                <Box style={{ display: 'flex', flexDirection: 'column', }}>
+                                                    <RadioButton
+                                                        label="Popup"
+                                                        checked={widgetData?.general?.styles?.presentation === 'popup'}
+                                                        onChange={() => setWidgetData({ ...widgetData, general: { ...widgetData.general, styles: { ...widgetData.general.styles, presentation: 'popup' } } })}
+                                                    />
+                                                    <RadioButton
+                                                        label="Sidebar"
+                                                        checked={widgetData?.general?.styles?.presentation === 'sidebar'}
+                                                        onChange={() => setWidgetData({ ...widgetData, general: { ...widgetData.general, styles: { ...widgetData.general.styles, presentation: 'sidebar' } } })}
+                                                    />
+                                                </Box>
+                                            </BlockStack>
 
-                                        <BlockStack gap="200">
-                                            <Text variant="bodyLg" fontWeight='semibold'>Position</Text>
-                                            <Box style={{ display: 'flex', flexDirection: 'column', }}>
-                                                <RadioButton
-                                                    label="Left"
-                                                    checked={widgetData?.general?.styles?.position === 'left'}
-                                                    onChange={() => setWidgetData({ ...widgetData, general: { ...widgetData.general, styles: { ...widgetData.general.styles, position: 'left' } } })}
-                                                />
-                                                <RadioButton label="Right"
-                                                    checked={widgetData?.general?.styles?.position === 'right'}
-                                                    onChange={() => setWidgetData({ ...widgetData, general: { ...widgetData.general, styles: { ...widgetData.general.styles, position: 'right' } } })}
-                                                />
-                                            </Box>
-                                        </BlockStack>
+                                            <BlockStack gap="200">
+                                                <Text variant="bodyLg" fontWeight='semibold'>Position</Text>
+                                                <Box style={{ display: 'flex', flexDirection: 'column', }}>
+                                                    <RadioButton
+                                                        label="Left"
+                                                        checked={widgetData?.general?.styles?.position === 'left'}
+                                                        onChange={() => setWidgetData({ ...widgetData, general: { ...widgetData.general, styles: { ...widgetData.general.styles, position: 'left' } } })}
+                                                    />
+                                                    <RadioButton label="Right"
+                                                        checked={widgetData?.general?.styles?.position === 'right'}
+                                                        onChange={() => setWidgetData({ ...widgetData, general: { ...widgetData.general, styles: { ...widgetData.general.styles, position: 'right' } } })}
+                                                    />
+                                                </Box>
+                                            </BlockStack>
 
-                                        <Divider /> */}
+                                            <Divider /> */}
 
                                         <Text variant="bodyLg" fontWeight='semibold'>Header</Text>
                                         <BlockStack gap="300">
@@ -315,7 +313,7 @@ const General = ({ widgetData, setWidgetData, errors = {}, clearError, openColla
                                                     onChange={() => setWidgetData({ ...widgetData, general: { ...widgetData.general, styles: { ...widgetData.general.styles, header: { ...widgetData.general.styles.header, header_type: 'gradient' } } } })}
                                                 />
                                                 {headerType === 'gradient' && (
-                                                    <div style={{ marginLeft: '25px', display: 'flex', flexDirection: 'column', gap: '10px' }}>
+                                                    <div style={{ marginLeft: '25px', display: 'flex', flexDirection: 'row', gap: '10px' }}>
                                                         <ColorPickerInput
                                                             // label="Header color"
                                                             value={headerGradientColor1}
@@ -461,20 +459,22 @@ const General = ({ widgetData, setWidgetData, errors = {}, clearError, openColla
                                         </BlockStack>
 
                                         <Box style={{ display: 'flex', flexDirection: 'column', gap: '10px', marginBottom: '10px' }}>
-                                            <ColorPickerInput
-                                                label="Header bar"
-                                                value={headerBarColor}
-                                                onChange={(value) => setWidgetData({ ...widgetData, general: { ...widgetData.general, styles: { ...widgetData.general.styles, header: { ...widgetData.general.styles.header, header_bar_color: value } } } })}
-                                                error={getErrorMessage('general.styles.header.header_bar_color')}
-                                                onClearError={() => clearError('general.styles.header.header_bar_color')}
-                                            />
-                                            <ColorPickerInput
-                                                label="Header bar text"
-                                                value={headerBarTextColor}
-                                                onChange={(value) => setWidgetData({ ...widgetData, general: { ...widgetData.general, styles: { ...widgetData.general.styles, header: { ...widgetData.general.styles.header, header_bar_text_color: value } } } })}
-                                                error={getErrorMessage('general.styles.header.header_bar_text_color')}
-                                                onClearError={() => clearError('general.styles.header.header_bar_text_color')}
-                                            />
+                                            <div style={{ display: 'flex', flexDirection: 'row', gap: '10px' }}>
+                                                <ColorPickerInput
+                                                    label="Header bar"
+                                                    value={headerBarColor}
+                                                    onChange={(value) => setWidgetData({ ...widgetData, general: { ...widgetData.general, styles: { ...widgetData.general.styles, header: { ...widgetData.general.styles.header, header_bar_color: value } } } })}
+                                                    error={getErrorMessage('general.styles.header.header_bar_color')}
+                                                    onClearError={() => clearError('general.styles.header.header_bar_color')}
+                                                />
+                                                <ColorPickerInput
+                                                    label="Header bar text"
+                                                    value={headerBarTextColor}
+                                                    onChange={(value) => setWidgetData({ ...widgetData, general: { ...widgetData.general, styles: { ...widgetData.general.styles, header: { ...widgetData.general.styles.header, header_bar_text_color: value } } } })}
+                                                    error={getErrorMessage('general.styles.header.header_bar_text_color')}
+                                                    onClearError={() => clearError('general.styles.header.header_bar_text_color')}
+                                                />
+                                            </div>
                                             <ColorPickerInput
                                                 label="Header text color"
                                                 value={headerTextColor}
@@ -623,7 +623,7 @@ const General = ({ widgetData, setWidgetData, errors = {}, clearError, openColla
                                             </Box>
                                         </BlockStack>
 
-                                        <Box style={{ display: 'flex', flexDirection: 'column', gap: '10px', marginBottom: '10px' }}>
+                                        <Box style={{ display: 'flex', flexDirection: 'row', gap: '10px', marginBottom: '10px' }}>
                                             {/* Heading Color */}
                                             <ColorPickerInput
                                                 label="Heading color"
@@ -649,7 +649,7 @@ const General = ({ widgetData, setWidgetData, errors = {}, clearError, openColla
 
 
                                         <Text variant="bodyLg" fontWeight='semibold'>Accent</Text>
-                                        <Box style={{ display: 'flex', flexDirection: 'column', gap: '10px', marginBottom: '10px' }}>
+                                        <Box style={{ display: 'flex', flexDirection: 'row', gap: '10px', marginBottom: '10px' }}>
                                             {/* Heading Color */}
                                             <ColorPickerInput
                                                 label="Button Text color"
@@ -676,7 +676,7 @@ const General = ({ widgetData, setWidgetData, errors = {}, clearError, openColla
                                             onChange={(value) => setWidgetData({ ...widgetData, general: { ...widgetData.general, styles: { ...widgetData.general.styles, accent: { ...widgetData.general.styles.accent, button_radius: value } } } })}
                                             suffix={<Box style={{ textAlign: 'right', width: '24px' }}>{buttonRadius}px</Box>}
                                         />
-                                        <Box style={{ display: 'flex', flexDirection: 'column', gap: '10px', marginBottom: '10px' }}>
+                                        <Box style={{ display: 'flex', flexDirection: 'row', gap: '10px', marginBottom: '10px' }}>
                                             <ColorPickerInput
                                                 label="Link color"
                                                 value={linkColor}
@@ -721,7 +721,7 @@ const General = ({ widgetData, setWidgetData, errors = {}, clearError, openColla
                                         {/* Card */}
                                         <BlockStack gap="300">
                                             <Text variant="bodyLg" fontWeight='semibold'>Box</Text>
-                                            <Box style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
+                                            <Box style={{ display: 'flex', flexDirection: 'row', gap: '10px' }}>
                                                 <ColorPickerInput
                                                     label="Box background color"
                                                     value={boxBackgroundColor}
@@ -747,7 +747,7 @@ const General = ({ widgetData, setWidgetData, errors = {}, clearError, openColla
 
                                         <BlockStack gap="300">
                                             <Text variant="bodyLg" fontWeight='semibold'>Card</Text>
-                                            <Box style={{ display: 'flex', flexDirection: 'column', gap: '10px', marginBottom: '15px' }}>
+                                            <Box style={{ display: 'flex', flexDirection: 'row', gap: '10px', marginBottom: '15px' }}>
                                                 <ColorPickerInput
                                                     label="Card background color"
                                                     value={cardBackgroundColor}
@@ -794,7 +794,7 @@ const General = ({ widgetData, setWidgetData, errors = {}, clearError, openColla
                                         {/* section */}
                                         <BlockStack gap="300">
                                             <Text variant="bodyLg" fontWeight='semibold'>Section</Text>
-                                            <Box style={{ display: 'flex', flexDirection: 'column', gap: '10px', marginBottom: '15px' }}>
+                                            <Box style={{ display: 'flex', flexDirection: 'row', gap: '10px', marginBottom: '15px' }}>
                                                 <ColorPickerInput
                                                     label="Section background color"
                                                     value={sectionBackgroundColor}
@@ -839,23 +839,25 @@ const General = ({ widgetData, setWidgetData, errors = {}, clearError, openColla
                                         </Box>
 
                                         <Text variant="bodyLg" fontWeight='semibold'>Input</Text>
-                                        <Box style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
-                                            <ColorPickerInput
-                                                label="Input field color"
-                                                value={inputFieldColor}
-                                                onChange={(value) => setWidgetData({ ...widgetData, general: { ...widgetData.general, advanced: { ...widgetData.general.advanced, input: { ...widgetData.general.advanced.input, input_color: value } } } })}
-                                                error={getErrorMessage('general.advanced.input.input_color')}
-                                                onClearError={() => clearError('general.advanced.input.input_color')}
-                                                onFocus={() => setIsEnabled(false)}
-                                            />
-                                            <ColorPickerInput
-                                                label="Input field border color"
-                                                value={inputFieldBorderColor}
-                                                onChange={(value) => setWidgetData({ ...widgetData, general: { ...widgetData.general, advanced: { ...widgetData.general.advanced, input: { ...widgetData.general.advanced.input, input_border_color: value } } } })}
-                                                error={getErrorMessage('general.advanced.input.input_border_color')}
-                                                onClearError={() => clearError('general.advanced.input.input_border_color')}
-                                                onFocus={() => setIsEnabled(false)}
-                                            />
+                                        <Box style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
+                                            <Box style={{ display: 'flex', flexDirection: 'row', gap: '10px' }}>
+                                                <ColorPickerInput
+                                                    label="Input field color"
+                                                    value={inputFieldColor}
+                                                    onChange={(value) => setWidgetData({ ...widgetData, general: { ...widgetData.general, advanced: { ...widgetData.general.advanced, input: { ...widgetData.general.advanced.input, input_color: value } } } })}
+                                                    error={getErrorMessage('general.advanced.input.input_color')}
+                                                    onClearError={() => clearError('general.advanced.input.input_color')}
+                                                    onFocus={() => setIsEnabled(false)}
+                                                />
+                                                <ColorPickerInput
+                                                    label="Input field border color"
+                                                    value={inputFieldBorderColor}
+                                                    onChange={(value) => setWidgetData({ ...widgetData, general: { ...widgetData.general, advanced: { ...widgetData.general.advanced, input: { ...widgetData.general.advanced.input, input_border_color: value } } } })}
+                                                    error={getErrorMessage('general.advanced.input.input_border_color')}
+                                                    onClearError={() => clearError('general.advanced.input.input_border_color')}
+                                                    onFocus={() => setIsEnabled(false)}
+                                                />
+                                            </Box>
                                             <RangeSlider
                                                 label="Input field border radius"
                                                 max={36}
@@ -867,29 +869,38 @@ const General = ({ widgetData, setWidgetData, errors = {}, clearError, openColla
                                             />
                                         </Box>
 
-                                        <ColorPickerInput
-                                            label="Progress Bar Fill"
-                                            value={progressBarFill}
-                                            onChange={(value) => setWidgetData({ ...widgetData, general: { ...widgetData.general, advanced: { ...widgetData.general.advanced, section: { ...widgetData.general.advanced.section, progress_bar_fill: value } } } })}
-                                            error={getErrorMessage('general.advanced.section.progress_bar_fill')}
-                                            onClearError={() => clearError('general.advanced.section.progress_bar_fill')}
-                                            onFocus={() => setIsEnabled(false)}
-                                        />
-                                        <ColorPickerInput
-                                            label="Progress Bar Background"
-                                            value={progressBarBackground}
-                                            onChange={(value) => setWidgetData({ ...widgetData, general: { ...widgetData.general, advanced: { ...widgetData.general.advanced, section: { ...widgetData.general.advanced.section, progress_bar_background: value } } } })}
-                                            error={getErrorMessage('general.advanced.section.progress_bar_background')}
-                                            onClearError={() => clearError('general.advanced.section.progress_bar_background')}
-                                            onFocus={() => setIsEnabled(false)}
-                                        />
+                                        <Box style={{ display: 'flex', flexDirection: 'row', gap: '10px' }}>
+                                            <ColorPickerInput
+                                                label="Progress Bar Fill"
+                                                value={progressBarFill}
+                                                onChange={(value) => setWidgetData({ ...widgetData, general: { ...widgetData.general, advanced: { ...widgetData.general.advanced, section: { ...widgetData.general.advanced.section, progress_bar_fill: value } } } })}
+                                                error={getErrorMessage('general.advanced.section.progress_bar_fill')}
+                                                onClearError={() => clearError('general.advanced.section.progress_bar_fill')}
+                                                onFocus={() => setIsEnabled(false)}
+                                            />
+                                            <ColorPickerInput
+                                                label="Progress Bar Background"
+                                                value={progressBarBackground}
+                                                onChange={(value) => setWidgetData({ ...widgetData, general: { ...widgetData.general, advanced: { ...widgetData.general.advanced, section: { ...widgetData.general.advanced.section, progress_bar_background: value } } } })}
+                                                error={getErrorMessage('general.advanced.section.progress_bar_background')}
+                                                onClearError={() => clearError('general.advanced.section.progress_bar_background')}
+                                                onFocus={() => setIsEnabled(false)}
+                                            />
+                                        </Box>
 
                                     </BlockStack>
 
                                 </Collapsible>
-                            </Grid.Cell>
+                            </Card>
+                        </Box>
 
-                            <Grid.Cell columnSpan={{ xs: 6, sm: 6, md: 4, lg: 7, xl: 7 }}>
+
+                        <Box style={{ width: '50%', position: 'sticky', top: '20px', alignSelf: 'flex-start' }}>
+                            <Card>
+                                <Box style={{ marginBottom: '10px' }}>
+                                    <Text as="h1" variant='headingMd'>Preview</Text>
+                                </Box>
+
                                 <div style={{ position: 'sticky', top: '20px' }}>
                                     {/* --- THIS IS THE MAGIC CONTAINER --- */}
                                     <div
@@ -1132,7 +1143,7 @@ const General = ({ widgetData, setWidgetData, errors = {}, clearError, openColla
                                                             </Box>
                                                         </div>
 
-                                                        {/* VIP Tiers Section */}
+                                                        {/* Reward Tiers Section */}
                                                         <div style={{ marginTop: '20px', border: `${cardBorderWidth}px solid ${cardBorderColor}`, padding: '20px', backgroundColor: cardBackgroundColor, borderRadius: cardBorderRadius, boxShadow: '0 4px 12px rgba(0,0,0,0.15)' }}>
                                                             <BlockStack gap="200">
                                                                 {/* Crown Icon and Title */}
@@ -1423,12 +1434,13 @@ const General = ({ widgetData, setWidgetData, errors = {}, clearError, openColla
 
                                     </div>
                                 </div>
-                            </Grid.Cell>
-                        </Grid>
+                            </Card>
+                        </Box>
                     </Box>
                 </>
             )}
-        </Card>
+        </Box>
+        // </Card >
     )
 }
 

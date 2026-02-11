@@ -296,24 +296,24 @@ const Widget = () => {
             newErrors['storefront.referrals_card.my_discount_text'] = 'Discount title is required';
         }
 
-        // StoreFront Tab - VIP Tiers Card validation
-        if (!data.storefront_app?.vip_tiers_card?.title?.trim()) {
-            newErrors['storefront.vip_tiers_card.title'] = 'VIP tiers title is required';
+        // StoreFront Tab - Reward Tiers Card validation
+        if (!data.storefront_app?.reward_tiers_card?.title?.trim()) {
+            newErrors['storefront.reward_tiers_card.title'] = 'Reward tiers title is required';
         }
-        if (!data.storefront_app?.vip_tiers_card?.message?.trim()) {
-            newErrors['storefront.vip_tiers_card.message'] = 'VIP tiers message is required';
+        if (!data.storefront_app?.reward_tiers_card?.message?.trim()) {
+            newErrors['storefront.reward_tiers_card.message'] = 'Reward tiers message is required';
         }
-        if (!data.storefront_app?.vip_tiers_card?.customer_tier?.current_tier?.trim()) {
-            newErrors['storefront.vip_tiers_card.current_tier'] = 'Current tier text is required';
+        if (!data.storefront_app?.reward_tiers_card?.customer_tier?.current_tier?.trim()) {
+            newErrors['storefront.reward_tiers_card.current_tier'] = 'Current tier text is required';
         }
-        if (!data.storefront_app?.vip_tiers_card?.customer_tier?.next_tier?.trim()) {
-            newErrors['storefront.vip_tiers_card.next_tier'] = 'Next tier text is required';
+        if (!data.storefront_app?.reward_tiers_card?.customer_tier?.next_tier?.trim()) {
+            newErrors['storefront.reward_tiers_card.next_tier'] = 'Next tier text is required';
         }
-        if (!data.storefront_app?.vip_tiers_card?.customer_tier?.max_tier?.trim()) {
-            newErrors['storefront.vip_tiers_card.max_tier'] = 'Max tier text is required';
+        if (!data.storefront_app?.reward_tiers_card?.customer_tier?.max_tier?.trim()) {
+            newErrors['storefront.reward_tiers_card.max_tier'] = 'Max tier text is required';
         }
-        if (!data.storefront_app?.vip_tiers_card?.all_tiers?.title?.trim()) {
-            newErrors['storefront.vip_tiers_card.all_tiers'] = 'All tiers title is required';
+        if (!data.storefront_app?.reward_tiers_card?.all_tiers?.title?.trim()) {
+            newErrors['storefront.reward_tiers_card.all_tiers'] = 'All tiers title is required';
         }
 
         // Launcher Tab validation
@@ -367,7 +367,7 @@ const Widget = () => {
         if (firstError.startsWith('storefront.referrals_card')) {
             return { tab: 1, collapsible: 'referralCard' };
         }
-        if (firstError.startsWith('storefront.vip_tiers_card')) {
+        if (firstError.startsWith('storefront.reward_tiers_card')) {
             return { tab: 1, collapsible: 'vipTier' };
         }
 

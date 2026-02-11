@@ -39,11 +39,11 @@ const VipTier = ({ entryMethod, tierProgressExpiry, setEntryMethod, setTierProgr
                 }
             } else {
                 console.log('response?.message', response?.message)
-                shopify.toast.show(response?.message || 'Failed to update VIP Tier status', { duration: 2000, isError: true });
+                shopify.toast.show(response?.message || 'Failed to update Reward tier status', { duration: 2000, isError: true });
             }
         } catch (err) {
-            console.error("Error updating VIP Tier:", err);
-            shopify.toast.show(err?.message || 'Error updating VIP Tier status', { duration: 2000, isError: true });
+            console.error("Error updating Reward tier:", err);
+            shopify.toast.show(err?.message || 'Error updating Reward tier status', { duration: 2000, isError: true });
         } finally {
             setLoading(false);
         }
@@ -58,8 +58,8 @@ const VipTier = ({ entryMethod, tierProgressExpiry, setEntryMethod, setTierProgr
     return (
         <div style={{ marginBottom: '30px' }} className="annotatedSection-border">
             <Layout.AnnotatedSection
-                title={'VIP Tier Status'}
-                description={'Activate/Deactivate your VIP Tier program'}
+                title={'Reward tier Status'}
+                description={'Activate/Deactivate your Reward tier program'}
             >
                 <Card>
                     {loadingTiers ? <SkeletonBodyText lines={2} /> : (
@@ -82,12 +82,12 @@ const VipTier = ({ entryMethod, tierProgressExpiry, setEntryMethod, setTierProgr
             </Layout.AnnotatedSection>
 
             <Layout.AnnotatedSection
-                title={'VIP Tiers'}
+                title={'Reward tiers'}
                 description={
                     <Box>
-                        <Text>Incentivize customer spending and activity by allowing members to reach exclusive VIP tiers.</Text>
+                        <Text>Incentivize customer spending and activity by allowing members to reach exclusive Reward tiers.</Text>
                         <Box style={{ marginTop: '10px' }}>
-                            <Button onClick={() => handleAddTierClick()} variant="secondary">Add VIP Tier</Button>
+                            <Button onClick={() => handleAddTierClick()} variant="secondary">Add Reward tier</Button>
                         </Box>
                     </Box>
                 }
@@ -157,7 +157,7 @@ const VipTier = ({ entryMethod, tierProgressExpiry, setEntryMethod, setTierProgr
                         </Box>
                         <Box style={{ paddingTop: '10px' }}>
                             <Text>
-                                Customers are placed onto VIP Tiers based upon their total number of orders placed.
+                                Customers are placed onto Reward tiers based upon their total number of orders placed.
                             </Text>
                             <BlockStack >
                                 <RadioButton
@@ -194,11 +194,11 @@ const VipTier = ({ entryMethod, tierProgressExpiry, setEntryMethod, setTierProgr
 
                     <Card>
                         <Box>
-                            <Text variant="headingMd">Vip Tier Coupon Expiry</Text>
+                            <Text variant="headingMd">Reward tier Coupon Expiry</Text>
                         </Box>
                         <Box style={{ paddingTop: "10px" }}>
-                            <Text>Define how long VIP tier coupons remain valid after being issued.</Text>
-                            <Text>Choose how long VIP tier coupons are valid after being issued.</Text>
+                            <Text>Define how long Reward tier coupons remain valid after being issued.</Text>
+                            <Text>Choose how long Reward tier coupons are valid after being issued.</Text>
                             <BlockStack >
                                 <RadioButton
                                     label="A lifetime, once they are a loyalty program member"

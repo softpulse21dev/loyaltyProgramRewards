@@ -242,7 +242,7 @@ const Customers = () => {
                     bValue = String(bValue || '').toLowerCase().trim();
                     const comparison = aValue.localeCompare(bValue, undefined, { numeric: true, sensitivity: 'base' });
                     return sortDirection === 'ascending' ? comparison : -comparison;
-                } // --- FIX: Updated VIP Tier Sorting Logic ---
+                } // --- FIX: Updated Reward Tier Sorting Logic ---
                 else if (sortColumn === 'vip_tier_name') {
                     const tierList = Array.isArray(vipTierList) ? vipTierList : [];
                     const aStr = String(aValue || '').trim();
@@ -652,10 +652,10 @@ const Customers = () => {
         },
         {
             key: 'vipTierFilter',
-            label: 'VIP Tier',
+            label: 'Reward Tier',
             filter: (
                 <Select
-                    label="VIP Tier"
+                    label="Reward Tier"
                     options={vipTierOptions}
                     value={selectedVipTier || ''}
                     onChange={(value) => setSelectedVipTier(value || null)}
@@ -697,7 +697,7 @@ const Customers = () => {
         if (pointsRange.min || pointsRange.max) appliedFilters.push({ key: 'pointsRange', label: `Points ${getRangeLabel(pointsRange)}`, onRemove: handlePointsRangeRemove });
         if (ordersRange.min || ordersRange.max) appliedFilters.push({ key: 'ordersRange', label: `Orders ${getRangeLabel(ordersRange)}`, onRemove: handleOrdersRangeRemove });
         if (pointsSpentRange.min || pointsSpentRange.max) appliedFilters.push({ key: 'pointsSpentRange', label: `Points Spent ${getRangeLabel(pointsSpentRange)}`, onRemove: handlePointsSpentRangeRemove });
-        if (selectedVipTier) appliedFilters.push({ key: 'vipTierFilter', label: `VIP Tier is ${vipTierList.find(t => t.uid === selectedVipTier)?.title || ''}`, onRemove: handleVipTierFilterRemove });
+        if (selectedVipTier) appliedFilters.push({ key: 'vipTierFilter', label: `Reward Tier is ${vipTierList.find(t => t.uid === selectedVipTier)?.title || ''}`, onRemove: handleVipTierFilterRemove });
     } else if (customerType === 'guest') {
         if (ordersRange.min || ordersRange.max) appliedFilters.push({ key: 'ordersRange', label: `Orders ${getRangeLabel(ordersRange)}`, onRemove: handleOrdersRangeRemove });
     } else {
@@ -777,7 +777,7 @@ const Customers = () => {
                         { title: 'Points', id: 'points_balance' },
                         { title: 'Orders', id: 'orders_count' },
                         { title: 'Points Spent', id: 'total_spent' },
-                        { title: 'Vip Tier', id: 'vip_tier_name' },
+                        { title: 'Reward Tier', id: 'vip_tier_name' },
                         { title: 'Date Joined', id: 'registration_date' },
                     ]}
                     onSort={handleSort}

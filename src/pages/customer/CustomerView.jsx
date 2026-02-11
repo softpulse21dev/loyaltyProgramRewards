@@ -779,10 +779,10 @@ const CustomerView = () => {
                                             </BlockStack>
                                         </Card>
                                         {console.log('customerData', customerData)}
-                                        {/* vip tier change modal */}
+                                        {/* Reward tier change modal */}
                                         <Card>
                                             <BlockStack>
-                                                <Text variant='headingMd' as="span">VIP Tier</Text>
+                                                <Text variant='headingMd' as="span">Reward Tier</Text>
                                                 <Box style={{ margin: '15px 0px 10px 0px', display: 'flex', alignItems: 'center', gap: '10px' }}>
                                                     <Box style={{ display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
                                                         {customerData?.current_tier_info?.icon_type === 'default' ? (

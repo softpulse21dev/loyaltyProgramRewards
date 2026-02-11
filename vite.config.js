@@ -10,7 +10,7 @@ export default defineConfig({
   server: {
     historyApiFallback: true,
     hmr: {
-      host: "player-happened-guided-dicke.trycloudflare.com",
+      host: "assessing-productive-potter-objectives.trycloudflare.com",
       protocol: "wss",
     },
   },

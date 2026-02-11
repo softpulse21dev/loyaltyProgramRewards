@@ -39,7 +39,7 @@ const LoyaltyProgram = () => {
         try {
             const formData = new FormData();
             const response = await fetchData("/get-tiers", formData);
-            console.log('response vip Tier', response);
+            console.log('response Reward Tier', response);
             if (response.status) {
                 setEntryMethod(response?.data?.tier_method);
                 setTierProgressExpiry(response?.data?.tier_expiry);
@@ -50,14 +50,14 @@ const LoyaltyProgram = () => {
                 shopify.toast.show(response?.message, { duration: 2000, isError: true });
             }
         } catch (error) {
-            console.error('Error fetching VIP tiers:', error);
+            console.error('Error fetching Reward tiers:', error);
             shopify.toast.show(error?.message, { duration: 2000, isError: true });
         } finally {
             setLoadingTiers(false);
         }
     }, [dispatch]);
 
-    // Only fetch VIP tier data when the VIP Tier tab is selected
+    // Only fetch reward tier data when the reward Tier tab is selected
     useEffect(() => {
         if (selectedTab === 2) {
             GetVipTierAPI();
@@ -80,7 +80,7 @@ const LoyaltyProgram = () => {
                 shopify.toast.show(response?.message, { duration: 2000, isError: true });
             }
         } catch (err) {
-            console.error("Error updating VIP Tier:", err);
+            console.error("Error updating Reward Tier:", err);
         } finally {
             setLoadingSave(false);
         }
@@ -123,7 +123,7 @@ const LoyaltyProgram = () => {
         },
         {
             id: "vip-tier-tab",
-            content: "VIP Tier",
+            content: "Reward Tier",
             panelID: "vip-tier-content",
         },
     ];

@@ -6,7 +6,7 @@ import RedeemModal from '../../components/RedeemModal';
 import { fetchData } from '../../action';
 import { useDispatch, useSelector } from 'react-redux';
 import { ClearTierFormData, SetData, UpdateData, UpdateTierFormData, TierId, MasterRewardsList, GetVipTierData } from '../../redux/action';
-import { iconsMap, NoLeadingZero, sanitizeNumberWithDecimal, SingleLeadingZero } from '../../utils';
+import { iconsMap, LimitText, NoLeadingZero, sanitizeNumberWithDecimal, SingleLeadingZero } from '../../utils';
 import SvgPreview from '../../components/SvgPreview';
 
 const TierView = () => {
@@ -188,7 +188,7 @@ const TierView = () => {
                 shopify.toast.show(response?.message, { duration: 2000, isError: true });
             }
         } catch (error) {
-            console.error('Error adding VIP tier:', error);
+            console.error('Error adding Reward tier:', error);
         } finally {
             setSubmitLoading(false);
         }
@@ -208,7 +208,7 @@ const TierView = () => {
                 shopify.toast.show(response?.message, { duration: 2000, isError: true });
             }
         } catch (error) {
-            console.error('Error deleting VIP tier:', error);
+            console.error('Error deleting Reward tier:', error);
             shopify.toast.show(error?.message, { duration: 2000, isError: true });
         } finally {
             setDeleteLoading(false);
@@ -323,7 +323,7 @@ const TierView = () => {
                 :
                 <Page
                     backAction={{ content: 'Back', onAction: () => { handleBackAction() } }}
-                    title="VIP Tier"
+                    title="Reward Tier"
                     secondaryActions={edit ? <Button tone='critical' icon={DeleteIcon} loading={deleteLoading} onClick={() => { DeleteVipTierAPI(rule?.uid) }}>Delete</Button> : ''}
                     primaryAction={{ content: 'Save', loading: submitLoading, onAction: () => { AddVipTierAPI() } }}
                 >
@@ -337,7 +337,7 @@ const TierView = () => {
                                                 <Text variant='headingMd' as="span">Tier Name</Text>
                                                 <TextField
                                                     value={tierName}
-                                                    onChange={(value) => dispatch(UpdateTierFormData({ ...tierFormData, tierName: value }), setValidation({ ...validation, tierName: '' }))}
+                                                    onChange={(value) => dispatch(UpdateTierFormData({ ...tierFormData, tierName: LimitText(value , 50) }), setValidation({ ...validation, tierName: '' }))}
                                                     maxLength={255}
                                                     error={validation.tierName}
                                                 />
@@ -432,7 +432,7 @@ const TierView = () => {
                                             <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
                                                 <Text variant='headingMd' as="span">Summary</Text>
                                                 <div>
-                                                    <Text>Set a VIP tier name.</Text>
+                                                    <Text>Set a Reward tier name.</Text>
                                                     <Text>Define the spending amount required to achieve the tier.</Text>
                                                     <Text>Configure a points multiplier for the tier.</Text>
                                                     <Text>Unlock rewards when the tier is achieved.</Text>

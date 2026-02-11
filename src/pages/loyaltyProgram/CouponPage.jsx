@@ -7,7 +7,7 @@ import { fetchData } from '../../action';
 import ProductModal from '../../components/ProductModal';
 import { useDispatch, useSelector } from 'react-redux';
 import { addData, DeleteData, UpdateData } from '../../redux/action';
-import { NoLeadingZero, sanitizeNumberWithDecimal, SingleLeadingZero } from '../../utils';
+import { LimitText, NoLeadingZero, sanitizeNumberWithDecimal, SingleLeadingZero } from '../../utils';
 import ConfirmationModal from '../../components/ConfirmationModal';
 
 const CouponPage = () => {
@@ -33,7 +33,7 @@ const CouponPage = () => {
     // --- FIX END ---
 
     // Logic to determine if we should show Points inputs
-    // If it is LocalSave (VIP Tier) or ReferralRule, we hide points logic.
+    // If it is LocalSave (Reward Tier) or ReferralRule, we hide points logic.
     const showPointsSystem = !localSave && !referralRule;
 
     console.log('localSave', localSave)
@@ -578,7 +578,7 @@ const CouponPage = () => {
                                                     <Text variant='headingSm' as="span">Reward Title</Text>
                                                     <TextField
                                                         value={rewardTitle}
-                                                        onChange={(value) => { setRewardTitle(value); setValidationError({ ...validationError, rewardTitle: '' }) }}
+                                                        onChange={(value) => { setRewardTitle(LimitText(value, 60)); setValidationError({ ...validationError, rewardTitle: '' }) }}
                                                         maxLength={255}
                                                         error={validationError?.rewardTitle}
                                                     />
@@ -680,8 +680,11 @@ const CouponPage = () => {
                                                                                 )}
                                                                             </FormLayout.Group>
                                                                         </FormLayout>
-                                                                        {rule?.type !== "free_shipping" && showPointsSystem && (
+                                                                        {rule?.type !== "free_shipping" && rule?.type === "percentage_discount" && showPointsSystem && (
                                                                             <Text variant='bodyMd' tone='subdued'>Based on your cost per point, {pointsAmount} points is equal to {sanitizeNumberWithDecimal(settings_json?.reward_value)} % off</Text>
+                                                                        )}
+                                                                        {rule?.type !== "free_shipping" && rule?.type !== "percentage_discount" && showPointsSystem && (
+                                                                            <Text variant='bodyMd' tone='subdued'>Based on your cost per point, {pointsAmount} points is equal to Rs. {sanitizeNumberWithDecimal(settings_json?.reward_value)}</Text>
                                                                         )}
                                                                     </>
                                                                 )}
@@ -716,7 +719,7 @@ const CouponPage = () => {
                                                                                 />
                                                                             </FormLayout.Group>
                                                                         </FormLayout>
-                                                                        <Text variant='bodyMd' tone='subdued'>Based on your cost per point, {pointsAmount} points is equal asdsdo Rs. {settings_json.reward_value}</Text>
+                                                                        <Text variant='bodyMd' tone='subdued'>Based on your cost per point, {pointsAmount} points is equal to Rs. {settings_json.reward_value}</Text>
 
                                                                         <Checkbox
                                                                             label="Set a minimum amount of points required to redeem this reward"
