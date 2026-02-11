@@ -4,14 +4,13 @@ import React, { useCallback, useState, useMemo, useEffect } from 'react'
 import ColorPickerInput from '../../../components/ColorPickerInput';
 import { BoldArrowRightIcon, BoldCopyIcon, BoldCrownIcon, BoldDiscountIcon, BoldFillStarIcon, BoldGiftIcon, BoldRewardsIcon, BoldStarIcon, BoldTrophyIcon, BoldTruckIcon, StarIcon } from '../../../assets/svg/svg';
 import { LimitText } from '../../../utils';
+import { useSelector } from 'react-redux';
 
 const StoreFront = ({ widgetData, setWidgetData, errors = {}, clearError, openCollapsible, setOpenCollapsible }) => {
 
     const [isEnabled, setIsEnabled] = useState(true);
+    const defaultData = useSelector((state) => state.merchantSettings.defaultData);
 
-
-    const defaultData = localStorage.getItem('defaultData');
-    const referlinkData = JSON.parse(defaultData);
     // Handler to switch between Enable and Disable
     const handleStatusChange = useCallback((status) => {
         if (status === 'enable') {
@@ -252,28 +251,28 @@ const StoreFront = ({ widgetData, setWidgetData, errors = {}, clearError, openCo
                                     <TextField
                                         label="Header bar text"
                                         value={headerBarText}
-                                        onChange={(value) => handleFieldChange('storefront.header.header_bar_text', value, (v) => setWidgetData({ ...widgetData, storefront_app: { ...storefrontData, header: { ...storefrontData.header, header_bar_text: LimitText(v, 20) } } }))}
+                                        onChange={(value) => handleFieldChange('storefront.header.header_bar_text', value, (v) => setWidgetData({ ...widgetData, storefront_app: { ...storefrontData, header: { ...storefrontData.header, header_bar_text: LimitText(v, 50) } } }))}
                                         error={getErrorMessage('storefront.header.header_bar_text') ? true : null}
                                         onFocus={() => setIsEnabled(true)}
                                     />
                                     <TextField
                                         label="Header text"
                                         value={headerText}
-                                        onChange={(value) => handleFieldChange('storefront.header.header_text', value, (v) => setWidgetData({ ...widgetData, storefront_app: { ...storefrontData, header: { ...storefrontData.header, header_text: LimitText(v, 35) } } }))}
+                                        onChange={(value) => handleFieldChange('storefront.header.header_text', value, (v) => setWidgetData({ ...widgetData, storefront_app: { ...storefrontData, header: { ...storefrontData.header, header_text: LimitText(v, 50) } } }))}
                                         error={getErrorMessage('storefront.header.header_text') ? true : null}
                                         onFocus={() => setIsEnabled(true)}
                                     />
                                     <TextField
                                         label="Header content"
                                         value={headerContent}
-                                        onChange={(value) => handleFieldChange('storefront.header.header_content', value, (v) => setWidgetData({ ...widgetData, storefront_app: { ...storefrontData, header: { ...storefrontData.header, header_content: LimitText(v, 35) } } }))}
+                                        onChange={(value) => handleFieldChange('storefront.header.header_content', value, (v) => setWidgetData({ ...widgetData, storefront_app: { ...storefrontData, header: { ...storefrontData.header, header_content: LimitText(v, 80) } } }))}
                                         error={getErrorMessage('storefront.header.header_content') ? true : null}
                                         onFocus={() => setIsEnabled(true)}
                                     />
                                     <TextField
                                         label="History button text"
                                         value={historyButtonText}
-                                        onChange={(value) => handleFieldChange('storefront.header.history_button_text', value, (v) => setWidgetData({ ...widgetData, storefront_app: { ...storefrontData, header: { ...storefrontData.header, history_button_text: LimitText(v, 15) } } }))}
+                                        onChange={(value) => handleFieldChange('storefront.header.history_button_text', value, (v) => setWidgetData({ ...widgetData, storefront_app: { ...storefrontData, header: { ...storefrontData.header, history_button_text: LimitText(v, 40) } } }))}
                                         error={getErrorMessage('storefront.header.history_button_text') ? true : null}
                                         onFocus={() => setIsEnabled(false)}
                                     />
@@ -425,28 +424,28 @@ const StoreFront = ({ widgetData, setWidgetData, errors = {}, clearError, openCo
                                     <TextField
                                         label="Member card title"
                                         value={newMemberCardTitle}
-                                        onChange={(value) => handleFieldChange('storefront.new_member_card.title', value, (v) => setWidgetData({ ...widgetData, storefront_app: { ...widgetData.storefront_app, new_member_card: { ...widgetData.storefront_app.new_member_card, translations: { ...widgetData.storefront_app.new_member_card.translations, title: LimitText(v, 25) } } } }))}
+                                        onChange={(value) => handleFieldChange('storefront.new_member_card.title', value, (v) => setWidgetData({ ...widgetData, storefront_app: { ...widgetData.storefront_app, new_member_card: { ...widgetData.storefront_app.new_member_card, translations: { ...widgetData.storefront_app.new_member_card.translations, title: LimitText(v, 50) } } } }))}
                                         error={getErrorMessage('storefront.new_member_card.title') ? true : null}
                                         onFocus={() => setIsEnabled(true)}
                                     />
                                     <TextField
                                         label="Button text"
                                         value={newMemberCardButtonText}
-                                        onChange={(value) => handleFieldChange('storefront.new_member_card.button_text', value, (v) => setWidgetData({ ...widgetData, storefront_app: { ...widgetData.storefront_app, new_member_card: { ...widgetData.storefront_app.new_member_card, translations: { ...widgetData.storefront_app.new_member_card.translations, button_text: LimitText(v, 20) } } } }))}
+                                        onChange={(value) => handleFieldChange('storefront.new_member_card.button_text', value, (v) => setWidgetData({ ...widgetData, storefront_app: { ...widgetData.storefront_app, new_member_card: { ...widgetData.storefront_app.new_member_card, translations: { ...widgetData.storefront_app.new_member_card.translations, button_text: LimitText(v, 30) } } } }))}
                                         error={getErrorMessage('storefront.new_member_card.button_text') ? true : null}
                                         onFocus={() => setIsEnabled(true)}
                                     />
                                     <TextField
                                         label="Sign-in message"
                                         value={newMemberCardSignInMessage}
-                                        onChange={(value) => handleFieldChange('storefront.new_member_card.signin_msg', value, (v) => setWidgetData({ ...widgetData, storefront_app: { ...widgetData.storefront_app, new_member_card: { ...widgetData.storefront_app.new_member_card, translations: { ...widgetData.storefront_app.new_member_card.translations, signin_msg: LimitText(v, 35) } } } }))}
+                                        onChange={(value) => handleFieldChange('storefront.new_member_card.signin_msg', value, (v) => setWidgetData({ ...widgetData, storefront_app: { ...widgetData.storefront_app, new_member_card: { ...widgetData.storefront_app.new_member_card, translations: { ...widgetData.storefront_app.new_member_card.translations, signin_msg: LimitText(v, 50) } } } }))}
                                         error={getErrorMessage('storefront.new_member_card.signin_msg') ? true : null}
                                         onFocus={() => setIsEnabled(true)}
                                     />
                                     <TextField
                                         label="Sign-in link text"
                                         value={newMemberCardSignInLinkText}
-                                        onChange={(value) => handleFieldChange('storefront.new_member_card.signin_text', value, (v) => setWidgetData({ ...widgetData, storefront_app: { ...widgetData.storefront_app, new_member_card: { ...widgetData.storefront_app.new_member_card, translations: { ...widgetData.storefront_app.new_member_card.translations, signin_text: LimitText(v, 10) } } } }))}
+                                        onChange={(value) => handleFieldChange('storefront.new_member_card.signin_text', value, (v) => setWidgetData({ ...widgetData, storefront_app: { ...widgetData.storefront_app, new_member_card: { ...widgetData.storefront_app.new_member_card, translations: { ...widgetData.storefront_app.new_member_card.translations, signin_text: LimitText(v, 50) } } } }))}
                                         error={getErrorMessage('storefront.new_member_card.signin_text') ? true : null}
                                         onFocus={() => setIsEnabled(true)}
                                     />
@@ -482,7 +481,7 @@ const StoreFront = ({ widgetData, setWidgetData, errors = {}, clearError, openCo
                                     <TextField
                                         label="Points card title"
                                         value={pointsCardTitle}
-                                        onChange={(value) => handleFieldChange('storefront.points_card.title', value, (v) => setWidgetData({ ...widgetData, storefront_app: { ...widgetData.storefront_app, points_card: { ...widgetData.storefront_app.points_card, title: LimitText(v, 20) } } }))}
+                                        onChange={(value) => handleFieldChange('storefront.points_card.title', value, (v) => setWidgetData({ ...widgetData, storefront_app: { ...widgetData.storefront_app, points_card: { ...widgetData.storefront_app.points_card, title: LimitText(v, 50) } } }))}
                                         error={getErrorMessage('storefront.points_card.title') ? true : null}
                                         onFocus={() => setIsEnabled(true)}
                                     />
@@ -490,28 +489,28 @@ const StoreFront = ({ widgetData, setWidgetData, errors = {}, clearError, openCo
                                         label="Points card message"
                                         value={pointsCardMessage}
                                         multiline={2}
-                                        onChange={(value) => handleFieldChange('storefront.points_card.message', value, (v) => setWidgetData({ ...widgetData, storefront_app: { ...widgetData.storefront_app, points_card: { ...widgetData.storefront_app.points_card, message: LimitText(v, 20) } } }))}
+                                        onChange={(value) => handleFieldChange('storefront.points_card.message', value, (v) => setWidgetData({ ...widgetData, storefront_app: { ...widgetData.storefront_app, points_card: { ...widgetData.storefront_app.points_card, message: LimitText(v, 60) } } }))}
                                         error={getErrorMessage('storefront.points_card.message') ? true : null}
                                         onFocus={() => setIsEnabled(true)}
                                     />
                                     <TextField
                                         label="Ways to earn text"
                                         value={pointsCardWaysToEarnText}
-                                        onChange={(value) => handleFieldChange('storefront.points_card.ways_to_earn_text', value, (v) => setWidgetData({ ...widgetData, storefront_app: { ...widgetData.storefront_app, points_card: { ...widgetData.storefront_app.points_card, ways_to_earn_text: LimitText(v, 20) } } }))}
+                                        onChange={(value) => handleFieldChange('storefront.points_card.ways_to_earn_text', value, (v) => setWidgetData({ ...widgetData, storefront_app: { ...widgetData.storefront_app, points_card: { ...widgetData.storefront_app.points_card, ways_to_earn_text: LimitText(v, 50) } } }))}
                                         error={getErrorMessage('storefront.points_card.ways_to_earn_text') ? true : null}
                                         onFocus={() => setIsEnabled(true)}
                                     />
                                     <TextField
                                         label="Ways to redeem text"
                                         value={pointsCardWaysToRedeemText}
-                                        onChange={(value) => handleFieldChange('storefront.points_card.ways_to_redeem_text', value, (v) => setWidgetData({ ...widgetData, storefront_app: { ...widgetData.storefront_app, points_card: { ...widgetData.storefront_app.points_card, ways_to_redeem_text: LimitText(v, 20) } } }))}
+                                        onChange={(value) => handleFieldChange('storefront.points_card.ways_to_redeem_text', value, (v) => setWidgetData({ ...widgetData, storefront_app: { ...widgetData.storefront_app, points_card: { ...widgetData.storefront_app.points_card, ways_to_redeem_text: LimitText(v, 50) } } }))}
                                         error={getErrorMessage('storefront.points_card.ways_to_redeem_text') ? true : null}
                                         onFocus={() => setIsEnabled(true)}
                                     />
                                     <TextField
                                         label="My rewards"
                                         value={pointsCardMyRewardsText}
-                                        onChange={(value) => handleFieldChange('storefront.points_card.my_rewards', value, (v) => setWidgetData({ ...widgetData, storefront_app: { ...widgetData.storefront_app, points_card: { ...widgetData.storefront_app.points_card, my_rewards: LimitText(v, 20) } } }))}
+                                        onChange={(value) => handleFieldChange('storefront.points_card.my_rewards', value, (v) => setWidgetData({ ...widgetData, storefront_app: { ...widgetData.storefront_app, points_card: { ...widgetData.storefront_app.points_card, my_rewards: LimitText(v, 50) } } }))}
                                         error={getErrorMessage('storefront.points_card.my_rewards') ? true : null}
                                         onFocus={() => setIsEnabled(false)}
                                     />
@@ -545,41 +544,41 @@ const StoreFront = ({ widgetData, setWidgetData, errors = {}, clearError, openCo
                                     <TextField
                                         label="Referral card title"
                                         value={referralCardTitle}
-                                        onChange={(value) => handleFieldChange('storefront.referrals_card.title', value, (v) => setWidgetData({ ...widgetData, storefront_app: { ...widgetData.storefront_app, referrals_card: { ...widgetData.storefront_app.referrals_card, title: LimitText(v, 15) } } }))}
+                                        onChange={(value) => handleFieldChange('storefront.referrals_card.title', value, (v) => setWidgetData({ ...widgetData, storefront_app: { ...widgetData.storefront_app, referrals_card: { ...widgetData.storefront_app.referrals_card, title: LimitText(v, 100) } } }))}
                                         error={getErrorMessage('storefront.referrals_card.title') ? true : null}
                                     />
                                     <TextField
                                         label="Referral card message"
                                         value={referralCardMessage}
                                         multiline={2}
-                                        onChange={(value) => handleFieldChange('storefront.referrals_card.message', value, (v) => setWidgetData({ ...widgetData, storefront_app: { ...widgetData.storefront_app, referrals_card: { ...widgetData.storefront_app.referrals_card, message: LimitText(v, 20) } } }))}
+                                        onChange={(value) => handleFieldChange('storefront.referrals_card.message', value, (v) => setWidgetData({ ...widgetData, storefront_app: { ...widgetData.storefront_app, referrals_card: { ...widgetData.storefront_app.referrals_card, message: LimitText(v, 100) } } }))}
                                         error={getErrorMessage('storefront.referrals_card.message') ? true : null}
                                     />
                                     <TextField
                                         label="Referrer title"
                                         value={referrerTitle}
-                                        onChange={(value) => handleFieldChange('storefront.referrals_card.referrer_title', value, (v) => setWidgetData({ ...widgetData, storefront_app: { ...widgetData.storefront_app, referrals_card: { ...widgetData.storefront_app.referrals_card, referrer_title: LimitText(v, 20) } } }))}
+                                        onChange={(value) => handleFieldChange('storefront.referrals_card.referrer_title', value, (v) => setWidgetData({ ...widgetData, storefront_app: { ...widgetData.storefront_app, referrals_card: { ...widgetData.storefront_app.referrals_card, referrer_title: LimitText(v, 40) } } }))}
                                         error={getErrorMessage('storefront.referrals_card.referrer_title') ? true : null}
                                         onFocus={() => setIsEnabled(false)}
                                     />
                                     <TextField
                                         label="Referee title"
                                         value={refereeTitle}
-                                        onChange={(value) => handleFieldChange('storefront.referrals_card.referee_title', value, (v) => setWidgetData({ ...widgetData, storefront_app: { ...widgetData.storefront_app, referrals_card: { ...widgetData.storefront_app.referrals_card, referee_title: LimitText(v, 20) } } }))}
+                                        onChange={(value) => handleFieldChange('storefront.referrals_card.referee_title', value, (v) => setWidgetData({ ...widgetData, storefront_app: { ...widgetData.storefront_app, referrals_card: { ...widgetData.storefront_app.referrals_card, referee_title: LimitText(v, 40) } } }))}
                                         error={getErrorMessage('storefront.referrals_card.referee_title') ? true : null}
                                         onFocus={() => setIsEnabled(false)}
                                     />
                                     <TextField
                                         label="Link title"
                                         value={referralCardLinkTitle}
-                                        onChange={(value) => handleFieldChange('storefront.referrals_card.link_title', value, (v) => setWidgetData({ ...widgetData, storefront_app: { ...widgetData.storefront_app, referrals_card: { ...widgetData.storefront_app.referrals_card, link_title: LimitText(v, 22) } } }))}
+                                        onChange={(value) => handleFieldChange('storefront.referrals_card.link_title', value, (v) => setWidgetData({ ...widgetData, storefront_app: { ...widgetData.storefront_app, referrals_card: { ...widgetData.storefront_app.referrals_card, link_title: LimitText(v, 40) } } }))}
                                         error={getErrorMessage('storefront.referrals_card.link_title') ? true : null}
                                         onFocus={() => setIsEnabled(false)}
                                     />
                                     <TextField
                                         label="My discount text"
                                         value={referralCardMyDiscountText}
-                                        onChange={(value) => handleFieldChange('storefront.referrals_card.my_discount_text', value, (v) => setWidgetData({ ...widgetData, storefront_app: { ...widgetData.storefront_app, referrals_card: { ...widgetData.storefront_app.referrals_card, my_discount_text: LimitText(v, 25) } } }))}
+                                        onChange={(value) => handleFieldChange('storefront.referrals_card.my_discount_text', value, (v) => setWidgetData({ ...widgetData, storefront_app: { ...widgetData.storefront_app, referrals_card: { ...widgetData.storefront_app.referrals_card, my_discount_text: LimitText(v, 40) } } }))}
                                         error={getErrorMessage('storefront.referrals_card.my_discount_text') ? true : null}
                                         onFocus={() => setIsEnabled(false)}
                                     />
@@ -612,7 +611,7 @@ const StoreFront = ({ widgetData, setWidgetData, errors = {}, clearError, openCo
                                     <TextField
                                         label="Reward tiers title"
                                         value={vipTierCardTitle}
-                                        onChange={(value) => handleFieldChange('storefront.reward_tiers_card.title', value, (v) => setWidgetData({ ...widgetData, storefront_app: { ...widgetData.storefront_app, reward_tiers_card: { ...widgetData.storefront_app.reward_tiers_card, title: LimitText(v, 25) } } }))}
+                                        onChange={(value) => handleFieldChange('storefront.reward_tiers_card.title', value, (v) => setWidgetData({ ...widgetData, storefront_app: { ...widgetData.storefront_app, reward_tiers_card: { ...widgetData.storefront_app.reward_tiers_card, title: LimitText(v, 60) } } }))}
                                         error={getErrorMessage('storefront.reward_tiers_card.title') ? true : null}
                                         onFocus={() => setIsEnabled(true)}
                                     />
@@ -620,7 +619,7 @@ const StoreFront = ({ widgetData, setWidgetData, errors = {}, clearError, openCo
                                         label="Reward tiers message"
                                         value={vipTierCardMessage}
                                         multiline={2}
-                                        onChange={(value) => handleFieldChange('storefront.reward_tiers_card.message', value, (v) => setWidgetData({ ...widgetData, storefront_app: { ...widgetData.storefront_app, reward_tiers_card: { ...widgetData.storefront_app.reward_tiers_card, message: LimitText(v, 25) } } }))}
+                                        onChange={(value) => handleFieldChange('storefront.reward_tiers_card.message', value, (v) => setWidgetData({ ...widgetData, storefront_app: { ...widgetData.storefront_app, reward_tiers_card: { ...widgetData.storefront_app.reward_tiers_card, message: LimitText(v, 100) } } }))}
                                         error={getErrorMessage('storefront.reward_tiers_card.message') ? true : null}
                                         onFocus={() => setIsEnabled(true)}
                                     />
@@ -635,21 +634,21 @@ const StoreFront = ({ widgetData, setWidgetData, errors = {}, clearError, openCo
                                     <TextField
                                         label="Current tier"
                                         value={vipTierCardCurrentTier}
-                                        onChange={(value) => handleFieldChange('storefront.reward_tiers_card.current_tier', value, (v) => setWidgetData({ ...widgetData, storefront_app: { ...widgetData.storefront_app, reward_tiers_card: { ...widgetData.storefront_app.reward_tiers_card, customer_tier: { ...widgetData.storefront_app.reward_tiers_card.customer_tier, current_tier: LimitText(v, 25) } } } }))}
+                                        onChange={(value) => handleFieldChange('storefront.reward_tiers_card.current_tier', value, (v) => setWidgetData({ ...widgetData, storefront_app: { ...widgetData.storefront_app, reward_tiers_card: { ...widgetData.storefront_app.reward_tiers_card, customer_tier: { ...widgetData.storefront_app.reward_tiers_card.customer_tier, current_tier: LimitText(v, 50) } } } }))}
                                         error={getErrorMessage('storefront.reward_tiers_card.current_tier') ? true : null}
                                         onFocus={() => setIsEnabled(false)}
                                     />
                                     <TextField
                                         label="Next tier"
                                         value={vipTierCardNextTier}
-                                        onChange={(value) => handleFieldChange('storefront.reward_tiers_card.next_tier', value, (v) => setWidgetData({ ...widgetData, storefront_app: { ...widgetData.storefront_app, reward_tiers_card: { ...widgetData.storefront_app.reward_tiers_card, customer_tier: { ...widgetData.storefront_app.reward_tiers_card.customer_tier, next_tier: LimitText(v, 28) } } } }))}
+                                        onChange={(value) => handleFieldChange('storefront.reward_tiers_card.next_tier', value, (v) => setWidgetData({ ...widgetData, storefront_app: { ...widgetData.storefront_app, reward_tiers_card: { ...widgetData.storefront_app.reward_tiers_card, customer_tier: { ...widgetData.storefront_app.reward_tiers_card.customer_tier, next_tier: LimitText(v, 60) } } } }))}
                                         error={getErrorMessage('storefront.reward_tiers_card.next_tier') ? true : null}
                                         onFocus={() => setIsEnabled(false)}
                                     />
                                     <TextField
                                         label="Max tier reached"
                                         value={vipTierCardMaxTierReached}
-                                        onChange={(value) => handleFieldChange('storefront.reward_tiers_card.max_tier', value, (v) => setWidgetData({ ...widgetData, storefront_app: { ...widgetData.storefront_app, reward_tiers_card: { ...widgetData.storefront_app.reward_tiers_card, customer_tier: { ...widgetData.storefront_app.reward_tiers_card.customer_tier, max_tier: LimitText(v, 25) } } } }))}
+                                        onChange={(value) => handleFieldChange('storefront.reward_tiers_card.max_tier', value, (v) => setWidgetData({ ...widgetData, storefront_app: { ...widgetData.storefront_app, reward_tiers_card: { ...widgetData.storefront_app.reward_tiers_card, customer_tier: { ...widgetData.storefront_app.reward_tiers_card.customer_tier, max_tier: LimitText(v, 60) } } } }))}
                                         error={getErrorMessage('storefront.reward_tiers_card.max_tier') ? true : null}
                                         onFocus={() => setIsEnabled(false)}
                                     />
@@ -664,7 +663,7 @@ const StoreFront = ({ widgetData, setWidgetData, errors = {}, clearError, openCo
                                     <TextField
                                         label="All tier"
                                         value={vipTierCardAllTier}
-                                        onChange={(value) => handleFieldChange('storefront.reward_tiers_card.all_tiers', value, (v) => setWidgetData({ ...widgetData, storefront_app: { ...widgetData.storefront_app, reward_tiers_card: { ...widgetData.storefront_app.reward_tiers_card, all_tiers: { ...widgetData.storefront_app.reward_tiers_card.all_tiers, title: LimitText(v, 22) } } } }))}
+                                        onChange={(value) => handleFieldChange('storefront.reward_tiers_card.all_tiers', value, (v) => setWidgetData({ ...widgetData, storefront_app: { ...widgetData.storefront_app, reward_tiers_card: { ...widgetData.storefront_app.reward_tiers_card, all_tiers: { ...widgetData.storefront_app.reward_tiers_card.all_tiers, title: LimitText(v, 50) } } } }))}
                                         error={getErrorMessage('storefront.reward_tiers_card.all_tiers') ? true : null}
                                         onFocus={() => setIsEnabled(false)}
                                     />
@@ -1166,7 +1165,7 @@ const StoreFront = ({ widgetData, setWidgetData, errors = {}, clearError, openCo
                                                                 display: 'flex',
                                                                 alignItems: 'center'
                                                             }}>
-                                                                <text style={{ textWrap: 'nowrap' }}> {referlinkData?.referral_link}</text>
+                                                                <text style={{ textWrap: 'nowrap' }}> {defaultData?.referral_link}</text>
                                                             </span>
 
                                                             {/* BUTTON: border-left added, padding adjusted */}

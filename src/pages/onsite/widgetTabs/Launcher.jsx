@@ -179,7 +179,7 @@ const Launcher = ({ widgetData, setWidgetData, errors = {}, clearError }) => {
                         <TextField
                             label="Title"
                             value={title}
-                            onChange={(value) => handleFieldChange('launcher.layout.title', value, (v) => setWidgetData({ ...widgetData, launcher: { ...launcherData, layout: { ...launcherData.layout, title: LimitText(v, 22) } } }))}
+                            onChange={(value) => handleFieldChange('launcher.layout.title', value, (v) => setWidgetData({ ...widgetData, launcher: { ...launcherData, layout: { ...launcherData.layout, title: LimitText(v, 50) } } }))}
                             error={getErrorMessage('launcher.layout.title') ? true : null}
                         />
 
