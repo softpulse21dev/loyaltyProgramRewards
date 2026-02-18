@@ -10,7 +10,7 @@ export default defineConfig({
   server: {
     historyApiFallback: true,
     hmr: {
-      host: "assessing-productive-potter-objectives.trycloudflare.com",
+      host: "databases-copyright-fiber-rising.trycloudflare.com",
       protocol: "wss",
     },
   },

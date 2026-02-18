@@ -11,7 +11,7 @@ const PREFIXES = {
     social_share_twitter: "https://twitter.com/intent/tweet?url=",
     social_share_tiktok: "",
     social_follow_instagram: "https://www.instagram.com/",
-    social_follow_twitter: "https://twitter.com/",
+    social_follow_twitter: "https://x.com/",
     social_follow_tiktok: "https://www.tiktok.com/@",
 };
 
@@ -77,11 +77,11 @@ const LoyaltySocialView = () => {
     // Helper: Get platform-specific title
     const getPlatformTitle = useCallback((displayUseType) => {
         switch (displayUseType) {
-            case 'social_follow_twitter': return 'Follow on Twitter';
+            case 'social_follow_twitter': return 'Follow on X';
             case 'social_follow_instagram': return 'Follow on Instagram';
             case 'social_follow_tiktok': return 'Follow on TikTok';
             case 'social_share_facebook': return 'Share on Facebook';
-            case 'social_share_twitter': return 'Share on Twitter';
+            case 'social_share_twitter': return 'Share on X';
             case 'social_share_tiktok': return 'Share on TikTok';
             case 'url_visit': return 'Visit URL';
             default: return 'Social Rule';
@@ -495,7 +495,7 @@ const LoyaltySocialView = () => {
                                                         <SkeletonDisplayText size="small" />
                                                     ) : (
                                                         <TextField
-                                                            label="Earning points"
+                                                            label="Earning Points"
                                                             value={earningpoints}
                                                             type="text"
                                                             inputMode="numeric"
@@ -550,7 +550,7 @@ const LoyaltySocialView = () => {
                                                             <Text>Customers earn points for following your Instagram account.</Text>
                                                         )}
                                                         {activeDisplayUseType === 'social_follow_twitter' && (
-                                                            <Text>Customers earn points for following your Twitter account.</Text>
+                                                            <Text>Customers earn points for following your X account.</Text>
                                                         )}
                                                         {activeDisplayUseType === 'social_follow_tiktok' && (
                                                             <Text>Customers earn points for following your TikTok account.</Text>
@@ -559,7 +559,7 @@ const LoyaltySocialView = () => {
                                                             <Text>Customers earn points for sharing your link on Facebook.</Text>
                                                         )}
                                                         {activeDisplayUseType === 'social_share_twitter' && (
-                                                            <Text>Customers earn points for sharing your link on Twitter.</Text>
+                                                            <Text>Customers earn points for sharing your link on X.</Text>
                                                         )}
                                                         {activeDisplayUseType === 'social_share_tiktok' && (
                                                             <Text>Customers earn points for sharing your link on TikTok.</Text>

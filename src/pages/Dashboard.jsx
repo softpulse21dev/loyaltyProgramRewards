@@ -3,8 +3,9 @@ import { PlayCircleIcon } from '@shopify/polaris-icons';
 import { useCallback, useEffect, useState } from 'react'
 import { fetchData } from '../action';
 import DateRangePicker from '../components/DateRangePicker';
-import { useDispatch } from 'react-redux';
+import { useDispatch, useSelector } from 'react-redux';
 import { DefaultData } from '../redux/action';
+import NeedSupport from '../components/NeedSupport';
 
 const Dashboard = () => {
     const [active, setActive] = useState(false);
@@ -35,6 +36,9 @@ const Dashboard = () => {
         until: formatDate(today),
     });
     const dispatch = useDispatch();
+
+    const currencySymbol = useSelector((state) => state?.merchantSettings?.defaultData?.currency?.symbol);
+    console.log('currencySymbol', currencySymbol)
 
     const getDefaultDataApi = async () => {
         try {
@@ -135,13 +139,21 @@ const Dashboard = () => {
                     <Box>
                         <BlockStack gap="500">
                             <Banner
-                                title={loyaltyStatus ? "Your loyalty program is currently enabled" : "Your loyalty program is currently disabled"}
+                                title={loyaltyStatus ? "Your Loyalty program is currently enabled" : "Your Loyalty program is currently disabled"}
                                 action={{ content: loyaltyStatus ? 'Turn off' : 'Turn on', onAction: () => { updateLoyaltyStatusAPI(!loyaltyStatus) }, loading: programStatusLoading }}
                                 tone={loyaltyStatus ? 'success' : 'warning'}
                             >
-                                <p>
-                                    Turn on your loyalty program to let customers earn points and explore rewards. The widget and loyalty page (if set up) will be visible.
-                                </p>
+                                {!loyaltyStatus ?
+                                    <p>
+                                        {/* Turn on your loyalty program to let customers earn points and explore rewards. The widget and loyalty page (if set up) will be visible. */}
+                                        Customers can't earn points or redeem rewards while the program is turned off. The widget and loyalty page (if set up) will be visible.
+                                    </p>
+                                    :
+                                    <p>
+                                        {/* Turn on your loyalty program to let customers earn points and explore rewards. The widget and loyalty page (if set up) will be visible. */}
+                                        Customers can earn points, redeem rewards, and access the loyalty widget and loyalty page.
+                                    </p>
+                                }
                             </Banner>
 
                             {/* Tutorial Section */}
@@ -165,7 +177,7 @@ const Dashboard = () => {
 
                             {/* Revenue Section */}
                             <BlockStack gap="300">
-                                <Text as="h1" variant="headingMd">Revenue from loyalty programs</Text>
+                                <Text as="h1" variant="headingMd">Revenue from Loyalty Programs</Text>
                                 <Layout>
                                     <Layout.Section>
                                         <Grid>
@@ -174,7 +186,7 @@ const Dashboard = () => {
                                                     <Box style={styles.dashboardCardInfo}>
                                                         <Text variant="bodyLg">Total Sales Generated</Text>
                                                         <Box style={{ display: 'flex', alignItems: 'flex-end', gap: '10px' }}>
-                                                            <Text variant="headingLg">₹{dashboardData?.total_sales}</Text>
+                                                            <Text variant="headingLg">{currencySymbol}{dashboardData?.total_sales}</Text>
                                                             {dashboardData?.total_sales_percentage > 0 && (
                                                                 <Text tone='success' variant="bodyLg">+{dashboardData?.total_sales_percentage}%</Text>
                                                             )}
@@ -187,7 +199,7 @@ const Dashboard = () => {
                                                     <Box style={styles.dashboardCardInfo}>
                                                         <Text variant="bodyLg">Retention Revenue</Text>
                                                         <Box style={{ display: 'flex', alignItems: 'flex-end', gap: '10px' }}>
-                                                            <Text variant="headingLg">₹{dashboardData?.retention_revenue}</Text>
+                                                            <Text variant="headingLg">{currencySymbol}{dashboardData?.retention_revenue}</Text>
                                                             {dashboardData?.retention_percentage > 0 && (
                                                                 <Text tone='success' variant="bodyLg">+{dashboardData?.retention_percentage}%</Text>
                                                             )}
@@ -200,7 +212,7 @@ const Dashboard = () => {
                                                     <Box style={styles.dashboardCardInfo}>
                                                         <Text variant="bodyLg">Referral Revenue</Text>
                                                         <Box style={{ display: 'flex', alignItems: 'flex-end', gap: '10px' }}>
-                                                            <Text variant="headingLg">₹{dashboardData?.referral_revenue}</Text>
+                                                            <Text variant="headingLg">{currencySymbol}{dashboardData?.referral_revenue}</Text>
                                                             {dashboardData?.referral_revenue_percentage > 0 && (
                                                                 <Text tone='success' variant="bodyLg">+{dashboardData?.referral_revenue_percentage}%</Text>
                                                             )}
@@ -215,14 +227,14 @@ const Dashboard = () => {
 
                             {/* Engagement Section */}
                             <BlockStack gap="300">
-                                <Text as="h1" variant="headingMd">Engagement metrics</Text>
+                                <Text as="h1" variant="headingMd">Engagement Metrics</Text>
                                 <Layout>
                                     <Layout.Section>
                                         <Grid>
                                             <Grid.Cell columnSpan={{ xs: 6, sm: 6, md: 3, lg: 6, xl: 46 }}>
                                                 <Card>
                                                     <Box style={styles.dashboardCardInfo}>
-                                                        <Text variant="bodyLg">Points generated</Text>
+                                                        <Text variant="bodyLg">Points Generated</Text>
                                                         <Box style={{ display: 'flex', alignItems: 'flex-end', gap: '10px' }}>
                                                             <Text variant="headingLg">{dashboardData?.points_generated}</Text>
                                                             {dashboardData?.points_generated_percentage > 0 && (
@@ -235,7 +247,7 @@ const Dashboard = () => {
                                             <Grid.Cell columnSpan={{ xs: 6, sm: 6, md: 3, lg: 6, xl: 6 }}>
                                                 <Card>
                                                     <Box style={styles.dashboardCardInfo}>
-                                                        <Text variant="bodyLg">New members</Text>
+                                                        <Text variant="bodyLg">New Members</Text>
                                                         <Box style={{ display: 'flex', alignItems: 'flex-end', gap: '10px' }}>
                                                             <Text variant="headingLg">{dashboardData?.new_members}</Text>
                                                             {dashboardData?.new_members_percentage > 0 && (
@@ -248,13 +260,13 @@ const Dashboard = () => {
                                             {/* <Grid.Cell columnSpan={{ xs: 6, sm: 6, md: 2, lg: 4, xl: 4 }}>
                                     <Card>
                                         <Text variant="headingSm">Loyalty member orders</Text>
-                                        <Text variant="bodyLg">₹0.00</Text>
+                                        <Text variant="bodyLg">{currencySymbol}0.00</Text>
                                     </Card>
                                 </Grid.Cell> */}
                                             <Grid.Cell columnSpan={{ xs: 6, sm: 6, md: 3, lg: 6, xl: 6 }}>
                                                 <Card>
                                                     <Box style={styles.dashboardCardInfo}>
-                                                        <Text variant="bodyLg">Rewards claimed</Text>
+                                                        <Text variant="bodyLg">Rewards Claimed</Text>
                                                         <Box style={{ display: 'flex', alignItems: 'flex-end', gap: '10px' }}>
                                                             <Text variant="headingLg">{dashboardData?.rewards_claimed}</Text>
                                                             {dashboardData?.rewards_claimed_percentage > 0 && (
@@ -267,7 +279,7 @@ const Dashboard = () => {
                                             <Grid.Cell columnSpan={{ xs: 6, sm: 6, md: 3, lg: 6, xl: 6 }}>
                                                 <Card>
                                                     <Box style={styles.dashboardCardInfo}>
-                                                        <Text variant="bodyLg">Orders from referrals</Text>
+                                                        <Text variant="bodyLg">Orders from Referrals</Text>
                                                         <Box style={{ display: 'flex', alignItems: 'flex-end', gap: '10px' }}>
                                                             <Text variant="headingLg">{dashboardData?.orders_from_referral}</Text>
                                                             {dashboardData?.orders_referral_percentage > 0 && (
@@ -280,7 +292,7 @@ const Dashboard = () => {
                                             {/* <Grid.Cell columnSpan={{ xs: 6, sm: 6, md: 2, lg: 4, xl: 4 }}>
                                     <Card>
                                         <Text variant="headingSm">VIP members</Text>
-                                        <Text variant="bodyLg">₹0.00</Text>
+                                        <Text variant="bodyLg">{currencySymbol}0.00</Text>
                                     </Card>
                                 </Grid.Cell> */}
                                         </Grid>
@@ -318,8 +330,10 @@ const Dashboard = () => {
                                     </p>
                                 </Collapsible>
                             </Card>
+                            <NeedSupport />
                         </BlockStack>
                     </Box>
+
                 </Page>
             )}
         </>

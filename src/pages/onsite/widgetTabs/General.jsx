@@ -3,7 +3,7 @@ import React, { useState, useCallback, useEffect, useMemo } from 'react';
 import '../../../widget.css';
 import { UploadIcon, DeleteIcon } from '@shopify/polaris-icons';
 import ColorPickerInput from '../../../components/ColorPickerInput';
-import { BoldArrowRightIcon, BoldCopyIcon, BoldCrownIcon, BoldDiscountIcon, BoldFillStarIcon, BoldGiftIcon, BoldRewardsIcon, BoldStarIcon, BoldTrophyIcon, BoldTruckIcon, StarIcon } from '../../../assets/svg/svg';
+import { BoldArrowRightIcon, BoldCopyIcon, BoldCrownIcon, BoldDiscountIcon, BoldFillStarIcon, BoldThumpUpIcon, BoldRewardsIcon, BoldStarIcon, BoldTrophyIcon, ReferrerIcon, StarIcon, TierIcon } from '../../../assets/svg/svg';
 import { useSelector } from 'react-redux';
 
 const General = ({ widgetData, setWidgetData, errors = {}, clearError, openCollapsible, setOpenCollapsible, loading }) => {
@@ -285,7 +285,7 @@ const General = ({ widgetData, setWidgetData, errors = {}, clearError, openColla
 
                                         <Text variant="bodyLg" fontWeight='semibold'>Header</Text>
                                         <BlockStack gap="300">
-                                            <Text variant="bodyMd">Header color</Text>
+                                            <Text variant="bodyMd">Header Color</Text>
                                             <Box style={{ display: 'flex', flexDirection: 'column' }}>
                                                 <RadioButton
                                                     label="Solid"
@@ -461,14 +461,14 @@ const General = ({ widgetData, setWidgetData, errors = {}, clearError, openColla
                                         <Box style={{ display: 'flex', flexDirection: 'column', gap: '10px', marginBottom: '10px' }}>
                                             <div style={{ display: 'flex', flexDirection: 'row', gap: '10px' }}>
                                                 <ColorPickerInput
-                                                    label="Header bar"
+                                                    label="Header Bar"
                                                     value={headerBarColor}
                                                     onChange={(value) => setWidgetData({ ...widgetData, general: { ...widgetData.general, styles: { ...widgetData.general.styles, header: { ...widgetData.general.styles.header, header_bar_color: value } } } })}
                                                     error={getErrorMessage('general.styles.header.header_bar_color')}
                                                     onClearError={() => clearError('general.styles.header.header_bar_color')}
                                                 />
                                                 <ColorPickerInput
-                                                    label="Header bar text"
+                                                    label="Header Bar Text"
                                                     value={headerBarTextColor}
                                                     onChange={(value) => setWidgetData({ ...widgetData, general: { ...widgetData.general, styles: { ...widgetData.general.styles, header: { ...widgetData.general.styles.header, header_bar_text_color: value } } } })}
                                                     error={getErrorMessage('general.styles.header.header_bar_text_color')}
@@ -476,7 +476,7 @@ const General = ({ widgetData, setWidgetData, errors = {}, clearError, openColla
                                                 />
                                             </div>
                                             <ColorPickerInput
-                                                label="Header text color"
+                                                label="Header Text Color"
                                                 value={headerTextColor}
                                                 onChange={(value) => setWidgetData({ ...widgetData, general: { ...widgetData.general, styles: { ...widgetData.general.styles, header: { ...widgetData.general.styles.header, text_color: value } } } })}
                                                 error={getErrorMessage('general.styles.header.text_color')}
@@ -490,7 +490,7 @@ const General = ({ widgetData, setWidgetData, errors = {}, clearError, openColla
 
                                         <Text variant="bodyLg" fontWeight='semibold'>Content</Text>
                                         <BlockStack gap="200">
-                                            <Text variant="bodyMd">Background color</Text>
+                                            <Text variant="bodyMd">Background Color</Text>
                                             <Box style={{ display: 'flex', flexDirection: 'column' }}>
                                                 <RadioButton
                                                     label="Solid"
@@ -626,7 +626,7 @@ const General = ({ widgetData, setWidgetData, errors = {}, clearError, openColla
                                         <Box style={{ display: 'flex', flexDirection: 'row', gap: '10px', marginBottom: '10px' }}>
                                             {/* Heading Color */}
                                             <ColorPickerInput
-                                                label="Heading color"
+                                                label="Heading Color"
                                                 value={headingColor}
                                                 onChange={(value) => setWidgetData({ ...widgetData, general: { ...widgetData.general, styles: { ...widgetData.general.styles, content: { ...widgetData.general.styles.content, heading_color: value } } } })}
                                                 error={getErrorMessage('general.styles.content.heading_color')}
@@ -635,7 +635,7 @@ const General = ({ widgetData, setWidgetData, errors = {}, clearError, openColla
 
                                             {/* Text Color */}
                                             <ColorPickerInput
-                                                label="Text color"
+                                                label="Text Color"
                                                 value={textColor}
                                                 onChange={(value) => setWidgetData({ ...widgetData, general: { ...widgetData.general, styles: { ...widgetData.general.styles, content: { ...widgetData.general.styles.content, text_color: value } } } })}
                                                 error={getErrorMessage('general.styles.content.text_color')}
@@ -652,7 +652,7 @@ const General = ({ widgetData, setWidgetData, errors = {}, clearError, openColla
                                         <Box style={{ display: 'flex', flexDirection: 'row', gap: '10px', marginBottom: '10px' }}>
                                             {/* Heading Color */}
                                             <ColorPickerInput
-                                                label="Button Text color"
+                                                label="Button Text Color"
                                                 value={buttonTextColor}
                                                 onChange={(value) => setWidgetData({ ...widgetData, general: { ...widgetData.general, styles: { ...widgetData.general.styles, accent: { ...widgetData.general.styles.accent, button_text_color: value } } } })}
                                                 error={getErrorMessage('general.styles.accent.button_text_color')}
@@ -661,7 +661,7 @@ const General = ({ widgetData, setWidgetData, errors = {}, clearError, openColla
 
                                             {/* Text Color */}
                                             <ColorPickerInput
-                                                label="Button color"
+                                                label="Button Color"
                                                 value={buttonColor}
                                                 onChange={(value) => setWidgetData({ ...widgetData, general: { ...widgetData.general, styles: { ...widgetData.general.styles, accent: { ...widgetData.general.styles.accent, button_color: value } } } })}
                                                 error={getErrorMessage('general.styles.accent.button_color')}
@@ -669,7 +669,7 @@ const General = ({ widgetData, setWidgetData, errors = {}, clearError, openColla
                                             />
                                         </Box>
                                         <RangeSlider
-                                            label="Button radius"
+                                            label="Button Radius"
                                             max={32}
                                             min={0}
                                             value={buttonRadius}
@@ -678,7 +678,7 @@ const General = ({ widgetData, setWidgetData, errors = {}, clearError, openColla
                                         />
                                         <Box style={{ display: 'flex', flexDirection: 'row', gap: '10px', marginBottom: '10px' }}>
                                             <ColorPickerInput
-                                                label="Link color"
+                                                label="Link Color"
                                                 value={linkColor}
                                                 onChange={(value) => setWidgetData({ ...widgetData, general: { ...widgetData.general, styles: { ...widgetData.general.styles, accent: { ...widgetData.general.styles.accent, link_color: value } } } })}
                                                 error={getErrorMessage('general.styles.accent.link_color')}
@@ -686,7 +686,7 @@ const General = ({ widgetData, setWidgetData, errors = {}, clearError, openColla
                                                 onFocus={() => setIsEnabled(true)}
                                             />
                                             <ColorPickerInput
-                                                label="Icon color"
+                                                label="Icon Color"
                                                 value={iconColor}
                                                 onChange={(value) => setWidgetData({ ...widgetData, general: { ...widgetData.general, styles: { ...widgetData.general.styles, accent: { ...widgetData.general.styles.accent, icons_color: value } } } })}
                                                 error={getErrorMessage('general.styles.accent.icons_color')}
@@ -723,7 +723,7 @@ const General = ({ widgetData, setWidgetData, errors = {}, clearError, openColla
                                             <Text variant="bodyLg" fontWeight='semibold'>Box</Text>
                                             <Box style={{ display: 'flex', flexDirection: 'row', gap: '10px' }}>
                                                 <ColorPickerInput
-                                                    label="Box background color"
+                                                    label="Box Background Color"
                                                     value={boxBackgroundColor}
                                                     onChange={(value) => setWidgetData({ ...widgetData, general: { ...widgetData.general, advanced: { ...widgetData.general.advanced, box: { ...widgetData.general.advanced.box, background_color: value } } } })}
                                                     error={getErrorMessage('general.advanced.box.background_color')}
@@ -731,7 +731,7 @@ const General = ({ widgetData, setWidgetData, errors = {}, clearError, openColla
                                                     onFocus={() => setIsEnabled(true)}
                                                 />
                                                 <ColorPickerInput
-                                                    label="Box border color"
+                                                    label="Box Border Color"
                                                     value={boxBorderColor}
                                                     onChange={(value) => setWidgetData({ ...widgetData, general: { ...widgetData.general, advanced: { ...widgetData.general.advanced, box: { ...widgetData.general.advanced.box, border_color: value } } } })}
                                                     error={getErrorMessage('general.advanced.box.border_color')}
@@ -749,7 +749,7 @@ const General = ({ widgetData, setWidgetData, errors = {}, clearError, openColla
                                             <Text variant="bodyLg" fontWeight='semibold'>Card</Text>
                                             <Box style={{ display: 'flex', flexDirection: 'row', gap: '10px', marginBottom: '15px' }}>
                                                 <ColorPickerInput
-                                                    label="Card background color"
+                                                    label="Card Background Color"
                                                     value={cardBackgroundColor}
                                                     onChange={(value) => setWidgetData({ ...widgetData, general: { ...widgetData.general, advanced: { ...widgetData.general.advanced, card: { ...widgetData.general.advanced.card, background_color: value } } } })}
                                                     error={getErrorMessage('general.advanced.card.background_color')}
@@ -757,7 +757,7 @@ const General = ({ widgetData, setWidgetData, errors = {}, clearError, openColla
                                                     onFocus={() => setIsEnabled(true)}
                                                 />
                                                 <ColorPickerInput
-                                                    label="Card border color"
+                                                    label="Card Border Color"
                                                     value={cardBorderColor}
                                                     onChange={(value) => setWidgetData({ ...widgetData, general: { ...widgetData.general, advanced: { ...widgetData.general.advanced, card: { ...widgetData.general.advanced.card, border_color: value } } } })}
                                                     error={getErrorMessage('general.advanced.card.border_color')}
@@ -767,7 +767,7 @@ const General = ({ widgetData, setWidgetData, errors = {}, clearError, openColla
                                             </Box>
                                             <div onMouseDown={() => setIsEnabled(true)}>
                                                 <RangeSlider
-                                                    label="Card border width"
+                                                    label="Card Border width"
                                                     max={4}
                                                     min={0}
                                                     value={cardBorderWidth}
@@ -777,7 +777,7 @@ const General = ({ widgetData, setWidgetData, errors = {}, clearError, openColla
                                             </div>
                                             <div onMouseDown={() => setIsEnabled(true)}>
                                                 <RangeSlider
-                                                    label="Card border radius"
+                                                    label="Card Border Radius"
                                                     max={36}
                                                     min={0}
                                                     value={cardBorderRadius}
@@ -796,7 +796,7 @@ const General = ({ widgetData, setWidgetData, errors = {}, clearError, openColla
                                             <Text variant="bodyLg" fontWeight='semibold'>Section</Text>
                                             <Box style={{ display: 'flex', flexDirection: 'row', gap: '10px', marginBottom: '15px' }}>
                                                 <ColorPickerInput
-                                                    label="Section background color"
+                                                    label="Section Background Color"
                                                     value={sectionBackgroundColor}
                                                     onChange={(value) => setWidgetData({ ...widgetData, general: { ...widgetData.general, advanced: { ...widgetData.general.advanced, section: { ...widgetData.general.advanced.section, background_color: value } } } })}
                                                     error={getErrorMessage('general.advanced.section.background_color')}
@@ -804,7 +804,7 @@ const General = ({ widgetData, setWidgetData, errors = {}, clearError, openColla
                                                     onFocus={() => setIsEnabled(false)}
                                                 />
                                                 <ColorPickerInput
-                                                    label="Section border color"
+                                                    label="Section Border Color"
                                                     value={sectionBorderColor}
                                                     onChange={(value) => setWidgetData({ ...widgetData, general: { ...widgetData.general, advanced: { ...widgetData.general.advanced, section: { ...widgetData.general.advanced.section, card_border_color: value } } } })}
                                                     error={getErrorMessage('general.advanced.section.card_border_color')}
@@ -814,7 +814,7 @@ const General = ({ widgetData, setWidgetData, errors = {}, clearError, openColla
                                             </Box>
                                             <div onMouseDown={() => setIsEnabled(false)}>
                                                 <RangeSlider
-                                                    label="Section border width"
+                                                    label="Section Border Width"
                                                     max={4}
                                                     min={0}
                                                     value={sectionBorderWidth}
@@ -824,7 +824,7 @@ const General = ({ widgetData, setWidgetData, errors = {}, clearError, openColla
                                             </div>
                                             <div onMouseDown={() => setIsEnabled(false)}>
                                                 <RangeSlider
-                                                    label="Section border radius"
+                                                    label="Section Border Radius"
                                                     max={36}
                                                     min={0}
                                                     value={sectionBorderRadius}
@@ -842,7 +842,7 @@ const General = ({ widgetData, setWidgetData, errors = {}, clearError, openColla
                                         <Box style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
                                             <Box style={{ display: 'flex', flexDirection: 'row', gap: '10px' }}>
                                                 <ColorPickerInput
-                                                    label="Input field color"
+                                                    label="Input Field Color"
                                                     value={inputFieldColor}
                                                     onChange={(value) => setWidgetData({ ...widgetData, general: { ...widgetData.general, advanced: { ...widgetData.general.advanced, input: { ...widgetData.general.advanced.input, input_color: value } } } })}
                                                     error={getErrorMessage('general.advanced.input.input_color')}
@@ -850,7 +850,7 @@ const General = ({ widgetData, setWidgetData, errors = {}, clearError, openColla
                                                     onFocus={() => setIsEnabled(false)}
                                                 />
                                                 <ColorPickerInput
-                                                    label="Input field border color"
+                                                    label="Input Field Border Color"
                                                     value={inputFieldBorderColor}
                                                     onChange={(value) => setWidgetData({ ...widgetData, general: { ...widgetData.general, advanced: { ...widgetData.general.advanced, input: { ...widgetData.general.advanced.input, input_border_color: value } } } })}
                                                     error={getErrorMessage('general.advanced.input.input_border_color')}
@@ -859,7 +859,7 @@ const General = ({ widgetData, setWidgetData, errors = {}, clearError, openColla
                                                 />
                                             </Box>
                                             <RangeSlider
-                                                label="Input field border radius"
+                                                label="Input Field Border Radius"
                                                 max={36}
                                                 min={0}
                                                 value={inputBorderRadius}
@@ -1091,7 +1091,7 @@ const General = ({ widgetData, setWidgetData, errors = {}, clearError, openColla
                                                                     onMouseEnter={e => { e.currentTarget.style.opacity = '0.7'; e.target.style.transform = "translateY(-2px)"; }}
                                                                     onMouseLeave={e => { e.currentTarget.style.opacity = '1'; e.target.style.transform = "translateY(0)"; }}
                                                                 >
-                                                                    <BoldGiftIcon color={iconColor} width='22' height='22' />
+                                                                    <BoldThumpUpIcon color={iconColor} width='22' height='22' />
                                                                     <span style={{ flex: 1, fontWeight: 500, fontSize: '14px', color: headingColor }}>{pointsCardWaysToRedeemText}</span>
                                                                     <BoldArrowRightIcon color={iconColor} height='14' width='14' />
                                                                 </div>
@@ -1124,7 +1124,7 @@ const General = ({ widgetData, setWidgetData, errors = {}, clearError, openColla
                                                                 {/* You get */}
                                                                 <div style={{ display: 'flex', flexDirection: 'row', gap: '10px', alignItems: 'center', backgroundColor: boxBackgroundColor, border: `1px solid ${boxBorderColor}`, padding: '10px', borderRadius: '10px' }}
                                                                 >
-                                                                    <BoldTruckIcon color={iconColor} width='22' height='22' />
+                                                                    <ReferrerIcon color={iconColor} width='22' height='22' />
                                                                     <div style={{ display: 'flex', flexDirection: 'column' }}>
                                                                         <span style={{ fontSize: '14px', fontWeight: 500, color: headingColor }}>{referrerTitle}</span>
                                                                         <text style={{ fontSize: '13px', color: textColor }}>Earn Points S1</text>
@@ -1221,7 +1221,7 @@ const General = ({ widgetData, setWidgetData, errors = {}, clearError, openColla
 
                                                                     <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', cursor: 'pointer' }}>
                                                                         <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-                                                                            <BoldFillStarIcon color={iconColor} />
+                                                                            <TierIcon color={iconColor} />
                                                                             <text style={{ textAlign: "center", fontSize: '14px', fontWeight: '500', color: headingColor, }}>{vipTierCardAllTier}</text>
                                                                         </div>
                                                                         <BoldArrowRightIcon color={iconColor} height='14' width='14' />
@@ -1286,7 +1286,7 @@ const General = ({ widgetData, setWidgetData, errors = {}, clearError, openColla
                                                                     onMouseEnter={e => { e.currentTarget.style.opacity = '0.7'; e.target.style.transform = "translateY(-2px)"; }}
                                                                     onMouseLeave={e => { e.currentTarget.style.opacity = '1'; e.target.style.transform = "translateY(0)"; }}
                                                                 >
-                                                                    <BoldGiftIcon color={iconColor} width='22' height='22' />
+                                                                    <BoldThumpUpIcon color={iconColor} width='22' height='22' />
                                                                     <text style={{ flex: 1, fontWeight: 500, fontSize: '14px', color: headingColor }}>{pointsCardWaysToRedeemText}</text>
                                                                     <BoldArrowRightIcon color={iconColor} height='14' width='14' />
                                                                 </div>
@@ -1336,7 +1336,7 @@ const General = ({ widgetData, setWidgetData, errors = {}, clearError, openColla
                                                             <Box style={{ display: 'flex', flexDirection: 'column', gap: '10px', marginBottom: '10px' }}>
                                                                 {/* You get */}
                                                                 <div style={{ display: 'flex', flexDirection: 'row', gap: '10px', alignItems: 'center', backgroundColor: boxBackgroundColor, border: `1px solid ${boxBorderColor}`, padding: '10px', borderRadius: '10px' }} >
-                                                                    <BoldTruckIcon color={iconColor} width='22' height='22' />
+                                                                    <ReferrerIcon color={iconColor} width='22' height='22' />
                                                                     <div style={{ display: 'flex', flexDirection: 'column' }} >
                                                                         <span style={{ fontSize: '14px', fontWeight: 500, color: headingColor }}>{referrerTitle}</span>
                                                                         <text style={{ fontSize: '13px', color: textColor }}>Earn Points S1</text>

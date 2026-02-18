@@ -32,9 +32,34 @@ const TierView = () => {
     console.log('vipTierData tierview', vipTierData)
 
     console.log('Data', Data)
-    const { rule, edit, navigateTo } = location.state || {};
+    const { rule, edit, navigateTo, entryMethod: stateEntryMethod } = location.state || {};
     console.log('rule', rule)
     console.log('edit', edit)
+
+    let currentEntryMethod = 3;
+    if (stateEntryMethod !== undefined) {
+        currentEntryMethod = stateEntryMethod;
+        localStorage.setItem('tierEntryMethod', stateEntryMethod.toString()); // keep localStorage in sync
+    } else {
+        const saved = localStorage.getItem('tierEntryMethod');
+        if (saved) {
+            currentEntryMethod = parseInt(saved, 10);
+        }
+    }
+    const getGoalLabel = () => {
+        switch (currentEntryMethod) {
+            case 1:
+                return "Points earned since start date";
+            case 2:
+                return "Orders placed since start date";
+            case 3:
+                return "Amount spent since start date";
+            case 4:
+                return "Points redeemed since start date";
+            default:
+                return "Amount spent since start date";
+        }
+    };
     const [active, setActive] = useState(false);
     const tierId = useSelector((state) => state.merchantSettings.tierId);
     console.log('tierId', tierId)
@@ -220,17 +245,88 @@ const TierView = () => {
         dispatch(UpdateData(updatedReward));
     }, [dispatch]);
 
-    const handleDropZoneDrop = useCallback(
-        (_droppedFiles, acceptedFiles, _rejectedFiles) => {
-            console.log('acceptedFiles', acceptedFiles[0])
-            if (_rejectedFiles.length > 0) {
-                shopify.toast.show('Only .svg, .jpg, and .png files are accepted.', { duration: 2000, isError: true });
+    // --- FILE UPLOAD LOGIC STARTS HERE ---
+    const MAX_SVG_SIZE = 24;
+
+    const getSvgSize = (svgEl) => {
+        let wAttr = svgEl.getAttribute("width");
+        let hAttr = svgEl.getAttribute("height");
+        const viewBox = svgEl.getAttribute("viewBox");
+
+        let width = wAttr ? parseFloat(wAttr) : NaN;
+        let height = hAttr ? parseFloat(hAttr) : NaN;
+
+        if ((!Number.isFinite(width) || !Number.isFinite(height)) && viewBox) {
+            const parts = viewBox.trim().split(/[,\s]+/);
+            if (parts.length === 4) {
+                width = parseFloat(parts[2]);
+                height = parseFloat(parts[3]);
             }
-            // Dispatch update to Redux, not local state
-            dispatch(UpdateTierFormData({ ...tierFormData, files: acceptedFiles }));
-        },
-        [tierFormData, dispatch], // Add tierFormData and dispatch to dependencies
-    );
+        }
+        return { width, height };
+    };
+
+    const handleDropZoneDrop = async (_dropFiles, acceptedFiles, rejectedFiles) => {
+        console.log('acceptedFiles', acceptedFiles[0])
+        // 1. Handle Rejections (Polaris detected wrong file type)
+        if (rejectedFiles && rejectedFiles.length > 0) {
+            setValidation((prev) => ({
+                ...prev,
+                files: "Only PNG, JPG, or SVG files are allowed.",
+            }));
+            return;
+        }
+
+        const file = acceptedFiles?.[0];
+        if (!file) return;
+
+        // 2. Validate SVG Specifics
+        if (file.type === "image/svg+xml") {
+            try {
+                const text = await file.text();
+                const parser = new DOMParser();
+                const svgDoc = parser.parseFromString(text, "image/svg+xml");
+                const svgEl = svgDoc.querySelector("svg");
+
+                if (!svgEl) {
+                    setValidation((prev) => ({ ...prev, files: "Invalid SVG file." }));
+                    return;
+                }
+
+                const { width, height } = getSvgSize(svgEl);
+
+                // If we can't determine size, we usually reject or warn. 
+                // Here we reject to be safe.
+                if (!Number.isFinite(width) || !Number.isFinite(height)) {
+                    setValidation((prev) => ({
+                        ...prev,
+                        files: "Cannot determine SVG dimensions. Ensure width/height or viewBox is set.",
+                    }));
+                    return;
+                }
+
+                if (width > MAX_SVG_SIZE || height > MAX_SVG_SIZE) {
+                    setValidation((prev) => ({
+                        ...prev,
+                        files: `SVG must be ${MAX_SVG_SIZE}x${MAX_SVG_SIZE} pixels or smaller.`,
+                    }));
+                    return;
+                }
+            } catch (error) {
+                setValidation((prev) => ({ ...prev, files: "Error parsing SVG file." }));
+                return;
+            }
+        }
+
+        // 3. If we reached here, the file is valid (PNG/JPG or valid SVG)
+        // Clear errors
+        setValidation((prev) => ({ ...prev, files: "" }));
+
+        // UPDATE REDUX with an ARRAY of files so the UI updates
+        dispatch(UpdateTierFormData({ ...tierFormData, files: [file] }));
+    };
+    // --- FILE UPLOAD LOGIC ENDS HERE ---
+
     const validImageTypes = ['image/svg', 'image/jpeg', 'image/png'];
 
     const uploadedFiles = files && files.length > 0 && (
@@ -260,7 +356,7 @@ const TierView = () => {
                     }
 
                     return (
-                        <Box alignment="center" style={{ width: '100%', display: 'flex', justifyContent: 'flex-start', alignItems: 'center' }}>
+                        <Box key={index} alignment="center" style={{ width: '100%', display: 'flex', justifyContent: 'flex-start', alignItems: 'center' }}>
                             {thumbnail}
                             <Box style={{ width: '100%', marginLeft: 10, wordBreak: 'break-word' }}>
                                 <Text variant="bodyMd" as="span">{file.name}{' '}</Text>
@@ -285,6 +381,7 @@ const TierView = () => {
             </LegacyStack>
         </div>
     );
+
     const fileUpload = !files.length && (
         <DropZone.FileUpload actionHint="Accepts .svg, .jpg, and .png" />
     )
@@ -337,7 +434,10 @@ const TierView = () => {
                                                 <Text variant='headingMd' as="span">Tier Name</Text>
                                                 <TextField
                                                     value={tierName}
-                                                    onChange={(value) => dispatch(UpdateTierFormData({ ...tierFormData, tierName: LimitText(value , 50) }), setValidation({ ...validation, tierName: '' }))}
+                                                    onChange={(value) => {
+                                                        dispatch(UpdateTierFormData({ ...tierFormData, tierName: LimitText(value, 50) }));
+                                                        setValidation(prev => ({ ...prev, tierName: '' }));
+                                                    }}
                                                     maxLength={255}
                                                     error={validation.tierName}
                                                 />
@@ -346,14 +446,17 @@ const TierView = () => {
 
                                         <Card>
                                             <Box style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
-                                                <Text variant='headingMd' as="span">Goal to achieve tier</Text>
+                                                <Text variant='headingMd' as="span">Goal to Achieve Tier</Text>
                                                 <Box style={{ maxWidth: 300 }}>
                                                     <TextField
                                                         value={goalValue}
                                                         type='text'
-                                                        label='Amount spent since start date'
+                                                        label={getGoalLabel()}
                                                         requiredIndicator={true}
-                                                        onChange={(value) => dispatch(UpdateTierFormData({ ...tierFormData, goalValue: SingleLeadingZero(value) }), setValidation({ ...validation, goalValue: '' }))}
+                                                        onChange={(value) => {
+                                                            dispatch(UpdateTierFormData({ ...tierFormData, goalValue: SingleLeadingZero(value) }));
+                                                            setValidation(prev => ({ ...prev, goalValue: '' }));
+                                                        }}
                                                         error={validation.goalValue}
                                                     />
                                                 </Box>
@@ -369,7 +472,10 @@ const TierView = () => {
                                                         type='text'
                                                         label='Points earned will be multiplied by this value'
                                                         requiredIndicator={true}
-                                                        onChange={(value) => dispatch(UpdateTierFormData({ ...tierFormData, pointsMultiplier: sanitizeNumberWithDecimal(value) }), setValidation({ ...validation, pointsMultiplier: '' }))}
+                                                        onChange={(value) => {
+                                                            dispatch(UpdateTierFormData({ ...tierFormData, pointsMultiplier: sanitizeNumberWithDecimal(value) }));
+                                                            setValidation(prev => ({ ...prev, pointsMultiplier: '' }));
+                                                        }}
                                                         error={validation.pointsMultiplier}
                                                     />
                                                 </Box>
@@ -378,7 +484,7 @@ const TierView = () => {
 
                                         <Card>
                                             <BlockStack gap={400}>
-                                                <Text variant='headingMd'>Rewards to unlock tier</Text>
+                                                <Text variant='headingMd'>Rewards to Unlock Tier</Text>
                                                 <div className='icon-size'>
                                                     <ResourceList
                                                         resourceName={{ singular: "rule", plural: "rules" }}
@@ -433,7 +539,7 @@ const TierView = () => {
                                                 <Text variant='headingMd' as="span">Summary</Text>
                                                 <div>
                                                     <Text>Set a Reward tier name.</Text>
-                                                    <Text>Define the spending amount required to achieve the tier.</Text>
+                                                    <Text>Define the Goal to achieve tier.</Text>
                                                     <Text>Configure a points multiplier for the tier.</Text>
                                                     <Text>Unlock rewards when the tier is achieved.</Text>
                                                 </div>

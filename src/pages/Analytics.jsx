@@ -1,9 +1,10 @@
 import React, { useCallback, useEffect, useState } from "react";
-import { Page, Grid, SkeletonBodyText, Card } from "@shopify/polaris";
+import { Page, Grid, SkeletonBodyText, Card, Box } from "@shopify/polaris";
 import "@shopify/polaris-viz/build/esm/styles.css";
 import DateRangePicker from "../components/DateRangePicker";
 import { fetchData } from "../action";
 import ChartCard from "../components/ChartCard";
+import NeedSupport from "../components/NeedSupport";
 
 function Analytics() {
     const [analyticsData, setAnalyticsData] = useState({});
@@ -60,10 +61,10 @@ function Analytics() {
                         </Card> :
 
                         <ChartCard
-                            title="Total Earned Points"
-                            amount={summaryData?.total_points_earned}
-                            data={analyticsData?.points_earned}
-                            seriesName="Earned Points"
+                            title="Total Customers"
+                            amount={summaryData?.total_customers}
+                            data={analyticsData?.customers_counts}
+                            seriesName="Customers"
                         />
                     }
                 </Grid.Cell>
@@ -104,7 +105,7 @@ function Analytics() {
                             <SkeletonBodyText lines={10} />
                         </Card> :
                         <ChartCard
-                            title="Total points given manually"
+                            title="Total Points Given Manually"
                             amount={summaryData?.total_points_manual}
                             data={analyticsData?.points_manual}
                             seriesName="Given Points"
@@ -126,6 +127,10 @@ function Analytics() {
                     }
                 </Grid.Cell>
             </Grid>
+
+            <Box style={{ marginTop: '20px' }}>
+                <NeedSupport />
+            </Box>
         </Page>
     );
 }

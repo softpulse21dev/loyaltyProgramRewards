@@ -7,6 +7,7 @@ import TierModal from '../../components/TierModal';
 import PointsModal from '../../components/PointsModal';
 import { fetchData } from '../../action';
 import { capitalizeFirst, FormatAddress, formatShortDate, iconsMap } from '../../utils';
+import { useSelector } from 'react-redux';
 
 const CustomerView = () => {
     const navigate = useNavigate();
@@ -35,7 +36,7 @@ const CustomerView = () => {
         redeem: false,
         rewards: false,
     });
-
+    const currencySymbol = useSelector((state) => state?.merchantSettings?.defaultData?.currency);
     const statusToneMap = {
         active: 'success',
         redeemed: 'critical',
@@ -426,7 +427,7 @@ const CustomerView = () => {
                                             </Box>
 
                                             <Box style={{ display: 'flex', alignItems: 'center', gap: '10px', padding: '0px 16px 16px 16px' }} tone="subdued">
-                                                    {/* <Box>
+                                                {/* <Box>
                                                         <Icon source={PinIcon} />
                                                     </Box> */}
                                                 <Text> Referred a total of {customerData?.referral_used} customers</Text>
@@ -448,8 +449,8 @@ const CustomerView = () => {
                                                             selectable={false}
                                                             headings={[
                                                                 { title: 'Order ID' },
-                                                                { title: 'Total' },
-                                                                { title: 'Amount Spent' },
+                                                                { title: 'Total' + ' (' + (currencySymbol?.symbol) + ')' },
+                                                                { title: 'Amount Spent' + ' (' + (currencySymbol?.symbol) + ')' },
                                                                 { title: 'Status' },
                                                                 { title: 'Date' },
                                                             ]}

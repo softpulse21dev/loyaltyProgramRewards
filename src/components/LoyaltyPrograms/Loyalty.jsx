@@ -13,6 +13,7 @@ const Loyalty = () => {
     const [loyaltyData, setLoyaltyData] = useState([]);
     const [modalActive, setModalActive] = useState(false);
     const [redeemModalActive, setRedeemModalActive] = useState(false);
+    const [apiCallsInProgress, setApiCallsInProgress] = useState({});
     const navigate = useNavigate();
     const toggleModal = useCallback(() => setModalActive((active) => !active), []);
 
@@ -47,75 +48,98 @@ const Loyalty = () => {
     }, []);
 
     const handleRuleStatusChangeAPI = async (ruleId, isActive, isEarningRule = true) => {
+        // Check if an API call is already in progress for this rule
+        const callKey = `${ruleId}_${isEarningRule ? 'earning' : 'redeeming'}`;
+        if (apiCallsInProgress[callKey]) {
+            // API call is already in progress for this rule, ignore the request
+            return;
+        }
+
+        // Mark this API call as in progress
+        setApiCallsInProgress(prev => ({
+            ...prev,
+            [callKey]: true
+        }));
+
         const formData = new FormData();
         formData.append("status", isActive ? true : false);
         formData.append("rule_id", ruleId);
         const url = isEarningRule ? "/update-merchant-earning-rules-status" : "/update-merchant-redeeming-rules-status";
-        const response = await fetchData(url, formData);
+        
+        try {
+            const response = await fetchData(url, formData);
 
-        if (response.status) {
-            // ✅ Update local state only (no refetch / no page reload)
-            setLoyaltyData((prev) => {
-                if (!prev) return prev;
+            if (response.status) {
+                // ✅ Update local state only (no refetch / no page reload)
+                setLoyaltyData((prev) => {
+                    if (!prev) return prev;
 
-                // ---- EARNING RULES ----
-                if (isEarningRule) {
-                    const otherRules = prev?.earning_rules?.active_rules?.other_rules || [];
-                    const socialRules = prev?.earning_rules?.active_rules?.social_rules || [];
+                    // ---- EARNING RULES ----
+                    if (isEarningRule) {
+                        const otherRules = prev?.earning_rules?.active_rules?.other_rules || [];
+                        const socialRules = prev?.earning_rules?.active_rules?.social_rules || [];
 
-                    const updatedOtherRules = Array.isArray(otherRules)
-                        ? otherRules.map((r) =>
-                            r.rule_id === ruleId ? { ...r, status: isActive } : r
+                        const updatedOtherRules = Array.isArray(otherRules)
+                            ? otherRules.map((r) =>
+                                r.rule_id === ruleId ? { ...r, status: isActive } : r
+                            )
+                            : otherRules;
+
+                        const updatedSocialRules = Array.isArray(socialRules)
+                            ? socialRules.map((r) =>
+                                r.rule_id === ruleId ? { ...r, status: isActive } : r
+                            )
+                            : socialRules;
+
+                        return {
+                            ...prev,
+                            earning_rules: {
+                                ...prev.earning_rules,
+                                active_rules: {
+                                    ...prev.earning_rules?.active_rules,
+                                    other_rules: updatedOtherRules,
+                                    social_rules: updatedSocialRules,
+                                },
+                            },
+                        };
+                    }
+
+                    // ---- REDEEMING RULES ----
+                    const redeemingRules = prev?.redeeming_rules?.active_rules || [];
+                    const updatedRedeemingRules = Array.isArray(redeemingRules)
+                        ? redeemingRules.map((r) =>
+                            r.id === ruleId ? { ...r, status: isActive } : r
                         )
-                        : otherRules;
-
-                    const updatedSocialRules = Array.isArray(socialRules)
-                        ? socialRules.map((r) =>
-                            r.rule_id === ruleId ? { ...r, status: isActive } : r
-                        )
-                        : socialRules;
+                        : redeemingRules;
 
                     return {
                         ...prev,
-                        earning_rules: {
-                            ...prev.earning_rules,
-                            active_rules: {
-                                ...prev.earning_rules?.active_rules,
-                                other_rules: updatedOtherRules,
-                                social_rules: updatedSocialRules,
-                            },
+                        redeeming_rules: {
+                            ...prev.redeeming_rules,
+                            active_rules: updatedRedeemingRules,
                         },
                     };
-                }
+                });
 
-                // ---- REDEEMING RULES ----
-                const redeemingRules = prev?.redeeming_rules?.active_rules || [];
-                const updatedRedeemingRules = Array.isArray(redeemingRules)
-                    ? redeemingRules.map((r) =>
-                        r.id === ruleId ? { ...r, status: isActive } : r
-                    )
-                    : redeemingRules;
-
-                return {
-                    ...prev,
-                    redeeming_rules: {
-                        ...prev.redeeming_rules,
-                        active_rules: updatedRedeemingRules,
-                    },
-                };
+                shopify.toast.show(response?.message, { duration: 2000 });
+            } else {
+                shopify.toast.show(response?.message, { duration: 2000, isError: true });
+            }
+        } finally {
+            // Mark this API call as completed
+            setApiCallsInProgress(prev => {
+                const newState = { ...prev };
+                delete newState[callKey];
+                return newState;
             });
-
-            shopify.toast.show(response?.message, { duration: 2000 });
-        } else {
-            shopify.toast.show(response?.message, { duration: 2000, isError: true });
         }
     };
 
     return (
         <div className="annotatedSection-border">
             <Layout.AnnotatedSection
-                title={'Loyalty program status'}
-                description={'Activate/Deactivate your points program'}
+                title={'Loyalty Program Status'}
+                description={'Activate / Deactivate your points program.'}
             >
                 <Card>
                     <Box style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
@@ -144,8 +168,8 @@ const Loyalty = () => {
                 description={
                     <>
                         <Box>
-                            <p>Customize how your customers will earn points</p>
-                            <p>Customers will earn points through the actions below</p>
+                            <p>Customize how your customers will earn points.</p>
+                            <p>Customers will earn points through the actions.</p>
                         </Box>
                         {loyaltyData?.earning_rules?.master_rules?.length > 0 && (
                             <Box style={{ marginTop: 7, marginLeft: 0 }}>
@@ -187,6 +211,7 @@ const Loyalty = () => {
                                                                     type="checkbox"
                                                                     checked={itemStatus === true}
                                                                     id={`switch-${rule_id}`}
+                                                                    disabled={apiCallsInProgress[`${item.rule_id}_earning`]}
                                                                     onChange={(e) =>
                                                                         handleRuleStatusChangeAPI(item.rule_id, e.target.checked)
                                                                     }
@@ -232,6 +257,7 @@ const Loyalty = () => {
                                                                     type="checkbox"
                                                                     checked={itemStatus === true}
                                                                     id={`switch-${rule_id}`}
+                                                                    disabled={apiCallsInProgress[`${item.rule_id}_earning`]}
                                                                     onChange={(e) =>
                                                                         handleRuleStatusChangeAPI(item.rule_id, e.target.checked)
                                                                     }
@@ -257,15 +283,15 @@ const Loyalty = () => {
             </Layout.AnnotatedSection>
 
             <Layout.AnnotatedSection
-                title={'Redeeming rule'}
+                title={'Redeeming Rule'}
                 description={
                     <>
                         <Box>
-                            <p>Let customer redeem their earned points</p>
-                            <p>Customers can redeem these rewards using their points</p>
+                            <p>Let customer redeem their earned points.</p>
+                            <p>Customers can redeem these rewards using their points.</p>
                         </Box>
                         <Box style={{ marginTop: 7, marginLeft: 0 }}>
-                            <Button variant="primary" onClick={() => setRedeemModalActive(true)}>Add new rule</Button>
+                            <Button variant="primary" onClick={() => setRedeemModalActive(true)}>Add New Rule</Button>
                         </Box>
                     </>
                 }
@@ -300,6 +326,7 @@ const Loyalty = () => {
                                                             <input
                                                                 type="checkbox"
                                                                 checked={itemStatus === true}
+                                                                disabled={apiCallsInProgress[`${item.id}_redeeming`]}
                                                                 onChange={(e) =>
                                                                     handleRuleStatusChangeAPI(item.id, e.target.checked, false)
                                                                 }

@@ -4,6 +4,7 @@ import { useState, useCallback, useEffect, useRef, useMemo } from "react";
 import { useNavigate } from "react-router-dom";
 import { fetchData } from "../action";
 import { capitalizeFirst, formatShortDate } from "../utils";
+import NeedSupport from "../components/NeedSupport";
 
 const Customers = () => {
     const navigate = useNavigate();
@@ -818,6 +819,10 @@ const Customers = () => {
                     </InlineStack>
                 </BlockStack>
             </Card>
+
+            <Box style={{ marginTop: '20px' }}>
+                <NeedSupport />
+            </Box>
         </Page>
     );
 };

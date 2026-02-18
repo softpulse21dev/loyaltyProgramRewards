@@ -224,7 +224,7 @@ const EmailTemplate = () => {
               onClick={() => setTestMailModalOpen(true)}
               loading={loading}
             >
-              Send test email
+              Send Test Email
             </Button>
           }
         >
@@ -316,7 +316,7 @@ const EmailTemplate = () => {
 
                 <Card background="bg-surface-secondary" style={{ marginTop: '15px', backgroundColor: 'red' }}>
                   <BlockStack gap={200}>
-                    <Text variant="bodyMd" fontWeight='semibold'>Available template variables</Text>
+                    <Text variant="bodyMd" fontWeight='semibold'>Available Template Variables</Text>
                     {EmailData?.available_variables?.map((item, index) => (
                       <Box key={index} style={{ display: 'flex', flexDirection: 'row', gap: '10px', alignItems: 'center' }}>
                         {/* <Box>

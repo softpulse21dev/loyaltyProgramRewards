@@ -43,18 +43,18 @@ const Orders = ({ settingsData, setSettingsData }) => {
 
     return (
         <>
-            <Layout.AnnotatedSection title="Order total calculation" description="Select how order totals are calculated for earnings">
+            <Layout.AnnotatedSection title="Order Total Calculation" description="Select how order totals are calculated for earnings.">
                 <Card>
                     <BlockStack gap={200}>
                         <Checkbox
                             label="Include shipping in order total"
-                            helpText="The total savings amount from applied discounts on the order in the shop currency"
+                            helpText="The total savings amount from applied discounts on the order in the shop currency."
                             checked={Array.isArray(ordercalculation) && ordercalculation.includes("include_discount")}
                             onChange={() => toggleOrderCalculation("include_discount")}
                         />
                         <Checkbox
                             label="Include taxes"
-                            helpText="The sum of all the taxes applied to the order in the shop currency"
+                            helpText="The sum of all the taxes applied to the order in the shop currency."
                             checked={Array.isArray(ordercalculation) && ordercalculation.includes("include_taxes")}
                             onChange={() => toggleOrderCalculation("include_taxes")}
                         />
@@ -68,7 +68,7 @@ const Orders = ({ settingsData, setSettingsData }) => {
                 </Card>
             </Layout.AnnotatedSection>
 
-            <Layout.AnnotatedSection title="Loyalty Earnings Trigger" description="Choose when loyalty earnings should be processed for orders">
+            <Layout.AnnotatedSection title="Loyalty Earnings Trigger" description="Choose when loyalty earnings should be processed for orders.">
                 <Card>
                     <BlockStack gap={200}>
                         <Select
@@ -85,7 +85,7 @@ const Orders = ({ settingsData, setSettingsData }) => {
                 </Card>
             </Layout.AnnotatedSection >
 
-            <Layout.AnnotatedSection title="Order Financial Statuses for Rewards" description="Select which order financial statuses should qualify for earning rewards">
+            <Layout.AnnotatedSection title="Order Financial Statuses for Rewards" description="Select which order financial statuses should qualify for earning rewards.">
                 <Card>
                     <BlockStack gap={200}>
                         <Checkbox
@@ -140,25 +140,25 @@ const Orders = ({ settingsData, setSettingsData }) => {
                         />
                         <TextField
                             label="Loyalty Reward Prefix"
-                            helpText="This is the prefix for all loyalty reward discount codes. Leave blank to use the global prefix"
+                            helpText="This is the prefix for all loyalty reward discount codes. Leave blank to use the global prefix."
                             value={loyaltyRewardPrefix}
                             onChange={(value) => setSettingsData([{ ...settingsData[0], discount_code_prefixes: { ...settingsData[0].discount_code_prefixes, loyalty_prefix: cleanStrictWhitespace(value) } }])}
                         />
                         <TextField
                             label="Reward tier Reward Prefix"
-                            helpText="This is the prefix for all VIP reward discount codes. Leave blank to use the global prefix"
+                            helpText="This is the prefix for all VIP reward discount codes. Leave blank to use the global prefix."
                             value={vipTierRewardPrefix}
                             onChange={(value) => setSettingsData([{ ...settingsData[0], discount_code_prefixes: { ...settingsData[0].discount_code_prefixes, vip_prefix: cleanStrictWhitespace(value) } }])}
                         />
                         <TextField
                             label="Referral Advocate Reward Prefix"
-                            helpText="This is the prefix for all Advocate reward discount codes. Leave blank to use the global prefix"
+                            helpText="This is the prefix for all Advocate reward discount codes. Leave blank to use the global prefix."
                             value={referralAdvocateRewardPrefix}
                             onChange={(value) => setSettingsData([{ ...settingsData[0], discount_code_prefixes: { ...settingsData[0].discount_code_prefixes, advocate_prefix: cleanStrictWhitespace(value) } }])}
                         />
                         <TextField
                             label="Referral Friend Reward Prefix"
-                            helpText="This is the prefix for all Friend reward discount codes. Leave blank to use the global prefix"
+                            helpText="This is the prefix for all Friend reward discount codes. Leave blank to use the global prefix."
                             value={referralFriendRewardPrefix}
                             onChange={(value) => setSettingsData([{ ...settingsData[0], discount_code_prefixes: { ...settingsData[0].discount_code_prefixes, friend_prefix: cleanStrictWhitespace(value) } }])}
                         />

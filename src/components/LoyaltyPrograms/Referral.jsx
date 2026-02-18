@@ -15,6 +15,7 @@ const Referral = () => {
     const [isReferalRule, setIsReferalRule] = useState(false);
     const [activateLoading, setActivateLoading] = useState(false);
     const [loadingReferralRules, setLoadingReferralRules] = useState(false);
+    const [apiCallsInProgress, setApiCallsInProgress] = useState({});
     const [requireAccountLoading, setRequireAccountLoading] = useState(false);
     const [navigateTo, setNavigateTo] = useState(0);
     const navigate = useNavigate();
@@ -70,6 +71,18 @@ const Referral = () => {
 
     // ✅ Modified function to handle "Single Active" logic locally
     const updateReferalRuleStatusAPI = async (id, status) => {
+        // Check if an API call is already in progress for this rule
+        const callKey = `${id}`;
+        if (apiCallsInProgress[callKey]) {
+            // API call is already in progress for this rule, ignore the request
+            return;
+        }
+
+        // Mark this API call as in progress
+        setApiCallsInProgress(prev => ({
+            ...prev,
+            [callKey]: true
+        }));
         try {
             const formData = new FormData();
             formData.append("referral_rule_id", id);
@@ -122,6 +135,13 @@ const Referral = () => {
             }
         } catch (error) {
             console.error('Update Refer Error', error);
+        } finally {
+            // Mark this API call as completed
+            setApiCallsInProgress(prev => {
+                const newState = { ...prev };
+                delete newState[callKey];
+                return newState;
+            });
         }
     }
 
@@ -133,8 +153,8 @@ const Referral = () => {
     return (
         <div className="annotatedSection-border">
             <Layout.AnnotatedSection
-                title={'Referral program status'}
-                description={'Activate/Deactivate your Referral program'}
+                title={'Referral Program Status'}
+                description={'Activate / Deactivate your Referral program.'}
             >
                 <Card>
                     {loadingReferralRules ? <SkeletonBodyText lines={2} /> : (
@@ -149,9 +169,11 @@ const Referral = () => {
             <Layout.AnnotatedSection
                 title={'Referral Rewards'}
                 description={<>
-                    <Box style={{ display: "flex", flexDirection: "column", gap: "8px" }}>
-                        <Text>Set referrals/Advocate rewards</Text>
-                        <Text>Only one reward can be enabled at a time for each type</Text>
+                    <Box style={{ display: "flex", flexDirection: "column", }}>
+                        <Text>Set referrals/Advocate rewards.</Text>
+                        <Text>Only one reward can be enabled at a time for each type.</Text>
+                        <Text>Referral get rewards on successfull signup from referlink.</Text>
+                        <Text>Advocate will be eligible to receive rewards after first purchase of the referral friend.</Text>
                     </Box>
                 </>}
             >
@@ -196,6 +218,7 @@ const Referral = () => {
                                                                     <input
                                                                         type="checkbox"
                                                                         checked={status}
+                                                                        disabled={apiCallsInProgress[id]}
                                                                         onChange={() => updateReferalRuleStatusAPI(referral_rule_id, status)}
                                                                     />
                                                                     <span className="slider"></span>

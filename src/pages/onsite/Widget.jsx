@@ -5,6 +5,7 @@ import General from './widgetTabs/General';
 import StoreFront from './widgetTabs/StoreFront';
 import Launcher from './widgetTabs/Launcher';
 import { fetchData } from '../../action';
+import NeedSupport from '../../components/NeedSupport';
 
 const Widget = () => {
     const navigate = useNavigate();
@@ -548,6 +549,10 @@ const Widget = () => {
                                 )}
                             </Box>
                         </Tabs>
+
+                        <Box style={{ marginTop: '20px' }}>
+                            <NeedSupport />
+                        </Box>
                     </Page>
                 </>
             )

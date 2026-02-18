@@ -3,13 +3,14 @@ import { EmailIcon } from '@shopify/polaris-icons';
 import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { fetchData } from '../action';
+import NeedSupport from '../components/NeedSupport';
 
 const Emails = () => {
     const navigate = useNavigate();
 
     const [emailTemplates, setEmailTemplates] = useState([]);
     const [loading, setLoading] = useState(true);
-
+    const [apiCallsInProgress, setApiCallsInProgress] = useState({});
     const getEmailTemplatesAPI = async () => {
         setLoading(true);
         try {
@@ -30,6 +31,19 @@ const Emails = () => {
 
     // ✅ FIX 1: Ensure this function returns true/false so handleStatusChange knows what happened
     const ToggleEmailTemplateStatusAPI = async (id, newStatus) => {
+        // Check if an API call is already in progress for this rule
+        const callKey = `${id}`;
+        if (apiCallsInProgress[callKey]) {
+            // API call is already in progress for this rule, ignore the request
+            return;
+        }
+
+        // Mark this API call as in progress
+        setApiCallsInProgress(prev => ({
+            ...prev,
+            [callKey]: true
+        }));
+
         try {
             const formData = new FormData();
             formData.append("template_key", id);
@@ -47,6 +61,13 @@ const Emails = () => {
         catch (error) {
             console.error('Error toggling email template status:', error);
             return false; // Error
+        } finally {
+            // Mark this API call as completed
+            setApiCallsInProgress(prev => {
+                const newState = { ...prev };
+                delete newState[callKey];
+                return newState;
+            });
         }
     }
 
@@ -154,6 +175,7 @@ const Emails = () => {
                                                             <label className="switch">
                                                                 <input
                                                                     type="checkbox"
+                                                                    disabled={apiCallsInProgress[id]}
                                                                     // Handle both boolean true and integer 1
                                                                     checked={is_enabled === 1 || is_enabled === true}
                                                                     onChange={(e) => handleStatusChange(id, e.target.checked ? 1 : 0)}
@@ -184,6 +206,11 @@ const Emails = () => {
                                 }}
                             />
                         </Card>
+
+
+                        <Box style={{ marginTop: '20px' }}>
+                            <NeedSupport />
+                        </Box>
                     </Page>
                 )}
         </>

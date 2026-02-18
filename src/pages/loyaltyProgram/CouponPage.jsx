@@ -2,9 +2,9 @@ import { Avatar, Badge, BlockStack, Box, Button, Card, Checkbox, FormLayout, Gri
 import { DeleteIcon } from '@shopify/polaris-icons';
 import { useEffect, useState } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
-import CollectionModal from '../../components/CollectionModal';
+// Removed: import CollectionModal from '../../components/CollectionModal'; 
 import { fetchData } from '../../action';
-import ProductModal from '../../components/ProductModal';
+// Removed: import ProductModal from '../../components/ProductModal';
 import { useDispatch, useSelector } from 'react-redux';
 import { addData, DeleteData, UpdateData } from '../../redux/action';
 import { LimitText, NoLeadingZero, sanitizeNumberWithDecimal, SingleLeadingZero } from '../../utils';
@@ -43,8 +43,8 @@ const CouponPage = () => {
     const [rewardTitle, setRewardTitle] = useState('');
     const [pointsAmount, setPointsAmount] = useState(100);
     const [rewardExpiration, setRewardExpiration] = useState(1);
-    const [collectionModalOpen, setCollectionModalOpen] = useState(false);
-    const [productModalOpen, setProductModalOpen] = useState(false);
+    // Removed: const [collectionModalOpen, setCollectionModalOpen] = useState(false);
+    // Removed: const [productModalOpen, setProductModalOpen] = useState(false);
     const [status, setStatus] = useState(false);
     const [loading, setLoading] = useState(true);
     const [submitLoading, setSubmitLoading] = useState(false);
@@ -56,6 +56,7 @@ const CouponPage = () => {
     const [totalProductPrice, setTotalProductPrice] = useState(0);
     const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
     const Data = useSelector((state) => state.merchantSettings.Data);
+    const currencySymbol = useSelector((state) => state?.merchantSettings?.defaultData?.currency);
     const dispatch = useDispatch();
 
     const [settings_json, setSettingsJson] = useState({
@@ -75,6 +76,121 @@ const CouponPage = () => {
         min_order_value_excludes_free_product: false,
         products: [],
     });
+
+    // --- COLLECTION PICKER LOGIC ---
+    const openCollectionPicker = async () => {
+        // 1. Prepare IDs for the picker (must be GIDs)
+        // If we saved them as integers, we need to convert them back to GID strings for the picker to recognize them
+        const currentIds = settings_json.collections.map(c => ({
+            id: c.collection_id.toString().includes('gid://')
+                ? c.collection_id
+                : `gid://shopify/Collection/${c.collection_id}`
+        }));
+
+        const selected = await shopify.resourcePicker({
+            type: "collection",
+            multiple: true,
+            selectionIds: currentIds,
+        });
+
+        if (!selected) return;
+
+        // 2. Process selection (Convert GID back to Integer)
+        const leanCollections = selected.map((c) => {
+            // Extract the numeric ID from "gid://shopify/Collection/12345"
+            // .split('/').pop() takes the last part of the URL-like string
+            const numericId = c.id.split('/').pop();
+
+            return {
+                collection_id: numericId,
+                name: c.title,
+                handle: c.handle,
+                image: c.image?.originalSrc || c.image?.src || "",
+            };
+        });
+
+        setSettingsJson(prev => ({
+            ...prev,
+            collections: leanCollections
+        }));
+        setValidationError({ ...validationError, collections: '' });
+    };
+
+    // --- NEW PRODUCT PICKER LOGIC ---
+    const openProductPicker = async () => {
+        // 1. Reconstruct selectionIds for the picker (handling Products and Variants)
+        const initialSelectionIds = [];
+        const groups = {};
+
+        settings_json.products.forEach(p => {
+            // Use parent_product_id if available (for variants), else assume product_id is the parent (legacy)
+            const parentId = p.parent_product_id || p.product_id;
+            const isVariant = !!p.parent_product_id;
+
+            const parentGid = parentId.toString().includes('gid://')
+                ? parentId
+                : `gid://shopify/Product/${parentId}`;
+
+            if (!groups[parentGid]) {
+                groups[parentGid] = { id: parentGid, variants: [] };
+                initialSelectionIds.push(groups[parentGid]);
+            }
+
+            if (isVariant) {
+                const variantGid = p.product_id.toString().includes('gid://')
+                    ? p.product_id
+                    : `gid://shopify/ProductVariant/${p.product_id}`;
+                groups[parentGid].variants.push({ id: variantGid });
+            }
+        });
+
+        const selected = await shopify.resourcePicker({
+            type: "product",
+            multiple: false,
+            showVariants: true,
+            selectionIds: initialSelectionIds,
+        });
+
+        if (!selected) return;
+
+        // 2. Process selection (Calculate Price & Flatten Variants)
+        let calculatedPrice = 0;
+        const leanProducts = [];
+
+        selected.forEach(product => {
+            product.variants.forEach(variant => {
+                const price = parseFloat(variant.price) || 0;
+                calculatedPrice += price;
+
+                const variantId = variant.id.split('/').pop();
+                const productId = product.id.split('/').pop();
+
+                leanProducts.push({
+                    product_id: variantId, // Storing Variant ID as main ID
+                    parent_product_id: productId, // Storing Parent ID for reconstruction
+                    title: variant.title === 'Default Title' ? product.title : `${product.title} - ${variant.title}`,
+                    img: variant.image?.originalSrc || product.images?.[0]?.originalSrc || "",
+                    price: price
+                });
+            });
+        });
+
+        // 3. Update State
+        setTotalProductPrice(calculatedPrice);
+        setSettingsJson(prev => ({
+            ...prev,
+            products: leanProducts,
+            // Auto-set reward value to total price if > 0
+            reward_value: calculatedPrice > 0 ? String(calculatedPrice) : prev.reward_value
+        }));
+
+        setValidationError(prev => {
+            const next = { ...prev, products: '' };
+            if (calculatedPrice > 0) next.rewardValue = '';
+            return next;
+        });
+    };
+    // --------------------------------
 
     useEffect(() => {
         // Safe check: if no rule exists (e.g. storage cleared), stop execution
@@ -106,7 +222,6 @@ const CouponPage = () => {
         }
     }, [edit, rule, referralRule, isTierRewardEdit]);
 
-    // Helper to clean settings_json for payload
     const getCleanSettings = () => {
         const cleanSettings = { ...settings_json };
         // If we are in Referral or VIP mode, we don't need points_type
@@ -427,7 +542,7 @@ const CouponPage = () => {
 
         if (settings_json.min_requirement === 'min_purchase_amount') {
             if (settings_json.min_order_value_in_cents === '' || settings_json.min_order_value_in_cents === null || Number(settings_json.min_order_value_in_cents) <= 0) {
-                newErrors.minOrderValueInCents = "Minimum order value in cents must be a number greater than 0";
+                newErrors.minOrderValueInCents = "Minimum order value must be a number greater than 0";
                 isError = true;
             }
         }
@@ -484,27 +599,15 @@ const CouponPage = () => {
 
                         <InlineGrid columns={['twoThirds', 'oneThird']} gap={400} >
                             <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
-                                <Card>
-                                    <SkeletonBodyText lines={4} />
-                                </Card>
-                                <Card>
-                                    <SkeletonBodyText lines={3} />
-                                </Card>
-                                <Card>
-                                    <SkeletonBodyText lines={8} />
-                                </Card>
-                                <Card>
-                                    <SkeletonBodyText lines={8} />
-                                </Card>
+                                <Card><SkeletonBodyText lines={4} /></Card>
+                                <Card><SkeletonBodyText lines={3} /></Card>
+                                <Card><SkeletonBodyText lines={8} /></Card>
+                                <Card><SkeletonBodyText lines={8} /></Card>
                             </div>
 
                             <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
-                                <Card>
-                                    <SkeletonBodyText lines={4} />
-                                </Card>
-                                <Card>
-                                    <SkeletonBodyText lines={4} />
-                                </Card>
+                                <Card><SkeletonBodyText lines={4} /></Card>
+                                <Card><SkeletonBodyText lines={4} /></Card>
                             </div>
                         </InlineGrid>
 
@@ -610,7 +713,7 @@ const CouponPage = () => {
                                                     <Box style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
                                                         <Text variant='headingMd' as="span">Product</Text>
                                                         <div>
-                                                            <Button variant='secondary' onClick={() => { setProductModalOpen(true) }}><Text variant='bodyMd'>Select Product</Text></Button>
+                                                            <Button variant='secondary' onClick={openProductPicker}><Text variant='bodyMd'>Select Product</Text></Button>
                                                             {validationError?.products && (
                                                                 <Text variant='bodyMd' tone='critical'>{validationError?.products}</Text>
                                                             )}
@@ -642,7 +745,7 @@ const CouponPage = () => {
                                                                             <FormLayout.Group>
                                                                                 {showPointsSystem && (
                                                                                     <TextField
-                                                                                        label="Points amount"
+                                                                                        label="Points Amount"
                                                                                         type="text"
                                                                                         value={pointsAmount}
                                                                                         onChange={(value) => {
@@ -651,7 +754,7 @@ const CouponPage = () => {
                                                                                         }}
                                                                                         error={validationError?.pointsAmount}
                                                                                         autoComplete="off"
-                                                                                        suffix="points"
+                                                                                        suffix="Points"
                                                                                     />
                                                                                 )}
 
@@ -684,7 +787,7 @@ const CouponPage = () => {
                                                                             <Text variant='bodyMd' tone='subdued'>Based on your cost per point, {pointsAmount} points is equal to {sanitizeNumberWithDecimal(settings_json?.reward_value)} % off</Text>
                                                                         )}
                                                                         {rule?.type !== "free_shipping" && rule?.type !== "percentage_discount" && showPointsSystem && (
-                                                                            <Text variant='bodyMd' tone='subdued'>Based on your cost per point, {pointsAmount} points is equal to Rs. {sanitizeNumberWithDecimal(settings_json?.reward_value)}</Text>
+                                                                            <Text variant='bodyMd' tone='subdued'>Based on your cost per point, {pointsAmount} points is equal to {sanitizeNumberWithDecimal(settings_json?.reward_value)} {currencySymbol?.code}.</Text>
                                                                         )}
                                                                     </>
                                                                 )}
@@ -703,12 +806,12 @@ const CouponPage = () => {
                                                                                     }}
                                                                                     error={validationError?.pointsAmount}
                                                                                     autoComplete="off"
-                                                                                    suffix="points"
+                                                                                    suffix="Points"
                                                                                 />
                                                                                 <TextField
                                                                                     label="Customer gets"
                                                                                     type="text"
-                                                                                    prefix="$"
+                                                                                    prefix={currencySymbol?.symbol}
                                                                                     value={settings_json.reward_value}
                                                                                     onChange={(value) => {
                                                                                         setSettingsJson({ ...settings_json, reward_value: NoLeadingZero(value) });
@@ -719,13 +822,14 @@ const CouponPage = () => {
                                                                                 />
                                                                             </FormLayout.Group>
                                                                         </FormLayout>
-                                                                        <Text variant='bodyMd' tone='subdued'>Based on your cost per point, {pointsAmount} points is equal to Rs. {settings_json.reward_value}</Text>
+                                                                        <Text variant='bodyMd' tone='subdued'>Based on your cost per point, {pointsAmount} points is equal to {currencySymbol?.code} {settings_json.reward_value}</Text>
 
                                                                         <Checkbox
                                                                             label="Set a minimum amount of points required to redeem this reward"
                                                                             checked={settings_json.min_points_to_redeem}
                                                                             onChange={() => setSettingsJson({ ...settings_json, min_points_to_redeem: !settings_json.min_points_to_redeem })}
                                                                         />
+
                                                                         {settings_json.min_points_to_redeem && (
                                                                             <TextField
                                                                                 type="text"
@@ -772,7 +876,7 @@ const CouponPage = () => {
                                                                 }}
                                                                 error={validationError?.pointsAmount}
                                                                 autoComplete="off"
-                                                                suffix="points"
+                                                                suffix="Points"
                                                             />
                                                         )}
 
@@ -793,7 +897,7 @@ const CouponPage = () => {
                                                                             setValidationError({ ...validationError, maxPointsToSpendValue: '' })
                                                                         }}
                                                                         error={validationError?.maxPointsToSpendValue}
-                                                                        prefix="Rs."
+                                                                        prefix={currencySymbol?.symbol}
                                                                     />
                                                                 )}
                                                             </span>
@@ -819,24 +923,21 @@ const CouponPage = () => {
                                                                     setSettingsJson({ ...settings_json, applies_to: 'collection' });
                                                                     setValidationError({ ...validationError, collections: '' })
                                                                 }}
-                                                                onFocus={() => {
-                                                                    setCollectionModalOpen(true);
-                                                                }}
+                                                                onFocus={openCollectionPicker}
                                                             />
                                                             {validationError?.collections && (
                                                                 <Text variant='bodyMd' tone='critical'>{validationError?.collections}</Text>
                                                             )}
                                                             {settings_json?.applies_to === 'collection' && (
                                                                 settings_json?.collections?.length > 0 && (
-                                                                    <>                                            {
+                                                                    <>{
                                                                         settings_json?.collections.map((col) => (
                                                                             <div key={col.collection_id} style={{ display: 'flex', alignItems: 'center', gap: 10, padding: 3 }}>
                                                                                 <Avatar source={col.image} customer />
                                                                                 <Text>{col.name}</Text>
                                                                             </div>
                                                                         ))
-                                                                    }
-                                                                    </>
+                                                                    }</>
                                                                 ))}
                                                         </BlockStack>
                                                     </Box>
@@ -867,7 +968,7 @@ const CouponPage = () => {
                                                                         setValidationError({ ...validationError, minOrderValueInCents: '' })
                                                                     }}
                                                                     error={validationError?.minOrderValueInCents}
-                                                                    helpText="Value in cents. Eg: $20 = 2000"
+                                                                    // helpText="Value in cents. Eg: $20 = 2000"
                                                                 />
                                                             </span>
                                                         )}
@@ -875,7 +976,8 @@ const CouponPage = () => {
                                                 </Box>
                                             </Card>
 
-                                            {(rule?.type !== "store_credit") && (
+                                            {/* removeed for now */}
+                                            {/* {(rule?.type !== "store_credit") && (
                                                 <Card>
                                                     <Box style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
                                                         <Text variant='headingMd' as="span">Purchase Type (optional)</Text>
@@ -899,7 +1001,7 @@ const CouponPage = () => {
                                                         </BlockStack>
                                                     </Box>
                                                 </Card>
-                                            )}
+                                            )} */}
 
                                             {(settings_json?.purchase_type === 'subscription' || settings_json?.purchase_type === 'both') && (
                                                 <>
@@ -963,7 +1065,6 @@ const CouponPage = () => {
                                                         <div>
                                                             <Text>Customer spends points to get a % off (e.g., 100 points = 1% off).</Text>
                                                             <Text>Discount applies to the entire order or a selected collection.</Text>
-                                                            <Text>Discount can apply to the entire order or a specific collection.</Text>
                                                             <Text>Optional minimum cart requirement can be added.</Text>
                                                         </div>
                                                     )}
@@ -1020,7 +1121,9 @@ const CouponPage = () => {
                             </Layout.Section>
                         </Layout >
 
-                        <CollectionModal
+
+                        {/* removed CollectionModal */}
+                        {/* <CollectionModal
                             open={collectionModalOpen}
                             onClose={() => setCollectionModalOpen(false)}
                             initialSelectedCollections={settings_json?.collections}
@@ -1032,9 +1135,10 @@ const CouponPage = () => {
                                 });
                                 setCollectionModalOpen(false);
                             }}
-                        />
+                        /> */}
 
-                        <ProductModal
+                        {/* removed productModal */}
+                        {/* <ProductModal
                             open={productModalOpen}
                             onClose={() => setProductModalOpen(false)}
                             selectedProducts={settings_json?.products}
@@ -1051,7 +1155,7 @@ const CouponPage = () => {
                                     setValidationError(prev => ({ ...prev, rewardValue: '' }));
                                 }
                             }}
-                        />
+                        /> */}
 
                         <ConfirmationModal
                             isOpen={isDeleteModalOpen}

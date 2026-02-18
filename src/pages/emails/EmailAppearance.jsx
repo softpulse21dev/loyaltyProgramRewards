@@ -308,7 +308,7 @@ const EmailAppearance = () => {
 
                                 {/* Image placement options */}
                                 <Box>
-                                    <Text variant="bodyMd" style={{ marginBottom: '8px' }}>Image placement</Text>
+                                    <Text variant="bodyMd" style={{ marginBottom: '8px' }}>Image Placement</Text>
                                     <Box style={{ display: 'flex', flexDirection: 'column' }}>
                                         <RadioButton
                                             label="Banner"
@@ -332,28 +332,28 @@ const EmailAppearance = () => {
                                 <Text variant="bodyMd" fontWeight='semibold' >Colors</Text>
 
                                 <ColorPickerInput
-                                    label="Background color"
+                                    label="Background Color"
                                     value={backgroundColor}
                                     onChange={(value) => { setBackgroundColor(value); clearError('backgroundColor'); }}
                                     error={errors.backgroundColor}
                                 />
 
                                 <ColorPickerInput
-                                    label="Heading color"
+                                    label="Heading Color"
                                     value={headingColor}
                                     onChange={(value) => { setHeadingColor(value); clearError('headingColor'); }}
                                     error={errors.headingColor}
                                 />
 
                                 <ColorPickerInput
-                                    label="Text color"
+                                    label="Text Color"
                                     value={textColor}
                                     onChange={(value) => { setTextColor(value); clearError('textColor'); }}
                                     error={errors.textColor}
                                 />
 
                                 <ColorPickerInput
-                                    label="Border color"
+                                    label="Border Color"
                                     value={borderColor}
                                     onChange={(value) => { setBorderColor(value); clearError('borderColor'); }}
                                     error={errors.borderColor}
@@ -364,25 +364,25 @@ const EmailAppearance = () => {
                                 {/* accent colors */}
                                 <Text variant="bodyMd" fontWeight='semibold' >Accent colors</Text>
                                 <ColorPickerInput
-                                    label="Button text color"
+                                    label="Button Text Color"
                                     value={buttonTextColor}
                                     onChange={(value) => { setButtonTextColor(value); clearError('buttonTextColor'); }}
                                     error={errors.buttonTextColor}
                                 />
                                 <ColorPickerInput
-                                    label="Button background color"
+                                    label="Button Background Color"
                                     value={buttonBackgroundColor}
                                     onChange={(value) => { setButtonBackgroundColor(value); clearError('buttonBackgroundColor'); }}
                                     error={errors.buttonBackgroundColor}
                                 />
                                 <ColorPickerInput
-                                    label="Link color"
+                                    label="Link Color"
                                     value={linkColor}
                                     onChange={(value) => { setLinkColor(value); clearError('linkColor'); }}
                                     error={errors.linkColor}
                                 />
                                 <ColorPickerInput
-                                    label="Footer text color"
+                                    label="Footer Text Color"
                                     value={footerTextColor}
                                     onChange={(value) => { setFooterTextColor(value); clearError('footerTextColor'); }}
                                     error={errors.footerTextColor}
@@ -410,7 +410,7 @@ const EmailAppearance = () => {
 
                         <Card background="bg-surface-secondary" style={{ marginTop: '15px', backgroundColor: 'red' }}>
                             <BlockStack gap={200}>
-                                <Text variant="bodyMd" fontWeight='semibold'>Available template variables</Text>
+                                <Text variant="bodyMd" fontWeight='semibold'>Available Template Variables</Text>
                                 {availableVariables?.map((item, index) => (
                                     <Box key={index} style={{ display: 'flex', flexDirection: 'row', gap: '10px', alignItems: 'center' }}>
                                         {/* <Box>
@@ -460,7 +460,7 @@ const EmailAppearance = () => {
 
                                         <Box style={{ display: 'flex', flexDirection: 'column', gap: '15px', }}>
                                             <div style={{ color: headingColor, }}>
-                                                <Text alignment='center' variant='headingLg'>Reward redeemed</Text>
+                                                <Text alignment='center' variant='headingLg'>Reward Redeemed</Text>
                                             </div>
                                             <div style={{ color: textColor, }}>
                                                 <Text alignment='center'>You redeemed 10% Off. Enjoy!</Text>
@@ -495,7 +495,7 @@ const EmailAppearance = () => {
                                                     color: buttonTextColor
                                                 }}
                                             >
-                                                ags
+                                                Redeem Now
                                             </button>
                                         </Box>
 

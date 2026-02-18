@@ -91,6 +91,20 @@ const General = ({ settingsData, setSettingsData, errors, clearError }) => {
         }
     }
 
+    // auto selecct first country code if null in database
+    useEffect(() => {
+        // Check if options exist but no value is currently selected
+        if (countryCodeOptions.length > 0 && !contactCountryCode) {
+            const defaultCode = countryCodeOptions[0].value;
+
+            // Update the state with the first option
+            setSettingsData(prev => [{
+                ...prev[0],
+                contact_country_code: defaultCode
+            }]);
+        }
+    }, [countryCodeOptions, contactCountryCode, setSettingsData]);
+
     useEffect(() => {
         const newTags = getInitialTags();
         // Only update if the new tags are different from current state
@@ -203,13 +217,13 @@ const General = ({ settingsData, setSettingsData, errors, clearError }) => {
     return (
         <Box>
             <Layout.AnnotatedSection
-                title="Store details"
-                description="Activate/Deactivate your points program"
+                title="Store Details"
+                description="Activate / Deactivate your points program."
             >
                 <Card>
                     <BlockStack gap="200">
                         <TextField
-                            label="Account email"
+                            label="Account Email"
                             value={accountEmail}
                             onChange={(value) => {
                                 setSettingsData([{ ...settingsData[0], account_email: value }]);
@@ -225,7 +239,7 @@ const General = ({ settingsData, setSettingsData, errors, clearError }) => {
                         <Box style={{ display: 'flex', gap: '10px', alignItems: 'flex-start' }}>
                             <Box style={{ flex: '0 0 180px', maxWidth: '180px' }}>
                                 <Select
-                                    label="Country code"
+                                    label="Country Code"
                                     options={countryCodeOptions}
                                     value={contactCountryCode}
                                     onChange={(value) => setSettingsData([{ ...settingsData[0], contact_country_code: value }])}
@@ -233,7 +247,7 @@ const General = ({ settingsData, setSettingsData, errors, clearError }) => {
                             </Box>
                             <Box style={{ flex: '1', minWidth: 0 }}>
                                 <TextField
-                                    label="Contact number"
+                                    label="Contact Number"
                                     value={contactNumber}
                                     onChange={(value) => {
                                         setSettingsData([{ ...settingsData[0], contact_number: value }]);
@@ -254,7 +268,7 @@ const General = ({ settingsData, setSettingsData, errors, clearError }) => {
                             onChange={(value) => setSettingsData([{ ...settingsData[0], store_currency: value }])}
                             disabled={currencyOptions.length === 0} // Disable if list failed to load
                         /> */}
-                        <TextField
+                        {/* <TextField
                             label="Installation date"
                             value={installDate}
                             disabled
@@ -276,7 +290,7 @@ const General = ({ settingsData, setSettingsData, errors, clearError }) => {
                                     Copy
                                 </Button>
                             }
-                        />
+                        /> */}
                     </BlockStack>
                 </Card>
             </Layout.AnnotatedSection>
@@ -316,7 +330,7 @@ const General = ({ settingsData, setSettingsData, errors, clearError }) => {
 
             <Layout.AnnotatedSection
                 title="Date and Time Format"
-                description="Date and time format to display for order tracking"
+                description="Date and time format to display for order tracking."
             >
                 <Card>
                     <InlineStack gap="200">

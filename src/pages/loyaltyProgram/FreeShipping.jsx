@@ -83,7 +83,9 @@ const FreeShipping = () => {
                                         </BlockStack>
                                     </Box>
                                 </Card>
-                                <Card>
+
+                                {/* removed for now */}
+                                {/* <Card>
                                     <Box style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
                                         <Text variant='headingMd' as="span">Purchase Type (optional)</Text>
                                         <BlockStack>
@@ -111,7 +113,7 @@ const FreeShipping = () => {
                                             />
                                         </BlockStack>
                                     </Box>
-                                </Card>
+                                </Card> */}
 
                                 <Card>
                                     <BlockStack gap={10}>

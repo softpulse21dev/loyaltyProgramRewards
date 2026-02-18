@@ -1,5 +1,5 @@
 import { useEffect, useState, useCallback } from "react";
-import { Card, InlineGrid, Page, SkeletonBodyText, SkeletonDisplayText, SkeletonPage, SkeletonTabs, Tabs, Text, } from "@shopify/polaris";
+import { Box, Card, InlineGrid, Page, SkeletonBodyText, SkeletonDisplayText, SkeletonPage, SkeletonTabs, Tabs, Text, } from "@shopify/polaris";
 import { useLocation } from "react-router-dom";
 import General from "../components/Settings/General";
 import Language from "../components/Settings/Language";
@@ -7,6 +7,7 @@ import CustomerEmail from "../components/Settings/CustomerEmail";
 import Theme from "../components/Settings/Theme";
 import Orders from "../components/Settings/Orders";
 import { fetchData } from "../action";
+import NeedSupport from "../components/NeedSupport";
 
 const Settings = () => {
     const location = useLocation();
@@ -257,6 +258,10 @@ const Settings = () => {
                             />
                         )}
                     </Tabs>
+
+                    <Box style={{ marginTop: '20px' }}>
+                        <NeedSupport />
+                    </Box>
                 </Page >
             )}
         </>

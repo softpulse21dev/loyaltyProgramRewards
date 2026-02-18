@@ -188,7 +188,7 @@ const Launcher = ({ widgetData, setWidgetData, errors = {}, clearError }) => {
                         <Text variant="bodyLg" fontWeight='bold'>Appearance</Text>
 
                         <ColorPickerInput
-                            label="Text color"
+                            label="Text Color"
                             value={textColor}
                             onChange={(value) => setWidgetData({ ...widgetData, launcher: { ...launcherData, appearance: { ...launcherData.appearance, text_color: value } } })}
                             error={getErrorMessage('launcher.appearance.text_color')}
@@ -197,10 +197,10 @@ const Launcher = ({ widgetData, setWidgetData, errors = {}, clearError }) => {
 
                         {/* Background color section */}
                         <Box style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
-                            <Text as="p" variant="bodyMd">Background color</Text>
+                            <Text as="p" variant="bodyMd">Background Color</Text>
                             <Box style={{ display: 'flex', flexDirection: 'column', }}>
                                 <RadioButton
-                                    label="Solid color"
+                                    label="Solid Color"
                                     checked={backgroundType === 'solid'}
                                     onChange={() => setWidgetData({ ...widgetData, launcher: { ...launcherData, appearance: { ...launcherData.appearance, background_type: 'solid' } } })}
                                 />
@@ -215,7 +215,7 @@ const Launcher = ({ widgetData, setWidgetData, errors = {}, clearError }) => {
                                     </div>
                                 )}
                                 <RadioButton
-                                    label="Gradient color"
+                                    label="Gradient Color"
                                     checked={backgroundType === 'gradient'}
                                     onChange={() => setWidgetData({ ...widgetData, launcher: { ...launcherData, appearance: { ...launcherData.appearance, background_type: 'gradient' } } })}
                                 />
@@ -241,7 +241,7 @@ const Launcher = ({ widgetData, setWidgetData, errors = {}, clearError }) => {
                         {/* Range Slider */}
                         <Box style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
                             <RangeSlider
-                                label="Border radius"
+                                label="Border Radius"
                                 max={32}
                                 min={0}
                                 value={borderRadius}
@@ -249,7 +249,7 @@ const Launcher = ({ widgetData, setWidgetData, errors = {}, clearError }) => {
                                 suffix={<Box style={{ textAlign: 'right', width: '24px' }}>{borderRadius}px</Box>}
                             />
                             <RangeSlider
-                                label="Side spacing"
+                                label="Side Spacing"
                                 max={32}
                                 min={0}
                                 value={sideSpacing}
@@ -257,7 +257,7 @@ const Launcher = ({ widgetData, setWidgetData, errors = {}, clearError }) => {
                                 suffix={<Box style={{ textAlign: 'right', width: '24px' }}>{sideSpacing}px</Box>}
                             />
                             <RangeSlider
-                                label="Bottom spacing"
+                                label="Bottom Spacing"
                                 max={32}
                                 min={0}
                                 value={bottomSpacing}
@@ -271,7 +271,7 @@ const Launcher = ({ widgetData, setWidgetData, errors = {}, clearError }) => {
                         {/* Accessibility */}
                         <Text variant="bodyLg" fontWeight='bold'>Accessibility</Text>
                         <Box>
-                            <Text as="p" variant="bodyMd">Visible on </Text>
+                            <Text as="p" variant="bodyMd">Visible On</Text>
                             <Box style={{ display: 'flex', flexDirection: 'column' }}>
                                 <RadioButton
                                     label="All devices"

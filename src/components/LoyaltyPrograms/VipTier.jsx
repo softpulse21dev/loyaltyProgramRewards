@@ -52,14 +52,29 @@ const VipTier = ({ entryMethod, tierProgressExpiry, setEntryMethod, setTierProgr
     const handleAddTierClick = () => {
         // Clear any previous edit data
         localStorage.removeItem('tierEditData');
+        localStorage.setItem('tierEntryMethod', entryMethod.toString());
         navigate(`/loyaltyProgram/tierview`, { state: { navigateTo: 2 } });
     };
+
+    const textEntryMethod = () => {
+        if (entryMethod == 1) {
+            return "Points"
+        }
+        else if (entryMethod == 2) {
+            return "Orders"
+        }
+        else if (entryMethod == 3) {
+            return "Amount Spent"
+        } else {
+            return "Points Redeemed"
+        }
+    }
 
     return (
         <div style={{ marginBottom: '30px' }} className="annotatedSection-border">
             <Layout.AnnotatedSection
-                title={'Reward tier Status'}
-                description={'Activate/Deactivate your Reward tier program'}
+                title={'Reward Tier Status'}
+                description={'Activate / Deactivate your Reward Tier program.'}
             >
                 <Card>
                     {loadingTiers ? <SkeletonBodyText lines={2} /> : (
@@ -82,12 +97,12 @@ const VipTier = ({ entryMethod, tierProgressExpiry, setEntryMethod, setTierProgr
             </Layout.AnnotatedSection>
 
             <Layout.AnnotatedSection
-                title={'Reward tiers'}
+                title={'Reward Tiers'}
                 description={
                     <Box>
                         <Text>Incentivize customer spending and activity by allowing members to reach exclusive Reward tiers.</Text>
                         <Box style={{ marginTop: '10px' }}>
-                            <Button onClick={() => handleAddTierClick()} variant="secondary">Add Reward tier</Button>
+                            <Button onClick={() => handleAddTierClick()} variant="secondary">Add Reward Tier</Button>
                         </Box>
                     </Box>
                 }
@@ -95,7 +110,7 @@ const VipTier = ({ entryMethod, tierProgressExpiry, setEntryMethod, setTierProgr
             >
                 <Card padding='0'>
                     <Box style={{ backgroundColor: "#F5F5F5", padding: "16px", display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-                        <Text variant="headingMd">Referral Rewards</Text>
+                        <Text variant="headingMd">Reward Tiers</Text>
                     </Box>
 
                     {loadingTiers ? <Box style={{ padding: '16px' }}>
@@ -123,7 +138,7 @@ const VipTier = ({ entryMethod, tierProgressExpiry, setEntryMethod, setTierProgr
                                                     </Box>
                                                     <Box>
                                                         <Text variant="bodyMd">{item?.title}</Text>
-                                                        <Text variant="bodyMd">Achieve on {item?.points_needed} points  |  {item?.points_multiply} points multiplier</Text>
+                                                        <Text variant="bodyMd">Achieve on {item?.points_needed} {textEntryMethod()} |  {item?.points_multiply} points multiplier</Text>
                                                     </Box>
                                                 </div>
                                             </Box>
@@ -133,7 +148,7 @@ const VipTier = ({ entryMethod, tierProgressExpiry, setEntryMethod, setTierProgr
                                                     tierId: item.uid,
                                                     editMode: true
                                                 }));
-
+                                                localStorage.setItem('tierEntryMethod', entryMethod.toString());
                                                 dispatch(TierId(item.uid));
                                                 navigate(`/loyaltyProgram/tierview`, { state: { rule: item, edit: true, navigateTo: 2 } });
                                             }} primary>Edit</Button>
@@ -159,7 +174,7 @@ const VipTier = ({ entryMethod, tierProgressExpiry, setEntryMethod, setTierProgr
                             <Text>
                                 Customers are placed onto Reward tiers based upon their total number of orders placed.
                             </Text>
-                            <BlockStack >
+                            <BlockStack>
                                 <RadioButton
                                     label="Lifetime Points Earned"
                                     checked={entryMethod == 1}
@@ -194,7 +209,7 @@ const VipTier = ({ entryMethod, tierProgressExpiry, setEntryMethod, setTierProgr
 
                     <Card>
                         <Box>
-                            <Text variant="headingMd">Reward tier Coupon Expiry</Text>
+                            <Text variant="headingMd">Reward Tier Coupon Expiry</Text>
                         </Box>
                         <Box style={{ paddingTop: "10px" }}>
                             <Text>Define how long Reward tier coupons remain valid after being issued.</Text>

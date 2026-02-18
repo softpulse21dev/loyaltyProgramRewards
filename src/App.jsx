@@ -38,7 +38,7 @@ function AppLayout({ pages }) {
           <Link to={`/customers${location.search}`}>Customers</Link>
           <Link to={`/settings${location.search}`}>Settings</Link>
           <Link to={`/analytics${location.search}`}>Analytics</Link>
-          <Link to={`/onsite${location.search}`}>Onsite</Link>
+          <Link to={`/widget${location.search}`}>Widget</Link>
           <Link to={`/emails${location.search}`}>Emails</Link>
         </NavMenu>
       </>

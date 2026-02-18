@@ -411,7 +411,7 @@ const LoyaltySignupView = () => {
                                                         <SkeletonDisplayText size="small" />
                                                     ) : (
                                                         <TextField
-                                                            label="Earning points"
+                                                            label="Earning Points"
                                                             value={earningpoints}
                                                             type="text"
                                                             error={earningPointsError} // This will now only show an error after Save is clicked
@@ -425,7 +425,7 @@ const LoyaltySignupView = () => {
                                             {rule?.type === 'birthday' && (
                                                 <Card>
                                                     <TextField
-                                                        label="Birthday eligibility cutoff"
+                                                        label="Birthday Eligibility Period"
                                                         helpText="Set how far in advance customers must provide their birthdate to be eligible for birthday rewards"
                                                         suffix="Days"
                                                         type="text"
@@ -453,7 +453,7 @@ const LoyaltySignupView = () => {
                                                     {rule?.type === 'birthday' && (
                                                         <div>
                                                             <Text>Customers earn bonus points on their birthday each year.</Text>
-                                                            <Text>Rewards are granted automatically if the birthday is provided before the eligibility cutoff. </Text>
+                                                            <Text>Rewards are granted automatically if the birthday is provided before the eligibility Period.</Text>
                                                             <Text>Points are added once per year to celebrate the customer’s birthday.</Text>
                                                         </div>
                                                     )}

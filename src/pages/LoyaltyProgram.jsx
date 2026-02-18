@@ -1,5 +1,5 @@
 import { useEffect, useState, useCallback } from "react";
-import { Page, Tabs, } from "@shopify/polaris";
+import { Box, Page, Tabs, } from "@shopify/polaris";
 
 import VipTier from "../components/LoyaltyPrograms/VipTier";
 import Loyalty from "../components/LoyaltyPrograms/Loyalty";
@@ -9,6 +9,7 @@ import { useLocation } from "react-router-dom";
 import { fetchData } from "../action";
 import { useDispatch } from "react-redux";
 import { GetVipTierData, MasterRewardsList } from "../redux/action";
+import NeedSupport from "../components/NeedSupport";
 
 
 const LoyaltyProgram = () => {
@@ -129,7 +130,7 @@ const LoyaltyProgram = () => {
     ];
 
     return (
-        <Page title="Loyalty program"
+        <Page title="Loyalty Program"
             primaryAction={selectedTab === 2 ? {
                 content: 'Save',
                 loading: loadingSave,
@@ -160,6 +161,9 @@ const LoyaltyProgram = () => {
                     />
                 )}
             </Tabs>
+            <Box style={{ marginTop: '20px' }}>
+                <NeedSupport />
+            </Box>
         </Page >
     );
 }

@@ -3,6 +3,7 @@ import { useEffect, useState, useCallback } from 'react'
 import { useLocation, useNavigate } from 'react-router-dom';
 import { fetchData } from '../../action';
 import { NoLeadingZero } from '../../utils';
+import { useSelector } from 'react-redux';
 
 const OrderPoints = () => {
     const navigate = useNavigate();
@@ -15,6 +16,7 @@ const OrderPoints = () => {
     const storedEditData = localStorage.getItem('loyaltyEditData');
     const parsedStoredData = storedEditData ? JSON.parse(storedEditData) : null;
     const { rule_id: storedRuleId, edit: storedEdit, rule_type: storedRuleType } = parsedStoredData || {};
+    const currencySymbol = useSelector((state) => state?.merchantSettings?.defaultData?.currency);
 
     // Create rule state: use locationRule if available, otherwise construct from stored data
     const [rule, setRule] = useState(() => {
@@ -255,8 +257,8 @@ const OrderPoints = () => {
                                                                 type="text"
                                                                 value={moneySpent}
                                                                 onChange={(value) => setMoneySpent(NoLeadingZero(value))}
-                                                                prefix="₹"
-                                                                suffix="spent"
+                                                                prefix={currencySymbol?.symbol}
+                                                                suffix="Spent"
                                                             />
                                                         </>
                                                     )}
@@ -277,7 +279,7 @@ const OrderPoints = () => {
                                         <Card>
                                             <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
                                                 <Text variant="headingMd" as="span" >Summary</Text>
-                                                <Text>Customers earn points for every Rs. 1 spent</Text>
+                                                {orderPointsMethod === 'multiplier' ? `Customers can  earn ${earningPoints}  points for every ${moneySpent} ${currencySymbol?.code} spent` : `Customers earn fixed amount of points per order`}
                                             </div>
                                             {/* <ul style={{ listStyle: "inherit", paddingInline: 20 }}>
                                                 <li>Customers earn points for every Rs. 1 spent</li>
