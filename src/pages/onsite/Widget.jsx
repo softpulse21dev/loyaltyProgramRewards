@@ -499,7 +499,7 @@ const Widget = () => {
                         {!widgetData?.is_enabled && (
                             <Box style={{ marginBottom: '30px' }}>
                                 <Banner
-                                    title={'Widget is disabled'}
+                                    title={'Widget is Disabled'}
                                     action={{ content: 'Enable', onAction: () => handleUpdateStatus(true), loading: statusLoading }}
                                     tone="warning"
                                 >

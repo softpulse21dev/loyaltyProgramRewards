@@ -10,7 +10,7 @@ export default defineConfig({
   server: {
     historyApiFallback: true,
     hmr: {
-      host: "databases-copyright-fiber-rising.trycloudflare.com",
+      host: "would-plain-residents-observations.trycloudflare.com",
       protocol: "wss",
     },
   },

@@ -1,11 +1,13 @@
-import { ActionList, Banner, BlockStack, Box, Button, Card, Collapsible, Grid, Layout, MediaCard, Page, Popover, SkeletonBodyText, SkeletonDisplayText, SkeletonPage, Text, VideoThumbnail } from '@shopify/polaris'
+import { ActionList, Banner, BlockStack, Box, Button, Card, Collapsible, Grid, Layout, Link, MediaCard, Page, Popover, SkeletonBodyText, SkeletonDisplayText, SkeletonPage, Text, VideoThumbnail } from '@shopify/polaris'
 import { PlayCircleIcon } from '@shopify/polaris-icons';
-import { useCallback, useEffect, useState } from 'react'
+import { useCallback, useEffect, useMemo, useState } from 'react'
 import { fetchData } from '../action';
 import DateRangePicker from '../components/DateRangePicker';
 import { useDispatch, useSelector } from 'react-redux';
 import { DefaultData } from '../redux/action';
 import NeedSupport from '../components/NeedSupport';
+import { SetupGuide } from '../components/SetupGuide';
+import { useNavigate } from 'react-router-dom';
 
 const Dashboard = () => {
     const [active, setActive] = useState(false);
@@ -13,7 +15,13 @@ const Dashboard = () => {
     const handleToggle = useCallback(() => setOpen((open) => !open), []);
     const [loyaltyStatus, setLoyaltyStatus] = useState(null);
     const [programStatusLoading, setProgramStatusLoading] = useState(false);
-    const [dashboardLoading, setDashboardLoading] = useState(false);
+    // const [dashboardLoading, setDashboardLoading] = useState(false);
+
+    const [dashboardLoading, setDashboardLoading] = useState(true);
+    const [defaultDataLoading, setDefaultDataLoading] = useState(true);
+    const hideGuide = localStorage.getItem('hideGuide');
+
+    const navigate = useNavigate();
     const [dashboardData, setDashboardData] = useState({
         new_members: 0,
         orders_from_member: 0,
@@ -37,10 +45,21 @@ const Dashboard = () => {
     });
     const dispatch = useDispatch();
 
+    const [defaultData, setDefaultData] = useState([]);
+    const [showGuide, setShowGuide] = useState(true);
+
+
     const currencySymbol = useSelector((state) => state?.merchantSettings?.defaultData?.currency?.symbol);
+
+    console.log('defaultData', defaultData)
     console.log('currencySymbol', currencySymbol)
 
-    const getDefaultDataApi = async () => {
+    const getDefaultDataApi = useCallback(async (silent = false) => {
+        // Only show skeleton if it's NOT a silent fetch
+        if (!silent) {
+            setDefaultDataLoading(true);
+        }
+
         try {
             const formData = new FormData();
             const response = await fetchData("/get-shop-details", formData);
@@ -48,14 +67,19 @@ const Dashboard = () => {
                 // Save to Redux
                 console.log("getDefaultDataApi", response?.data);
                 dispatch(DefaultData(response?.data));
+                setDefaultData(response?.data);
             } else {
                 shopify.toast.show(response?.message, { duration: 2000, isError: true, });
             }
             console.log("getDefaultDataApi", response);
         } catch (error) {
             console.error("Error fetching default data:", error);
+        } finally {
+            if (!silent) {
+                setDefaultDataLoading(false);
+            }
         }
-    };
+    }, [dispatch]); // Added dispatch as dependency
 
     const fetchDashboardAPI = useCallback(async () => {
         setDashboardLoading(true);
@@ -100,17 +124,111 @@ const Dashboard = () => {
         }
     }
 
+    // 1. Initial Load Effect
     useEffect(() => {
         fetchDashboardAPI();
-    }, [fetchDashboardAPI]);
+        getDefaultDataApi(false); // false = not silent, show skeleton on initial load
+    }, [fetchDashboardAPI, getDefaultDataApi]);
 
+    // 2. Tab Focus / Visibility Change Effect
     useEffect(() => {
-        getDefaultDataApi();
-    }, []);
+        const handleVisibilityChange = () => {
+            // document.visibilityState === 'visible' means the user just returned to this tab
+            if (document.visibilityState === 'visible') {
+                console.log("User returned to tab, fetching fresh data silently...");
+                getDefaultDataApi(true); // true = silent fetch, updates the checkmarks without showing skeleton
+            }
+        };
+
+        // Listen for tab switching
+        document.addEventListener("visibilitychange", handleVisibilityChange);
+
+        // Listen for window focus as a fallback (good for iframe embeds)
+        // window.addEventListener("focus", handleVisibilityChange);
+
+        return () => {
+            document.removeEventListener("visibilitychange", handleVisibilityChange);
+            // window.removeEventListener("focus", handleVisibilityChange);
+        };
+    }, [getDefaultDataApi]);
+
+
+    const items = useMemo(() => [
+        {
+            id: 0,
+            title: 'Activate Loyalty Program',
+            description: "Activate your Loyalty program to start rewarding your customers for their purchases.",
+            image: {
+                url: "https://cdn.shopify.com/shopifycloud/shopify/assets/admin/home/onboarding/shop_pay_task-70830ae12d3f01fed1da23e607dc58bc726325144c29f96c949baca598ee3ef6.svg",
+                alt: "Illustration highlighting ShopPay integration",
+            },
+            complete: !!loyaltyStatus, // Converted directly to boolean
+            primaryButton: {
+                content: "Activate Program",
+                props: {
+                    onAction: () => updateLoyaltyStatusAPI(true), // Passed boolean to match state type
+                },
+            },
+            loading: programStatusLoading,
+        },
+        {
+            id: 1,
+            title: 'Add Rewards to your Loyalty Program',
+            description: (
+                <Box style={{ marginTop: '10px' }}>
+                    <Text variant="bodyMd">Add rewards to your Loyalty program to reward your customers for their purchases.</Text>
+                    <Text><b>Step 1 :</b> Go to <Link removeUnderline onClick={() => navigate('/loyaltyProgram')}><b>Loyalty Program → Loyalty</b></Link></Text>
+                    <Text><b>Step 2 :</b> Make sure the Earning Points / Redeeming Rules are active.</Text>
+                </Box>
+            ),
+            image: {
+                url: "https://cdn.shopify.com/shopifycloud/shopify/assets/admin/home/onboarding/detail-images/home-onboard-share-store-b265242552d9ed38399455a5e4472c147e421cb43d72a0db26d2943b55bdb307.svg",
+                alt: "Illustration showing an online storefront with a 'share' icon in top right corner",
+            },
+            complete: defaultData?.reward_module_active == 1 ? true : false, // This will now correctly evaluate when the API updates!
+        },
+        {
+            id: 2,
+            title: "Turn on App Embed",
+            description: (
+                <Box style={{ marginTop: '10px' }}>
+                    <Text variant="bodyMd">Turn on app Embed to display the Loyalty program widget on your store.</Text>
+                    <Text><b>Step 1 :</b> Go to <Link url={defaultData?.themesUrl} target='_blank' removeUnderline ><b>Online Store → Themes</b></Link> Click <b>Edit theme</b>.</Text>
+                    <Text>
+                        <b>Step 2:</b> From the top-left menu, open <b>App embeds</b>.
+                        Locate your Loyalty App and turn the toggle switch on (it should appear enabled).
+                    </Text>
+                </Box>
+            ),
+            image: {
+                url: "https://cdn.shopify.com/b/shopify-guidance-dashboard-public/nqjyaxwdnkg722ml73r6dmci3cpn.svgz",
+            },
+            complete: defaultData?.app_embed_enabled == 1 ? true : false,
+        },
+        {
+            id: 3,
+            title: "Activate Widget",
+            description: (
+                <Box style={{ marginTop: '10px' }}>
+                    <Text variant="bodyMd">Activate the Loyalty program widget on your store.</Text>
+                    <Text><b>Step 1 :</b> From the left sidebar, click <Link onClick={() => navigate('/widget')} removeUnderline ><b>Widget</b></Link>.</Text>
+                    <Text><b>Step 2:</b> On the Widget page, locate the yellow banner that says <b>“Widget is Disabled.”</b></Text>
+                    <Text><b>Step 3:</b> Click the <b>Enable</b> button to activate the loyalty widget.</Text>
+                    <Box style={{ marginTop: '8px' }}>
+                        <Text tone="subdued">Once enabled, the widget will become visible to customers on your store.</Text>
+                    </Box>
+                </Box>
+            ),
+            image: {
+                url: "https://cdn.shopify.com/b/shopify-guidance-dashboard-public/nqjyaxwdnkg722ml73r6dmci3cpn.svgz",
+            },
+            complete: defaultData?.widget_enabled == 1 ? true : false,
+        },
+    ], [loyaltyStatus, defaultData, programStatusLoading, navigate]);
 
     return (
         <>
-            {dashboardLoading ? (
+            {dashboardLoading || defaultDataLoading ? (
                 <SkeletonPage
                     primaryAction={<SkeletonDisplayText />}
                 >
@@ -138,6 +256,12 @@ const Dashboard = () => {
                 >
                     <Box>
                         <BlockStack gap="500">
+                            {showGuide && hideGuide !== 'true' && (
+                                <SetupGuide
+                                    onDismiss={() => { setShowGuide(false), localStorage.setItem('hideGuide', true) }}
+                                    items={items}
+                                />
+                            )}
                             <Banner
                                 title={loyaltyStatus ? "Your Loyalty program is currently enabled" : "Your Loyalty program is currently disabled"}
                                 action={{ content: loyaltyStatus ? 'Turn off' : 'Turn on', onAction: () => { updateLoyaltyStatusAPI(!loyaltyStatus) }, loading: programStatusLoading }}
@@ -158,22 +282,22 @@ const Dashboard = () => {
 
                             {/* Tutorial Section */}
                             {/* <MediaCard
-                        size="small"
-                        title="Getting Started"
-                        primaryAction={{
-                            icon: PlayCircleIcon,
-                            content: <Text as="p">Watch tutorial</Text>,
-                            onAction: () => { window.open('https://youtu.be/VU-zVyMsxmg', '_blank') },
-                        }}
-                        description="Discover how Shopify can power up your entrepreneurial journey."
-                        onDismiss={() => { }}
-                    >
-                        <VideoThumbnail
-                            videoLength={30}
-                            thumbnailUrl="https://burst.shopifycdn.com/photos/business-woman-smiling-in-office.jpg?width=1850"
-                            onClick={() => console.log(window.open('https://youtu.be/VU-zVyMsxmg', '_blank'))}
-                        />
-                    </MediaCard> */}
+                                size="small"
+                                title="Getting Started"
+                                primaryAction={{
+                                    icon: PlayCircleIcon,
+                                    content: <Text as="p">Watch tutorial</Text>,
+                                    onAction: () => { window.open('https://youtu.be/VU-zVyMsxmg', '_blank') },
+                                }}
+                                description="Discover how Shopify can power up your entrepreneurial journey."
+                                onDismiss={() => { }}
+                            >
+                                <VideoThumbnail
+                                    videoLength={30}
+                                    thumbnailUrl="https://burst.shopifycdn.com/photos/business-woman-smiling-in-office.jpg?width=1850"
+                                    onClick={() => console.log(window.open('https://youtu.be/VU-zVyMsxmg', '_blank'))}
+                                />
+                            </MediaCard> */}
 
                             {/* Revenue Section */}
                             <BlockStack gap="300">

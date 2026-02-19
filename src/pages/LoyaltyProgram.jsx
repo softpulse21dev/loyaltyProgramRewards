@@ -16,7 +16,7 @@ const LoyaltyProgram = () => {
     const location = useLocation();
     const { navigateTo } = location.state || {};
     console.log('navigateTo', navigateTo)
-    
+
     // Initialize selectedTab from navigateTo or localStorage, default to 0
     const [selectedTab, setSelectedTab] = useState(() => {
         if (navigateTo !== undefined) {
@@ -26,13 +26,13 @@ const LoyaltyProgram = () => {
         const stored = localStorage.getItem('loyaltyProgramTab');
         return stored !== null ? parseInt(stored, 10) : 0;
     });
-    
+
     const [entryMethod, setEntryMethod] = useState(2);
     const [tierProgressExpiry, setTierProgressExpiry] = useState(1);
     const [loadingSave, setLoadingSave] = useState(false);
     const [loadingTiers, setLoadingTiers] = useState(false);
     const [vipStatus, setVipStatus] = useState(false);
-    
+
     const dispatch = useDispatch();
 
     const GetVipTierAPI = useCallback(async () => {
@@ -149,10 +149,10 @@ const LoyaltyProgram = () => {
                     <Referral />
                 )}
                 {selectedTab === 2 && (
-                    <VipTier 
-                        entryMethod={entryMethod} 
-                        tierProgressExpiry={tierProgressExpiry} 
-                        setEntryMethod={setEntryMethod} 
+                    <VipTier
+                        entryMethod={entryMethod}
+                        tierProgressExpiry={tierProgressExpiry}
+                        setEntryMethod={setEntryMethod}
                         setTierProgressExpiry={setTierProgressExpiry}
                         vipStatus={vipStatus}
                         setVipStatus={setVipStatus}
