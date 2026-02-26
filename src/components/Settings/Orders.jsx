@@ -156,12 +156,12 @@ const Orders = ({ settingsData, setSettingsData }) => {
                             value={referralAdvocateRewardPrefix}
                             onChange={(value) => setSettingsData([{ ...settingsData[0], discount_code_prefixes: { ...settingsData[0].discount_code_prefixes, advocate_prefix: cleanStrictWhitespace(value) } }])}
                         />
-                        <TextField
+                        {/* <TextField
                             label="Referral Friend Reward Prefix"
                             helpText="This is the prefix for all Friend reward discount codes. Leave blank to use the global prefix."
                             value={referralFriendRewardPrefix}
                             onChange={(value) => setSettingsData([{ ...settingsData[0], discount_code_prefixes: { ...settingsData[0].discount_code_prefixes, friend_prefix: cleanStrictWhitespace(value) } }])}
-                        />
+                        /> */}
                     </BlockStack>
                 </Card>
             </Layout.AnnotatedSection >

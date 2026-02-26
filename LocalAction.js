@@ -1,129 +1,130 @@
+import { createApp } from "@shopify/app-bridge";
+import { getSessionToken } from "@shopify/app-bridge-utils";
+
+const API_KEY = "5e7b9cfe3ba105053aa33a32e41c9580";
 const LOCAL_SHOP = "kg-store-demo.myshopify.com";
-const SHOP_STORAGE_KEY = "current_shopify_shop"; // Key to store the shop in localStorage
+const BASE_URL = "https://demo.shopiapps.in/loyalty/api";
+
+// ✅ Local-only query key
+const LOCAL_QUERY_KEY = "Y6vg3RZzOZz7a9W";
+
+const isLocalhost = () => {
+  const h = window.location.hostname;
+  return h === "localhost" || h === "127.0.0.1";
+};
+
+// ✅ Append ?key=... only in local
+const withLocalKey = (url) => {
+  if (!isLocalhost()) return url;
+
+  const u = new URL(url);
+  if (!u.searchParams.has("key")) {
+    u.searchParams.set("key", LOCAL_QUERY_KEY);
+  }
+  return u.toString();
+};
+
+const getHost = () => {
+  const urlParams = new URLSearchParams(window.location.search);
+  let host = urlParams.get("host");
+
+  if (!host) {
+    host = localStorage.getItem("shopify_app_host");
+  } else {
+    localStorage.setItem("shopify_app_host", host);
+  }
+
+  return host;
+};
+
+let app = null;
+try {
+  const host = getHost();
+  if (host) {
+    app = createApp({
+      apiKey: API_KEY,
+      host,
+      forceRedirect: true,
+    });
+  }
+} catch (e) {
+  console.log("App Bridge init failed (likely running outside Shopify):", e);
+};
 
 export const getCurrentShop = () => {
-    const urlParams = new URLSearchParams(window.location.search);
-    const urlShop = urlParams.get("shop");
+  const urlParams = new URLSearchParams(window.location.search);
+  const shop = urlParams.get("shop") || localStorage.getItem("current_shopify_shop");
 
-    // 1. If 'shop' is in the URL (on initial load):
-    //    Save it to localStorage and return it.
-    if (urlShop) {
-        localStorage.setItem(SHOP_STORAGE_KEY, urlShop);
-        return urlShop;
-    }
+  if (shop) localStorage.setItem("current_shopify_shop", shop);
 
-    // 2. If 'shop' is NOT in the URL (e.g., after navigating):
-    //    Try to get it from localStorage.
-    const storedShop = localStorage.getItem(SHOP_STORAGE_KEY);
-    if (storedShop) {
-        return storedShop;
-    }
-
-    // 3. Fallback for local development (if nothing in URL or storage):
-    const isLocalDevelopment =
-        window.location.hostname === "localhost" ||
-        window.location.hostname === "127.0.0.1";
-
-    if (isLocalDevelopment) {
-        // Optional: Also save the local shop to storage for consistency
-        localStorage.setItem(SHOP_STORAGE_KEY, LOCAL_SHOP);
-        return LOCAL_SHOP;
-    }
-
-    // 4. If live and still no shop, we have a problem.
-    console.error("Could not determine shop origin.");
-    return null;
+  if (!shop && isLocalhost()) return LOCAL_SHOP;
+  return shop;
 };
 
-// Base URL for APIs
+// ✅ Make api url (local adds key query param)
 export const getApiURL = (path) => {
-    const key = "Y6vg3RZzOZz7a9W";
-    const base_url = "https://demo.shopiapps.in/loyalty/api";
-    if (key === '') {
-        return `${base_url}${path}`;
-    } else {
-        return `${base_url}${path}?${key}`;
-    }
+  const base = `${BASE_URL}${path}`;
+
+  if (!isLocalhost()) return base;
+
+  // If already has query params, append using &
+  if (base.includes("?")) {
+    return `${base}&${LOCAL_QUERY_KEY}`;
+  }
+
+  return `${base}?${LOCAL_QUERY_KEY}`;
 };
 
-// Common fetch function
 export const fetchData = async (path, data = {}, dataType = "json") => {
-    return new Promise((resolve) => {
-        const method = "POST";
-        // Shop dynamic from URL
-        let currentShop = getCurrentShop();
+  return new Promise(async (resolve) => {
+    const currentShop = getCurrentShop();
 
-        // Local dev check
-        const isLocalDevelopment =
-            window.location.hostname === "localhost" ||
-            window.location.hostname === "127.0.0.1";
+    let token = "";
+    if (app) {
+      try {
+        token = await getSessionToken(app);
+      } catch (error) {
+        console.error("Error generating session token:", error);
+      }
+    } else {
+      console.warn("App Bridge not initialized. Token will be empty.");
+    }
 
-        if (!isLocalDevelopment) {
-            if (!currentShop || !currentShop.includes("myshopify.com")) {
-                console.error("Invalid shop parameter:", currentShop);
-                return resolve({
-                    status: false,
-                    message: "Invalid shop configuration. Please refresh the page.",
-                });
-            }
+    if (data instanceof FormData) {
+      if (!data.has("shop")) data.append("shop", currentShop);
+    } else {
+      data = { ...data, shop: currentShop };
+    }
+
+    const headers = {
+      Authorization: `Bearer ${token}`,
+    };
+
+    let body = data;
+    if (!(data instanceof FormData)) {
+      headers["Content-Type"] = "application/json";
+      body = JSON.stringify(data);
+    }
+
+    fetch(getApiURL(path), {
+      method: "POST",
+      headers,
+      body,
+    })
+      .then((res) => res.text())
+      .then((resText) => {
+        if (dataType === "json") {
+          try {
+            return resolve(JSON.parse(resText));
+          } catch (e) {
+            return resolve({ status: false, message: "Invalid JSON response" });
+          }
         }
-
-        // Add shop param
-        if (data instanceof FormData) {
-            if (!data.has("shop")) {
-                data.append("shop", currentShop);
-            }
-            if (!data.has("appLanguage")) {
-                const appLanguage = localStorage.getItem("interfaceLanguage") || "en";
-                data.append("appLanguage", appLanguage);
-            }
-        } else {
-            data = { ...data, shop: currentShop };
-        }
-
-        let headerContentType = "application/json";
-        let body = data;
-
-        if (data instanceof FormData) {
-            body = data;
-            headerContentType = undefined; // let browser set it
-        } else {
-            body = JSON.stringify(data);
-        }
-
-        const fetchOptions = {
-            method,
-            body,
-        };
-
-        if (headerContentType) {
-            fetchOptions.headers = {
-                "Content-Type": headerContentType,
-            };
-        }
-
-        fetch(getApiURL(path), fetchOptions)
-            .then((res) => res.text())
-            .then((resText) => {
-                if (dataType === "json") {
-                    try {
-                        const json = JSON.parse(resText);
-                        return resolve(json);
-                    } catch (e) {
-                        return resolve({
-                            status: false,
-                            message: "Invalid server response",
-                        });
-                    }
-                }
-                return resolve(resText);
-            })
-            .catch((err) => {
-                console.error("API error:", err);
-                return resolve({
-                    status: false,
-                    message: "Please try again later",
-                });
-            });
-    });
+        return resolve(resText);
+      })
+      .catch((err) => {
+        console.error("API error:", err);
+        return resolve({ status: false, message: "Network error" });
+      });
+  });
 };

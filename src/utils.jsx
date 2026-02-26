@@ -35,30 +35,89 @@ export const NavigateMap = {
     add_wallet: "/loyaltyProgram/loyaltySignupView",
 }
 
-export const formatShortDate = (dateString) => {
-    // Return a placeholder if the date string is not valid
-    if (!dateString) {
-        return 'N/A';
+// export const formatShortDate = (dateString) => {
+//     // Return a placeholder if the date string is not valid
+//     if (!dateString) {
+//         return 'N/A';
+//     }
+//     // Array of short month names
+//     const monthAbbreviations = [
+//         'Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun',
+//         'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'
+//     ];
+//     try {
+//         const date = new Date(dateString);
+//         // Check if the created date is valid
+//         if (isNaN(date.getTime())) {
+//             return dateString; // Return original string if it's an invalid date
+//         }
+//         const day = date.getDate();
+//         const monthIndex = date.getMonth(); // 0-indexed (Jan=0, Feb=1, etc.)
+//         const year = date.getFullYear();
+//         return `${day} ${monthAbbreviations[monthIndex]} ${year}`;
+//     } catch (error) {
+//         console.error("Error formatting date:", error);
+//         return dateString; // Fallback to original string on error
+//     }
+// };
+
+export const formatShortDate = (dateString, format = "d M Y") => {
+    if (!dateString) return 'N/A';
+
+    let day, monthIdx, year;
+
+    // 1. UPDATED EXTRACTION: Treat input strictly as MM/DD/YYYY
+    if (typeof dateString === 'string' && dateString.includes('/')) {
+        const parts = dateString.split('/');
+        
+        /** * For MM/DD/YYYY:
+         * parts[0] = Month
+         * parts[1] = Day
+         * parts[2] = Year
+         */
+        monthIdx = parseInt(parts[0], 10) - 1;     // MM (01 becomes 0 index)
+        day = parseInt(parts[1], 10);              // DD
+        
+        let yPart = parts[2].trim();
+        // Handle 2-digit years (26 -> 2026)
+        year = yPart.length === 2 ? parseInt(`20${yPart}`, 10) : parseInt(yPart, 10);
+    } else {
+        // Fallback for ISO dates or Date objects
+        const dObj = new Date(dateString);
+        if (isNaN(dObj.getTime())) return dateString;
+        day = dObj.getDate();
+        monthIdx = dObj.getMonth();
+        year = dObj.getFullYear();
     }
-    // Array of short month names
-    const monthAbbreviations = [
-        'Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun',
-        'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'
-    ];
-    try {
-        const date = new Date(dateString);
-        // Check if the created date is valid
-        if (isNaN(date.getTime())) {
-            return dateString; // Return original string if it's an invalid date
-        }
-        const day = date.getDate();
-        const monthIndex = date.getMonth(); // 0-indexed (Jan=0, Feb=1, etc.)
-        const year = date.getFullYear();
-        return `${day} ${monthAbbreviations[monthIndex]} ${year}`;
-    } catch (error) {
-        console.error("Error formatting date:", error);
-        return dateString; // Fallback to original string on error
-    }
+
+    // 2. VALIDATION
+    if (isNaN(day) || isNaN(monthIdx) || isNaN(year)) return dateString;
+
+    const getOrdinal = (n) => {
+        const s = ["th", "st", "nd", "rd"];
+        const v = n % 100;
+        return n + (s[(v - 20) % 10] || s[v] || s[0]);
+    };
+
+    const monthsFull = ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"];
+    const monthsShort = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
+
+    // 3. THE VALUES MAP
+    const values = {
+        "dS": getOrdinal(day),
+        "F": monthsFull[monthIdx],
+        "M": monthsShort[monthIdx],
+        "m": String(monthIdx + 1).padStart(2, '0'), // Re-pads Month to 2 digits
+        "d": String(day).padStart(2, '0'),          // Re-pads Day to 2 digits
+        "Y": String(year),
+        "y": String(year).slice(-2)
+    };
+
+    // 4. ONE-PASS EXECUTION
+    // This matches tokens in the order they appear in the 'format' string
+    const pattern = /dS|F|M|m|d|Y|y/g;
+
+    return format.replace(pattern, (matched) => values[matched]);
 };
 
 export const capitalizeFirst = (str) => {
@@ -260,7 +319,6 @@ export function LimitText(text, maxLength) {
     const singleSpacedText = text.replace(/\s+/g, " ");
     return singleSpacedText.slice(0, maxLength);
 }
-
 
 export function LimitStaticText(text, maxLength) {
     return text.length > maxLength ? text.slice(0, maxLength) + '...' : text;

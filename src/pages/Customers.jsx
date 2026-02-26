@@ -5,6 +5,7 @@ import { useNavigate } from "react-router-dom";
 import { fetchData } from "../action";
 import { capitalizeFirst, formatShortDate } from "../utils";
 import NeedSupport from "../components/NeedSupport";
+import { useSelector } from "react-redux";
 
 const Customers = () => {
     const navigate = useNavigate();
@@ -18,7 +19,7 @@ const Customers = () => {
     const [loading, setLoading] = useState(true);
     const [vipTierList, setVipTierList] = useState([]); // State to hold the list R1, R2, etc.
     const [selectedVipTier, setSelectedVipTier] = useState(null);
-
+    const dateFormat = useSelector((state) => state?.merchantSettings?.defaultData?.date_format);
     // --- Sorting State ---
     const [sortColumn, setSortColumn] = useState(null);
     const [sortDirection, setSortDirection] = useState('ascending');
@@ -736,7 +737,7 @@ const Customers = () => {
                 <IndexTable.Cell><Text variant='bodyMd' as="span">{val.orders_count}</Text></IndexTable.Cell>
                 <IndexTable.Cell><Text variant='bodyMd' as="span">{val.total_spent}</Text></IndexTable.Cell>
                 <IndexTable.Cell><Text variant='bodyMd' as="span">{val.vip_tier_name}</Text></IndexTable.Cell>
-                <IndexTable.Cell><Text variant='bodyMd' as="span"> {formatShortDate(val.registration_date)}</Text></IndexTable.Cell>
+                <IndexTable.Cell><Text variant='bodyMd' as="span"> {formatShortDate(val.registration_date, dateFormat)}</Text></IndexTable.Cell>
             </IndexTable.Row >
         );
     });

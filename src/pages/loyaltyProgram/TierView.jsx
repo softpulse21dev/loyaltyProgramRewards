@@ -1,5 +1,5 @@
-import { BlockStack, Box, Button, Card, DropZone, Grid, Icon, InlineGrid, Layout, LegacyStack, Page, RadioButton, ResourceItem, ResourceList, SkeletonBodyText, SkeletonDisplayText, SkeletonPage, Text, TextField, Thumbnail } from '@shopify/polaris'
-import { CashDollarIcon, CheckIcon, CurrencyConvertIcon, DeleteIcon, GiftCardIcon, HeartIcon, NoteIcon, RewardIcon, SaveIcon, StarIcon } from '@shopify/polaris-icons';
+import { Badge, BlockStack, Box, Button, Card, DropZone, Grid, Icon, InlineGrid, Layout, LegacyStack, Page, RadioButton, ResourceItem, ResourceList, SkeletonBodyText, SkeletonDisplayText, SkeletonPage, Text, TextField, Thumbnail } from '@shopify/polaris'
+import { CashDollarIcon, CheckIcon, CurrencyConvertIcon, DeleteIcon, GiftCardIcon, HeartIcon, InfoIcon, NoteIcon, RewardIcon, SaveIcon, StarIcon } from '@shopify/polaris-icons';
 import React, { useCallback, useEffect, useState } from 'react'
 import { useLocation, useNavigate } from 'react-router-dom';
 import RedeemModal from '../../components/RedeemModal';
@@ -15,6 +15,9 @@ const TierView = () => {
     const dispatch = useDispatch();
 
     const tierFormData = useSelector((state) => state.merchantSettings.tierFormData);
+    const tierIdFromState = localStorage.getItem('tierEditData');
+    const tierIdFromStateData = JSON.parse(tierIdFromState);
+
     const { uid, tierName, goalValue, pointsMultiplier, selectedIcon, files, status } = tierFormData;
     const Data = useSelector((state) => state.merchantSettings.Data);
     const masterRewardsList = useSelector((state) => state.merchantSettings.masterRewardsList);
@@ -207,7 +210,7 @@ const TierView = () => {
             console.log('response', response);
             if (response.status) {
                 handleBackAction();
-                // shopify.toast.show(response?.message, { duration: 2000 });
+                shopify.toast.show(response?.message, { duration: 2000 });
             }
             else {
                 shopify.toast.show(response?.message, { duration: 2000, isError: true });
@@ -234,7 +237,6 @@ const TierView = () => {
             }
         } catch (error) {
             console.error('Error deleting Reward tier:', error);
-            shopify.toast.show(error?.message, { duration: 2000, isError: true });
         } finally {
             setDeleteLoading(false);
         }
@@ -421,7 +423,7 @@ const TierView = () => {
                 <Page
                     backAction={{ content: 'Back', onAction: () => { handleBackAction() } }}
                     title="Reward Tier"
-                    secondaryActions={edit ? <Button tone='critical' icon={DeleteIcon} loading={deleteLoading} onClick={() => { DeleteVipTierAPI(rule?.uid) }}>Delete</Button> : ''}
+                    secondaryActions={edit ? !tierIdFromStateData?.isFirst && <Button tone='critical' icon={DeleteIcon} loading={deleteLoading} onClick={() => { DeleteVipTierAPI(rule?.uid) }}>Delete</Button> : ''}
                     primaryAction={{ content: 'Save', loading: submitLoading, onAction: () => { AddVipTierAPI() } }}
                 >
                     <Layout>
@@ -451,6 +453,7 @@ const TierView = () => {
                                                     <TextField
                                                         value={goalValue}
                                                         type='text'
+                                                        disabled={tierIdFromStateData?.isFirst}
                                                         label={getGoalLabel()}
                                                         requiredIndicator={true}
                                                         onChange={(value) => {
@@ -460,6 +463,14 @@ const TierView = () => {
                                                         error={validation.goalValue}
                                                     />
                                                 </Box>
+                                                {tierIdFromStateData?.isFirst &&
+                                                    <Badge tone='info'>
+                                                        <Box style={{ display: 'flex', alignItems: 'center', gap: '5px' }}>
+                                                            <Icon source={InfoIcon} />
+                                                            <Text variant='bodyMd' as="span">This is the first tier, so there is no goal to achieve.</Text>
+                                                        </Box>
+                                                    </Badge>
+                                                }
                                             </Box>
                                         </Card>
 

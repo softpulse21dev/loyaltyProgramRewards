@@ -10,7 +10,7 @@ export default defineConfig({
   server: {
     historyApiFallback: true,
     hmr: {
-      host: "would-plain-residents-observations.trycloudflare.com",
+      host: "america-differential-field-module.trycloudflare.com",
       protocol: "wss",
     },
   },

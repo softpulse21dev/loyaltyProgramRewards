@@ -279,7 +279,7 @@ const OrderPoints = () => {
                                         <Card>
                                             <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
                                                 <Text variant="headingMd" as="span" >Summary</Text>
-                                                {orderPointsMethod === 'multiplier' ? `Customers can  earn ${earningPoints}  points for every ${moneySpent} ${currencySymbol?.code} spent` : `Customers earn fixed amount of points per order`}
+                                                {orderPointsMethod === 'multiplier' ? `Customers can  earn ${earningPoints}  points for every ${moneySpent} ${currencySymbol?.code} spent.` : `Customers earn fixed amount of points per order.`}
                                             </div>
                                             {/* <ul style={{ listStyle: "inherit", paddingInline: 20 }}>
                                                 <li>Customers earn points for every Rs. 1 spent</li>

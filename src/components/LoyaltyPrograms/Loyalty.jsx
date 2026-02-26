@@ -33,13 +33,21 @@ const Loyalty = () => {
 
     const handleToggleStatus = async () => {
         setLoading(true);
-        const formData = new FormData();
-        formData.append("status", !status ? "true" : "false");
+        try {
+            const formData = new FormData();
+            formData.append("status", !status ? "true" : "false");
 
-        const response = await fetchData("/update-merchant-settings", formData);
-        setLoading(false);
-        if (response.status) {
-            setStatus((prev) => !prev);
+            const response = await fetchData("/update-merchant-settings", formData);
+            if (response.status === true) {
+                setStatus((prev) => !prev);
+                shopify.toast.show(response?.message, { duration: 2000 });
+            } else {
+                shopify.toast.show(response?.message, { duration: 2000, isError: true });
+            }
+        } catch (err) {
+            console.error("Error updating status:", err);
+        } finally {
+            setLoading(false);
         }
     };
 
@@ -65,7 +73,7 @@ const Loyalty = () => {
         formData.append("status", isActive ? true : false);
         formData.append("rule_id", ruleId);
         const url = isEarningRule ? "/update-merchant-earning-rules-status" : "/update-merchant-redeeming-rules-status";
-        
+
         try {
             const response = await fetchData(url, formData);
 

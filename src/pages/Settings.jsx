@@ -8,6 +8,8 @@ import Theme from "../components/Settings/Theme";
 import Orders from "../components/Settings/Orders";
 import { fetchData } from "../action";
 import NeedSupport from "../components/NeedSupport";
+import { useDispatch } from "react-redux";
+import { DefaultDateFormat } from "../redux/action";
 
 const Settings = () => {
     const location = useLocation();
@@ -18,6 +20,7 @@ const Settings = () => {
     const [loadingSave, setLoadingSave] = useState(false);
     const [loading, setLoading] = useState(false);
     const [errors, setErrors] = useState({});
+    const dispatch = useDispatch();
 
     useEffect(() => {
         console.log('resetConfirmation', resetConfirmation);
@@ -172,6 +175,9 @@ const Settings = () => {
             const response = await fetchData("/update-settings", formData);
             console.log('Save Settings Response', response);
             if (response.status && response.status === true) {
+                dispatch(DefaultDateFormat(
+                    settingsData?.[0]?.date_format,
+                ));
                 shopify.toast.show(response.message, { duration: 2000 });
             } else {
                 shopify.toast.show(response.message, { duration: 2000, isError: true });

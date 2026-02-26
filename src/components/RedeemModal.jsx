@@ -4,7 +4,7 @@ import React from 'react'
 import { iconsMap } from '../utils'
 import { useNavigate } from 'react-router-dom'
 
-const RedeemModal = ({ active, setActive, data, referralRule, navigateTo, localSave, loading }) => {
+const RedeemModal = ({ title='Ways to Redeem', active, setActive, data, referralRule, navigateTo, localSave, loading }) => {
     console.log('data', data)
     const navigate = useNavigate();
 
@@ -12,7 +12,7 @@ const RedeemModal = ({ active, setActive, data, referralRule, navigateTo, localS
         <Modal
             open={active}
             onClose={() => setActive(false)}
-            title="Ways to Redeem"
+            title={title}
         >
             {loading ? (
                 <Box style={{ padding: '16px' }}>

@@ -37,13 +37,13 @@ const VipTier = ({ entryMethod, tierProgressExpiry, setEntryMethod, setTierProgr
                 if (onRefreshData) {
                     onRefreshData();
                 }
+                shopify.toast.show(response?.message, { duration: 2000 });
             } else {
                 console.log('response?.message', response?.message)
-                shopify.toast.show(response?.message || 'Failed to update Reward tier status', { duration: 2000, isError: true });
+                shopify.toast.show(response?.message, { duration: 2000, isError: true });
             }
         } catch (err) {
             console.error("Error updating Reward tier:", err);
-            shopify.toast.show(err?.message || 'Error updating Reward tier status', { duration: 2000, isError: true });
         } finally {
             setLoading(false);
         }
@@ -119,6 +119,7 @@ const VipTier = ({ entryMethod, tierProgressExpiry, setEntryMethod, setTierProgr
                         <ResourceList
                             items={vipTierData || []}
                             renderItem={(item) => {
+                                const isFirstItem = vipTierData.indexOf(item) === 0;
                                 const IconSource = iconsMap[item?.icon];
                                 return (
                                     <ResourceItem key={item.id}>
@@ -146,7 +147,8 @@ const VipTier = ({ entryMethod, tierProgressExpiry, setEntryMethod, setTierProgr
                                                 // Store only the ID to identify which tier is being edited
                                                 localStorage.setItem('tierEditData', JSON.stringify({
                                                     tierId: item.uid,
-                                                    editMode: true
+                                                    editMode: true,
+                                                    isFirst: isFirstItem
                                                 }));
                                                 localStorage.setItem('tierEntryMethod', entryMethod.toString());
                                                 dispatch(TierId(item.uid));

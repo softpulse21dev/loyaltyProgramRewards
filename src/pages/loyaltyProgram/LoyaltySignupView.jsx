@@ -127,8 +127,10 @@ const LoyaltySignupView = () => {
                 // Clear localStorage on successful update
                 localStorage.removeItem('loyaltyEditData');
                 navigate('/loyaltyProgram');
+                shopify.toast.show(response?.message, { duration: 2000 });
             } else {
                 console.error('Update Url Error', response);
+                shopify.toast.show(response?.message, { duration: 2000, isError: true });
             }
         } catch (err) {
             console.error('Update Url Error', err);
@@ -448,7 +450,7 @@ const LoyaltySignupView = () => {
                                                     </Text>
 
                                                     {rule?.type === 'loyalty_anniversary' && (
-                                                        <Text>Customers will automatically earn points each year on the anniversary of the date they joined the loyalty program.</Text>
+                                                        <Text>Points are awarded automatically every year on the customer's join date.</Text>
                                                     )}
                                                     {rule?.type === 'birthday' && (
                                                         <div>

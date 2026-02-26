@@ -1,4 +1,4 @@
-import { ADD_DATA, CLEAR_TIER_FORM_DATA, DEFAULT_DATA, DELETE_DATA, GET_VIP_TIER_DATA, MASTER_REWARDS_LIST, REMOVE_DATA, REMOVE_TIER_ID, SET_DATA, TIER_ID, UPDATE_DATA, UPDATE_TIER_FORM_DATA } from "./action"
+import { ADD_DATA, CLEAR_TIER_FORM_DATA, DEFAULT_DATA, DEFAULT_DATE_FORMAT, DELETE_DATA, GET_VIP_TIER_DATA, MASTER_REWARDS_LIST, REMOVE_DATA, REMOVE_TIER_ID, SET_DATA, TIER_ID, UPDATE_DATA, UPDATE_TIER_FORM_DATA } from "./action"
 
 const initialTierFormState = {
     uid: null,
@@ -110,7 +110,11 @@ export const merchantSettingsIdReducer = (state = initialState, action) => {
                 ...state,
                 defaultData: action.payload
             }
-            
+        case DEFAULT_DATE_FORMAT:
+            return {
+                ...state,
+                defaultData: { ...state.defaultData, date_format: action.payload }
+            }
         default:
             return state;
     }

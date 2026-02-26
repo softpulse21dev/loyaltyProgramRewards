@@ -37,6 +37,7 @@ const CustomerView = () => {
         rewards: false,
     });
     const currencySymbol = useSelector((state) => state?.merchantSettings?.defaultData?.currency);
+    const dateFormat = useSelector((state) => state?.merchantSettings?.defaultData?.date_format);
     const statusToneMap = {
         active: 'success',
         redeemed: 'critical',
@@ -241,7 +242,7 @@ const CustomerView = () => {
                 <Badge tone={order.payment_status === 'paid' ? 'success' : 'attention'}>{capitalizeFirst(order.payment_status)}</Badge>
             </IndexTable.Cell>
             <IndexTable.Cell flush>
-                <Text variant='bodyMd' as="span">{formatShortDate(order.created_at)}</Text>
+                <Text variant='bodyMd' as="span"  alignment='center'>{formatShortDate(order.created_at, dateFormat)}</Text>
             </IndexTable.Cell>
         </IndexTable.Row>
     )), [customerOrdersData]);
@@ -255,7 +256,7 @@ const CustomerView = () => {
                 <Text variant='bodyMd' as="span">{point.points}</Text>
             </IndexTable.Cell>
             <IndexTable.Cell>
-                <Text variant='bodyMd' as="span">{formatShortDate(point.created_at)}</Text>
+                <Text variant='bodyMd' as="span"  alignment='center'>{formatShortDate(point.created_at, dateFormat)}</Text>
             </IndexTable.Cell>
         </IndexTable.Row>
     )), [customerPointsData]);
@@ -269,7 +270,7 @@ const CustomerView = () => {
                 <Text variant='bodyMd' as="span">{tier.description}</Text>
             </IndexTable.Cell>
             <IndexTable.Cell>
-                <Text variant='bodyMd' as="span">{formatShortDate(tier.created_at)}</Text>
+                <Text variant='bodyMd' as="span"  alignment='center'>{formatShortDate(tier.created_at, dateFormat)}</Text>
             </IndexTable.Cell>
         </IndexTable.Row>
     )), [customerTiersData]);
@@ -283,7 +284,7 @@ const CustomerView = () => {
                 <Text variant='bodyMd' as="span">{referral.total_orders}</Text>
             </IndexTable.Cell>
             <IndexTable.Cell>
-                <Text variant='bodyMd' as="span">{formatShortDate(referral.created_at)}</Text>
+                <Text variant='bodyMd' as="span"  alignment='center'>{formatShortDate(referral.created_at, dateFormat)}</Text>
             </IndexTable.Cell>
         </IndexTable.Row>
     )), [customerReferralsData]);
@@ -315,7 +316,7 @@ const CustomerView = () => {
                 <Text variant='bodyMd' as="span">{redeem?.code}</Text>
             </IndexTable.Cell>
             <IndexTable.Cell>
-                <Text variant='bodyMd' as="span">{formatShortDate(redeem?.created_at)}</Text>
+                <Text variant='bodyMd' as="span"  alignment='center'>{formatShortDate(redeem?.created_at, dateFormat)}</Text>
             </IndexTable.Cell>
         </IndexTable.Row>
     )))
@@ -337,7 +338,7 @@ const CustomerView = () => {
                 </Badge>
             </IndexTable.Cell>
             <IndexTable.Cell>
-                <Text variant='bodyMd' as="span">{formatShortDate(reward?.created_at)}</Text>
+                <Text variant='bodyMd' as="span"  alignment='center'>{formatShortDate(reward?.created_at, dateFormat)}</Text>
             </IndexTable.Cell>
         </IndexTable.Row>
     )));
@@ -380,7 +381,7 @@ const CustomerView = () => {
                 :
                 <Page
                     title={customerData?.name === '-' ? customerData?.email : customerData?.name}
-                    subtitle={`Joined on: ${formatShortDate(customerData?.created_at)}`}
+                    subtitle={`Joined on: ${formatShortDate(customerData?.created_at, dateFormat)}`}
                     titleMetadata={
                         <Badge tone={customerData?.is_excluded === '1' ? 'critical' : 'success'}>
                             {customerData?.is_excluded === '1' ? 'Excluded' : 'Active'}
@@ -452,7 +453,7 @@ const CustomerView = () => {
                                                                 { title: 'Total' + ' (' + (currencySymbol?.symbol) + ')' },
                                                                 { title: 'Amount Spent' + ' (' + (currencySymbol?.symbol) + ')' },
                                                                 { title: 'Status' },
-                                                                { title: 'Date' },
+                                                                { title: 'Date', alignment: 'center' },
                                                             ]}
                                                             pagination={(!loadingMore.orders && (customerOrdersData.pagination?.has_next || customerOrdersData.pagination?.has_previous)) ? (
                                                                 {
@@ -563,7 +564,7 @@ const CustomerView = () => {
                                                         headings={[
                                                             { title: 'Tier Achieved' },
                                                             { title: 'Description' },
-                                                            { title: 'Date' },
+                                                            { title: 'Date' , alignment:'center'},
                                                         ]}
                                                         pagination={(!loadingMore.vip_tier && (customerTiersData?.pagination?.has_next || customerTiersData?.pagination?.has_previous)) ? (
                                                             {
@@ -613,7 +614,7 @@ const CustomerView = () => {
                                                         headings={[
                                                             { title: 'Referred Friend' },
                                                             { title: 'Order Total' },
-                                                            { title: 'Date' },
+                                                            { title: 'Date' , alignment:'center'},
                                                         ]}
                                                         pagination={(!loadingMore.referrals && (customerReferralsData?.pagination?.has_next || customerReferralsData?.pagination?.has_previous)) ? (
                                                             {
@@ -665,7 +666,7 @@ const CustomerView = () => {
                                                             { title: 'Points' },
                                                             { title: 'Source' },
                                                             { title: 'Code' },
-                                                            { title: 'Date' },
+                                                            { title: 'Date' , alignment:'center'},
                                                         ]}
                                                         pagination={(!loadingMore.redeem && (customerRedeemData?.pagination?.has_next || customerRedeemData?.pagination?.has_previous)) ? (
                                                             {
@@ -717,7 +718,7 @@ const CustomerView = () => {
                                                             { title: 'Source' },
                                                             { title: 'Code' },
                                                             { title: 'Status' },
-                                                            { title: 'Date' },
+                                                            { title: 'Date' , alignment:'center'},
                                                         ]}
                                                         pagination={(!loadingMore.rewards && (customerRewardsData?.pagination?.has_next || customerRewardsData?.pagination?.has_previous)) ? (
                                                             {

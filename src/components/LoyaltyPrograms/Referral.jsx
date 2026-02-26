@@ -145,6 +145,8 @@ const Referral = () => {
         }
     }
 
+    const showEarnPointsonly = referralData?.advocate_reward?.available?.filter(item => item.type === "earn_points" ? item : null);
+    console.log('showEarnPointsonly', showEarnPointsonly)
     console.log('referralData', referralData)
     useEffect(() => {
         GetReferralRulesAPI();
@@ -167,19 +169,22 @@ const Referral = () => {
             </Layout.AnnotatedSection>
 
             <Layout.AnnotatedSection
-                title={'Referral Rewards'}
+                title={'Advocate Rewards'}
                 description={<>
-                    <Box style={{ display: "flex", flexDirection: "column", }}>
-                        <Text>Set referrals/Advocate rewards.</Text>
-                        <Text>Only one reward can be enabled at a time for each type.</Text>
-                        <Text>Referral get rewards on successfull signup from referlink.</Text>
-                        <Text>Advocate will be eligible to receive rewards after first purchase of the referral friend.</Text>
+                    <Box style={{ display: "flex", flexDirection: "column" }}>
+                        <Text>Set up Advocate rewards for referrals.</Text>
+                        <Text>Advocate rewards are earned only after your referred customer places their first order.</Text>
+                        <Box style={{ marginTop: "8px" }}>
+                            <Text>Example: You share your referral link → your friend signs up → you get the reward after they complete their first purchase.</Text>
+                        </Box>
                     </Box>
+
                 </>}
             >
                 <BlockStack gap="400">
+
                     {/* referral rewards */}
-                    <Card padding="0">
+                    {/* <Card padding="0">
 
                         <Box style={{ backgroundColor: "#F5F5F5", padding: "16px", display: "flex", justifyContent: "space-between", alignItems: "center" }}>
                             <Text variant="headingMd">Referral Rewards</Text>
@@ -205,8 +210,6 @@ const Referral = () => {
                                                                 <Box>
                                                                     <Text variant="bodyMd">{title}</Text>
                                                                     <InlineStack gap="100" align="left">
-                                                                        {/* <Text variant="bodyMd">{points} points</Text>
-                                                                        <Text variant="bodyMd" fontWeight="bold">|</Text> */}
                                                                         <Text variant="bodyMd">{redeemed_so_far || 0} redeemed so far</Text>
                                                                     </InlineStack>
                                                                 </Box>
@@ -240,13 +243,15 @@ const Referral = () => {
                             </>
                         )}
 
-                    </Card>
+                    </Card> */}
+
+
 
                     {/* advocate rewards */}
                     <Card padding="0">
                         <Box style={{ backgroundColor: "#F5F5F5", padding: "16px", display: "flex", justifyContent: "space-between", alignItems: "center" }}>
                             <Text variant="headingMd">Advocate Rewards</Text>
-                            {referralData?.advocate_reward?.available?.length > 0 && (
+                            {referralData?.advocate_reward?.available.some(item => item.type === "earn_points") && (
                                 <Button variant="plain" onClick={() => { setIsAdvocate(true), setIsReferalRule(true), setReferralModalActive(true); setNavigateTo(1); }}>Add Reward</Button>
                             )}
                         </Box>
@@ -355,7 +360,7 @@ const Referral = () => {
                 </Card>
             </Layout.AnnotatedSection> */}
 
-            <RedeemModal navigateTo={navigateTo} active={referralModalActive} setActive={setReferralModalActive} data={isAdvocate ? referralData?.advocate_reward?.available : referralData?.referred_friend_reward?.available} referralRule={isReferalRule} loading={loadingReferralRules} />
+            <RedeemModal title='Advocate Rewards' navigateTo={navigateTo} active={referralModalActive} setActive={setReferralModalActive} data={isAdvocate ? showEarnPointsonly : referralData?.referred_friend_reward?.available} referralRule={isReferalRule} loading={loadingReferralRules} />
         </div >
     );
 }

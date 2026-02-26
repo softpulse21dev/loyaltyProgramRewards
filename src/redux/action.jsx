@@ -10,6 +10,7 @@ export const REMOVE_TIER_ID = "REMOVE_TIER_ID";
 export const UPDATE_DATA = "UPDATE_DATA";
 export const DELETE_DATA = "DELETE_DATA";
 export const DEFAULT_DATA = "DEFAULT_DATA";
+export const DEFAULT_DATE_FORMAT = "DEFAULT_DATE_FORMAT";
 
 export const DefaultData = (data) => ({
     type: DEFAULT_DATA,
@@ -66,4 +67,9 @@ export const UpdateTierFormData = (data) => ({
 
 export const ClearTierFormData = () => ({
     type: CLEAR_TIER_FORM_DATA,
+});
+
+export const DefaultDateFormat = (data) => ({
+    type: DEFAULT_DATE_FORMAT,
+    payload: data,
 });

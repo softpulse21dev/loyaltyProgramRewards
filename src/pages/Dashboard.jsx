@@ -50,6 +50,7 @@ const Dashboard = () => {
 
 
     const currencySymbol = useSelector((state) => state?.merchantSettings?.defaultData?.currency?.symbol);
+    const dateFormat = useSelector((state) => state?.merchantSettings?.defaultData?.date_format);
 
     console.log('defaultData', defaultData)
     console.log('currencySymbol', currencySymbol)
@@ -157,7 +158,12 @@ const Dashboard = () => {
         {
             id: 0,
             title: 'Activate Loyalty Program',
-            description: "Activate your Loyalty program to start rewarding your customers for their purchases.",
+            description: (
+                <Box style={{ marginTop: '10px' }}>
+                    <Text variant="bodyMd">Activate your Loyalty program to start rewarding your customers for their purchases.</Text>
+                </Box>
+
+            ),
             image: {
                 url: "https://cdn.shopify.com/shopifycloud/shopify/assets/admin/home/onboarding/shop_pay_task-70830ae12d3f01fed1da23e607dc58bc726325144c29f96c949baca598ee3ef6.svg",
                 alt: "Illustration highlighting ShopPay integration",
@@ -256,12 +262,7 @@ const Dashboard = () => {
                 >
                     <Box>
                         <BlockStack gap="500">
-                            {showGuide && hideGuide !== 'true' && (
-                                <SetupGuide
-                                    onDismiss={() => { setShowGuide(false), localStorage.setItem('hideGuide', true) }}
-                                    items={items}
-                                />
-                            )}
+
                             <Banner
                                 title={loyaltyStatus ? "Your Loyalty program is currently enabled" : "Your Loyalty program is currently disabled"}
                                 action={{ content: loyaltyStatus ? 'Turn off' : 'Turn on', onAction: () => { updateLoyaltyStatusAPI(!loyaltyStatus) }, loading: programStatusLoading }}
@@ -423,6 +424,14 @@ const Dashboard = () => {
                                     </Layout.Section>
                                 </Layout>
                             </BlockStack>
+
+                            {/* Setup Guide */}
+                            {showGuide && hideGuide !== 'true' && (
+                                <SetupGuide
+                                    onDismiss={() => { setShowGuide(false), localStorage.setItem('hideGuide', true) }}
+                                    items={items}
+                                />
+                            )}
 
                             {/* Collapsible Section */}
                             <Card >

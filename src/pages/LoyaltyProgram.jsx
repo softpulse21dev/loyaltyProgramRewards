@@ -52,7 +52,6 @@ const LoyaltyProgram = () => {
             }
         } catch (error) {
             console.error('Error fetching Reward tiers:', error);
-            shopify.toast.show(error?.message, { duration: 2000, isError: true });
         } finally {
             setLoadingTiers(false);
         }

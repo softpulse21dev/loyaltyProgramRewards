@@ -26,6 +26,7 @@ const EmailAppearance = () => {
     const [emailSettings, setEmailSettings] = useState(null);
     const [availableVariables, setAvailableVariables] = useState([]);
     const [errors, setErrors] = useState({});
+    const [isImageDeleted, setIsImageDeleted] = useState(false);
 
     const isValidHexColor = (color) => {
         return color && /^#[0-9A-Fa-f]{6}$/.test(color);
@@ -129,6 +130,9 @@ const EmailAppearance = () => {
             // If emailImage is a File object, append it to FormData
             if (emailImage instanceof File) {
                 formData.append("upload_image", emailImage);
+            }
+            if (isImageDeleted) {
+                formData.append("delete_image_flag", true);
             }
 
             const response = await fetchData('/add-email-temp-settings', formData);
@@ -270,19 +274,20 @@ const EmailAppearance = () => {
                                             <input
                                                 type="file"
                                                 id="email-image-input"
-                                                accept=".jpg,.jpeg,.png,.svg,image/jpeg,image/png,image/svg+xml"
+                                                accept=".jpg,.png,.svg,image/png,image/svg+xml"
                                                 style={{ display: 'none' }}
                                                 onChange={(e) => {
                                                     const file = e.target.files[0];
                                                     if (file) {
-                                                        const allowedTypes = ['image/jpeg', 'image/png', 'image/svg+xml'];
-                                                        const allowedExtensions = ['.jpg', '.jpeg', '.png', '.svg'];
+                                                        const allowedTypes = ['image/jpg', 'image/png', 'image/svg+xml'];
+                                                        const allowedExtensions = ['.jpg', '.png', '.svg'];
                                                         const fileExtension = '.' + file.name.split('.').pop().toLowerCase();
 
                                                         if (allowedTypes.includes(file.type) || allowedExtensions.includes(fileExtension)) {
                                                             setEmailImage(file);
+                                                            setIsImageDeleted(false);
                                                         } else {
-                                                            alert('Please upload only JPG, JPEG, PNG, or SVG images.');
+                                                            shopify.toast.show('Please upload only JPG, JPEG, PNG, or SVG images.', { duration: 2000, isError: true });
                                                         }
                                                     }
                                                     // Reset input so same file can be selected again
@@ -294,7 +299,7 @@ const EmailAppearance = () => {
                                         {/* Upload image and Delete buttons */}
                                         <Box style={{ display: 'flex', alignItems: 'center', gap: '8px', marginTop: '8px' }}>
                                             {emailImageUrl && (
-                                                <Button tone="critical" icon={DeleteIcon} onClick={() => setEmailImage(null)}>
+                                                <Button tone="critical" icon={DeleteIcon} onClick={() => { setEmailImage(null); setIsImageDeleted(true); }}>
                                                     Delete
                                                 </Button>
                                             )}

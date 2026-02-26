@@ -188,20 +188,25 @@ const LoyaltySocialView = () => {
 
     const deleteEarningRuleAPI = async (ruleId) => {
         setDeleteLoading(true);
-        const formData = new FormData();
-        formData.append("setting_id", "ztEfTSMcDejdHNDnDiM5xBPdJdEuyCEkwhxdaL==");
-        formData.append("rule_id", ruleId);
-        const response = await fetchData("/delete-merchant-earning-rules", formData);
-        setDeleteLoading(false);
-        setIsDeleteModalOpen(false);
-        if (response.status) {
-            localStorage.removeItem('loyaltyEditData');
-            navigate('/loyaltyProgram');
-        } else {
-            console.error('Delete Url Error', response);
+        try {
+            const formData = new FormData();
+            formData.append("setting_id", "ztEfTSMcDejdHNDnDiM5xBPdJdEuyCEkwhxdaL==");
+            formData.append("rule_id", ruleId);
+            const response = await fetchData("/delete-merchant-earning-rules", formData);
+            setIsDeleteModalOpen(false);
+            if (response.status) {
+                localStorage.removeItem('loyaltyEditData');
+                navigate('/loyaltyProgram');
+                shopify.toast.show(response?.message, { duration: 2000 });
+            } else {
+                shopify.toast.show(response?.message, { duration: 2000, isError: true });
+            }
+        } catch (error) {
+            console.error('Delete Rule Error', error);
+        } finally {
+            setDeleteLoading(false);
         }
     }
-
     // FIX: Updated to accept an optional 'urlOverride' so the API uses the auto-fixed URL immediately
     const prepareDataForSave = (urlOverride) => {
         const platformField = getFieldNameForPlatformFromType(activeDisplayUseType);
@@ -291,8 +296,9 @@ const LoyaltySocialView = () => {
             if (response.status) {
                 localStorage.removeItem('loyaltyEditData');
                 navigate('/loyaltyProgram');
+                shopify.toast.show(response?.message, { duration: 2000 });
             } else {
-                console.error('Update Url Error', response);
+                shopify.toast.show(response?.message, { duration: 2000, isError: true });
             }
         } catch (error) {
             console.error('Update Rule Error', error);
