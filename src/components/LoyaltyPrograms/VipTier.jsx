@@ -211,11 +211,10 @@ const VipTier = ({ entryMethod, tierProgressExpiry, setEntryMethod, setTierProgr
 
                     <Card>
                         <Box>
-                            <Text variant="headingMd">Reward Tier Coupon Expiry</Text>
+                            <Text variant="headingMd">Reward Tier Renewal Period</Text>
                         </Box>
                         <Box style={{ paddingTop: "10px" }}>
-                            <Text>Define how long Reward tier coupons remain valid after being issued.</Text>
-                            <Text>Choose how long Reward tier coupons are valid after being issued.</Text>
+                            <Text>Choose how often this tier reward resets. When the period ends, the reward becomes available again and members can claim it again.</Text>
                             <BlockStack >
                                 <RadioButton
                                     label="A lifetime, once they are a loyalty program member"

@@ -47,19 +47,19 @@ const Orders = ({ settingsData, setSettingsData }) => {
                 <Card>
                     <BlockStack gap={200}>
                         <Checkbox
-                            label="Include shipping in order total"
+                            label="Include Discounts"
                             helpText="The total savings amount from applied discounts on the order in the shop currency."
                             checked={Array.isArray(ordercalculation) && ordercalculation.includes("include_discount")}
                             onChange={() => toggleOrderCalculation("include_discount")}
                         />
                         <Checkbox
-                            label="Include taxes"
+                            label="Include Taxes"
                             helpText="The sum of all the taxes applied to the order in the shop currency."
                             checked={Array.isArray(ordercalculation) && ordercalculation.includes("include_taxes")}
                             onChange={() => toggleOrderCalculation("include_taxes")}
                         />
                         <Checkbox
-                            label="Include shipping"
+                            label="Include Shipping"
                             helpText="The total shipping price of the order, excluding discounts and returns, in shop and presentment currencies."
                             checked={Array.isArray(ordercalculation) && ordercalculation.includes("include_shipping")}
                             onChange={() => toggleOrderCalculation("include_shipping")}
@@ -145,7 +145,7 @@ const Orders = ({ settingsData, setSettingsData }) => {
                             onChange={(value) => setSettingsData([{ ...settingsData[0], discount_code_prefixes: { ...settingsData[0].discount_code_prefixes, loyalty_prefix: cleanStrictWhitespace(value) } }])}
                         />
                         <TextField
-                            label="Reward tier Reward Prefix"
+                            label="Reward Tier Reward Prefix"
                             helpText="This is the prefix for all VIP reward discount codes. Leave blank to use the global prefix."
                             value={vipTierRewardPrefix}
                             onChange={(value) => setSettingsData([{ ...settingsData[0], discount_code_prefixes: { ...settingsData[0].discount_code_prefixes, vip_prefix: cleanStrictWhitespace(value) } }])}

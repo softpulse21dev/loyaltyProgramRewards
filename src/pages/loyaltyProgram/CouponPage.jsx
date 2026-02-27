@@ -513,7 +513,20 @@ const CouponPage = () => {
         let isError = false;
 
         if (localSave) {
-            if (Data.find(item => item.title === rewardTitle)) {
+            // FIX: Check if the title exists, but exclude the current item if we are editing
+            const isDuplicate = Data?.some(item => {
+                const hasSameTitle = item.title.trim().toLowerCase() === rewardTitle.trim().toLowerCase();
+
+                // If editing a Tier Reward, ignore the record that matches our current clientId
+                if (edit && isTierRewardEdit) {
+                    return hasSameTitle && item.clientId !== clientId;
+                }
+
+                // If adding a new reward, check against all existing rewards
+                return hasSameTitle;
+            });
+
+            if (isDuplicate) {
                 newErrors.rewardTitle = "Reward title already exists";
                 isError = true;
             }
