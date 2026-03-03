@@ -10,7 +10,7 @@ export default defineConfig({
   server: {
     historyApiFallback: true,
     hmr: {
-      host: "america-differential-field-module.trycloudflare.com",
+      host: "relay-belief-merchant-asn.trycloudflare.com",
       protocol: "wss",
     },
   },

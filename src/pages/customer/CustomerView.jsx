@@ -45,6 +45,14 @@ const CustomerView = () => {
         refunded: 'attention',
     };
 
+    const OrderStatusMap = {
+        pending: 'warning',
+        paid: 'success',
+        canceled: 'critical',
+        partially_paid: 'attention',
+        refunded: 'info',
+    };
+
     // --- EFFECT: If we have an ID from location.state (new navigation), update localStorage ---
     useEffect(() => {
         if (location.state?.id) {
@@ -239,7 +247,7 @@ const CustomerView = () => {
             </IndexTable.Cell>
             <IndexTable.Cell>{order.order_total_with_tax}</IndexTable.Cell>
             <IndexTable.Cell>
-                <Badge tone={order.payment_status === 'paid' ? 'success' : 'attention'}>{capitalizeFirst(order.payment_status)}</Badge>
+                <Badge tone={OrderStatusMap[order.payment_status]}>{capitalizeFirst(order.payment_status)}</Badge>
             </IndexTable.Cell>
             <IndexTable.Cell flush>
                 <Text variant='bodyMd' as="span"  alignment='center'>{formatShortDate(order.created_at, dateFormat)}</Text>

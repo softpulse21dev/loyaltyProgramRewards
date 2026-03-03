@@ -69,7 +69,7 @@ export const formatShortDate = (dateString, format = "d M Y") => {
     // 1. UPDATED EXTRACTION: Treat input strictly as MM/DD/YYYY
     if (typeof dateString === 'string' && dateString.includes('/')) {
         const parts = dateString.split('/');
-        
+
         /** * For MM/DD/YYYY:
          * parts[0] = Month
          * parts[1] = Day
@@ -77,7 +77,7 @@ export const formatShortDate = (dateString, format = "d M Y") => {
          */
         monthIdx = parseInt(parts[0], 10) - 1;     // MM (01 becomes 0 index)
         day = parseInt(parts[1], 10);              // DD
-        
+
         let yPart = parts[2].trim();
         // Handle 2-digit years (26 -> 2026)
         year = yPart.length === 2 ? parseInt(`20${yPart}`, 10) : parseInt(yPart, 10);
@@ -122,8 +122,13 @@ export const formatShortDate = (dateString, format = "d M Y") => {
 
 export const capitalizeFirst = (str) => {
     if (!str) return str;
-    return str.charAt(0).toUpperCase() + str.slice(1);
-}
+
+    return str
+        .toLowerCase()
+        .split('_')
+        .map(word => word.charAt(0).toUpperCase() + word.slice(1))
+        .join(' ');
+};
 
 export const openSocialShare = (platform, urlToShare) => {
     if (!urlToShare) return;
