@@ -5,11 +5,13 @@ import { fetchData } from "../../action";
 import { DeleteIcon } from "@shopify/polaris-icons";
 import ConfirmationModal from "../../components/ConfirmationModal";
 import { NoLeadingZero } from "../../utils";
+import { useLoyaltyData } from "../../context/LoyaltyDataContext";
 
 const LoyaltySignupView = () => {
     const navigate = useNavigate();
     const location = useLocation();
     const { rule: locationRule, edit: locationEdit } = location.state || {};
+    const { addEarningRule, updateEarningRule, deleteEarningRule } = useLoyaltyData();
     // Safely parse localStorage data
     const storedEditData = localStorage.getItem('loyaltyEditData');
     const parsedStoredData = storedEditData ? JSON.parse(storedEditData) : null;
@@ -100,6 +102,21 @@ const LoyaltySignupView = () => {
             const response = await fetchData("/add-merchant-earning-rules", formData);
             console.log('Add Rule Response', response);
             if (response.status) {
+                // Update context locally with new rule data
+                const newRule = {
+                    rule_id: response.data?.rule_id || response.rule_id,
+                    master_rule_id: rule.master_rule_id,
+                    title: rule.title,
+                    type: rule.type,
+                    display_use_type: rule.type,
+                    points: earningpoints,
+                    status: status === true || status === 'true',
+                    icon: rule.icon,
+                    ...(response.data || {}),
+                };
+                const isSocial = ['social_share_twitter', 'social_share_facebook', 'social_follow_tiktok', 'social_follow_twitter', 'social_follow_instagram'].includes(rule.type);
+                addEarningRule(newRule, isSocial);
+
                 // Clear localStorage on successful save
                 localStorage.removeItem('loyaltyEditData');
                 navigate('/loyaltyProgram');
@@ -120,10 +137,21 @@ const LoyaltySignupView = () => {
             formData.append("rule_id", ruleId);
             formData.append("points", earningpoints);
             formData.append("status", status);
-            formData.append("condition_json", JSON.stringify(conditionalJson));
+            // Only append condition_json for birthday rules
+            if (rule?.type === 'birthday') {
+                formData.append("condition_json", JSON.stringify(conditionalJson));
+            }
             const response = await fetchData("/update-merchant-earning-rules", formData);
             console.log('Update Rule By Id Response', response);
             if (response.status) {
+                // Update context locally
+                updateEarningRule(ruleId, {
+                    points: earningpoints,
+                    status: status === true || status === 'true',
+                    // Only include condition_json for birthday rules
+                    ...(rule?.type === 'birthday' ? { condition_json: conditionalJson } : {}),
+                });
+
                 // Clear localStorage on successful update
                 localStorage.removeItem('loyaltyEditData');
                 navigate('/loyaltyProgram');
@@ -149,6 +177,9 @@ const LoyaltySignupView = () => {
             setIsDeleteModalOpen(false);
             console.log('Delete Earning Rule Response', response);
             if (response.status) {
+                // Update context locally
+                deleteEarningRule(ruleId);
+
                 // Clear localStorage on successful delete - CRITICAL to prevent fetching deleted rule on reload
                 localStorage.removeItem('loyaltyEditData');
                 navigate('/loyaltyProgram');
@@ -167,8 +198,12 @@ const LoyaltySignupView = () => {
 
     useEffect(() => {
         if (edit) {
-            if (ruleId && !getdatabyID && !hasCalledAPI) {
-                // Only call API once if we don't already have the data
+            // If we have full rule data from navigation (locationRule), skip API call
+            if (locationRule) {
+                setGetdatabyID(locationRule);
+                setLoading(false);
+            } else if (ruleId && !getdatabyID && !hasCalledAPI) {
+                // Only call API on hard reload when we don't have locationRule
                 setHasCalledAPI(true);
                 getRuleByIdAPI(ruleId);
             } else if (!ruleId) {
@@ -186,7 +221,7 @@ const LoyaltySignupView = () => {
                 setPageTitle(rule.title);
             }
         }
-    }, [edit, ruleId, getdatabyID, hasCalledAPI, getRuleByIdAPI, rule]);
+    }, [edit, ruleId, getdatabyID, hasCalledAPI, getRuleByIdAPI, rule, locationRule]);
 
     useEffect(() => {
         if (getdatabyID) {

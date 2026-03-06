@@ -209,6 +209,29 @@ const TierView = () => {
             const response = await fetchData("/tier-add", formData);
             console.log('response', response);
             if (response.status) {
+                // Update Redux locally so we don't need to re-fetch
+                if (tierId && vipTierData) {
+                    // Edit mode: update existing tier in Redux
+                    const updatedTiers = vipTierData.map((t) =>
+                        t.uid === tierId
+                            ? {
+                                ...t,
+                                title: tierName,
+                                points_needed: goalValue,
+                                points_multiply: pointsMultiplier,
+                                icon_type: selectedIcon,
+                                benefits: Data,
+                                ...(response.data || {}),
+                            }
+                            : t
+                    );
+                    dispatch(GetVipTierData(updatedTiers));
+                } else if (response.data) {
+                    // Add mode: append new tier to Redux
+                    const currentTiers = vipTierData || [];
+                    dispatch(GetVipTierData([...currentTiers, response.data]));
+                }
+
                 handleBackAction();
                 shopify.toast.show(response?.message, { duration: 2000 });
             }
@@ -230,6 +253,12 @@ const TierView = () => {
             const response = await fetchData("/delete-tier", formData);
             console.log('response', response);
             if (response.status) {
+                // Update Redux locally: remove the deleted tier
+                if (vipTierData) {
+                    const updatedTiers = vipTierData.filter((t) => t.uid !== tierId);
+                    dispatch(GetVipTierData(updatedTiers));
+                }
+
                 handleBackAction();
                 shopify.toast.show(response?.message, { duration: 2000 });
             } else {

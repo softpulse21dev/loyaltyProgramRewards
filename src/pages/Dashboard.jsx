@@ -300,6 +300,14 @@ const Dashboard = () => {
                                 />
                             </MediaCard> */}
 
+                            {/* Setup Guide */}
+                            {showGuide && hideGuide !== 'true' && (
+                                <SetupGuide
+                                    onDismiss={() => { setShowGuide(false), localStorage.setItem('hideGuide', true) }}
+                                    items={items}
+                                />
+                            )}
+
                             {/* Revenue Section */}
                             <BlockStack gap="300">
                                 <Text as="h1" variant="headingMd">Revenue from Loyalty Programs</Text>
@@ -425,13 +433,6 @@ const Dashboard = () => {
                                 </Layout>
                             </BlockStack>
 
-                            {/* Setup Guide */}
-                            {showGuide && hideGuide !== 'true' && (
-                                <SetupGuide
-                                    onDismiss={() => { setShowGuide(false), localStorage.setItem('hideGuide', true) }}
-                                    items={items}
-                                />
-                            )}
 
                             {/* Collapsible Section */}
                             <Card >
