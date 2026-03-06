@@ -368,7 +368,6 @@ const CouponPage = () => {
             if (response?.status === true) {
                 // Update context locally with new redeem rule
                 const newRule = {
-                    id: response.data?.id || response.id,
                     master_rule_id: rule.master_rule_id,
                     title: rewardTitle,
                     type: rule.type,
@@ -379,6 +378,8 @@ const CouponPage = () => {
                     expiration_days: rewardExpiration,
                     expiration_status: rewardExpirationStatus ? 1 : 0,
                     ...(response.data || {}),
+                    // Ensure id is always set (placed AFTER spread so it won't be overwritten)
+                    id: response.data?.id || response.data?.rule_id || response.id || response.rule_id,
                 };
                 addRedeemingRule(newRule);
 
@@ -597,8 +598,8 @@ const CouponPage = () => {
             formData.append("referral_setting_id", rule.referral_setting_id);
             const response = await fetchData("/delete-referral-reward", formData);
             if (response?.status === true) {
-                // Update context locally
-                deleteReferralRule(rule.referral_rule_id);
+                // Pass rule so context can restore it to advocate available
+                deleteReferralRule(rule.referral_rule_id, rule);
 
                 localStorage.removeItem('couponPageData');
                 navigate('/loyaltyProgram', { state: { navigateTo: navigateTo } });
@@ -968,7 +969,7 @@ const CouponPage = () => {
                                                                                         type="text"
                                                                                         prefix={rule?.type !== "percentage_discount" ? `${currencySymbol?.symbol}` : ""}
                                                                                         suffix={rule?.type === "percentage_discount" ? "%" : ""}
-                                                                                        value={settings_json.reward_value}
+                                                                                        value={sanitizeNumberWithDecimal(settings_json.reward_value)}
                                                                                         onChange={(value) => {
                                                                                             const floatValue = parseFloat(value);
                                                                                             const isPercentage = rule?.type === "percentage_discount";

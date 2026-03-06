@@ -62,7 +62,7 @@ export const LoyaltyDataProvider = ({ children }) => {
             // Also remove this rule from master_rules so the "Add" modal reflects the change
             const currentMasterRules = prev?.earning_rules?.master_rules || [];
             const updatedMasterRules = currentMasterRules.filter(
-                (mr) => mr.id !== newRule.master_rule_id && mr.master_rule_id !== newRule.master_rule_id
+                (mr) => mr.master_rule_id !== newRule.master_rule_id
             );
 
             return {
@@ -111,11 +111,31 @@ export const LoyaltyDataProvider = ({ children }) => {
         });
     }, []);
 
-    const deleteEarningRule = useCallback((ruleId) => {
+    const deleteEarningRule = useCallback((ruleId, deletedRule) => {
         setLoyaltyData((prev) => {
             if (!prev) return prev;
             const otherRules = prev?.earning_rules?.active_rules?.other_rules || [];
             const socialRules = prev?.earning_rules?.active_rules?.social_rules || [];
+
+            // Restore the deleted rule back to master_rules so it reappears in the "Add" modal
+            const currentMasterRules = prev?.earning_rules?.master_rules || [];
+            let updatedMasterRules = currentMasterRules;
+            if (deletedRule && deletedRule.master_rule_id) {
+                const alreadyExists = currentMasterRules.some(
+                    (mr) => mr.id === deletedRule.master_rule_id || mr.master_rule_id === deletedRule.master_rule_id
+                );
+                if (!alreadyExists) {
+                    updatedMasterRules = [...currentMasterRules, {
+                        id: deletedRule.master_rule_id,
+                        master_rule_id: deletedRule.master_rule_id,
+                        title: deletedRule.title,
+                        type: deletedRule.type || deletedRule.display_use_type,
+                        display_use_type: deletedRule.display_use_type || deletedRule.type,
+                        icon: deletedRule.icon,
+                        points: deletedRule.points,
+                    }];
+                }
+            }
 
             return {
                 ...prev,
@@ -130,6 +150,7 @@ export const LoyaltyDataProvider = ({ children }) => {
                             ? socialRules.filter((r) => r.rule_id !== ruleId)
                             : socialRules,
                     },
+                    master_rules: updatedMasterRules,
                 },
             };
         });
@@ -245,13 +266,30 @@ export const LoyaltyDataProvider = ({ children }) => {
         });
     }, []);
 
-    const deleteReferralRule = useCallback((referralRuleId) => {
+    const deleteReferralRule = useCallback((referralRuleId, deletedRule) => {
         setReferralData((prev) => {
             if (!prev) return prev;
             const filterList = (list) => {
                 if (!Array.isArray(list)) return list;
                 return list.filter((item) => item.referral_rule_id !== referralRuleId);
             };
+
+            // Restore deleted rule back to advocate_reward.available so "Add Reward" reappears
+            let updatedAdvocateAvailable = prev?.advocate_reward?.available || [];
+            if (deletedRule && deletedRule.master_rule_id) {
+                const alreadyExists = updatedAdvocateAvailable.some(
+                    (a) => a.master_rule_id === deletedRule.master_rule_id
+                );
+                if (!alreadyExists) {
+                    updatedAdvocateAvailable = [...updatedAdvocateAvailable, {
+                        master_rule_id: deletedRule.master_rule_id,
+                        title: deletedRule.title,
+                        type: deletedRule.type || deletedRule.rule_type,
+                        icon: deletedRule.icon,
+                    }];
+                }
+            }
+
             return {
                 ...prev,
                 referred_friend_reward: {
@@ -261,6 +299,7 @@ export const LoyaltyDataProvider = ({ children }) => {
                 advocate_reward: {
                     ...prev.advocate_reward,
                     added: filterList(prev?.advocate_reward?.added || []),
+                    available: updatedAdvocateAvailable,
                 },
             };
         });

@@ -197,8 +197,9 @@ const LoyaltySocialView = () => {
             const response = await fetchData("/delete-merchant-earning-rules", formData);
             setIsDeleteModalOpen(false);
             if (response.status) {
-                // Update context locally
-                deleteEarningRule(ruleId);
+                // Pass the full rule so context can restore it to master_rules
+                const deletedRule = locationRule || rule;
+                deleteEarningRule(ruleId, deletedRule);
 
                 localStorage.removeItem('loyaltyEditData');
                 navigate('/loyaltyProgram');
@@ -222,8 +223,8 @@ const LoyaltySocialView = () => {
 
         const formattedValue = formatUrlForSaving(cleanValue, activeDisplayUseType);
 
+        // Only return the relevant field for this rule type
         return {
-            ...conditionalJson,
             [platformField]: formattedValue
         };
     };
@@ -240,10 +241,14 @@ const LoyaltySocialView = () => {
             // Pass fixedUrl to preparation function
             const formattedJson = prepareDataForSave(fixedUrl);
 
+            // Derive platform from display_use_type (e.g. 'social_follow_twitter' → 'twitter')
+            const displayType = activeDisplayUseType || rule.display_use_type || rule.type;
+            const derivedPlatform = displayType?.split('_').pop() || '';
+
             const formData = new FormData();
             formData.append("master_rule_id", rule.master_rule_id);
             formData.append("type", rule.type);
-            formData.append("platform", rule.platform);
+            formData.append("platform", derivedPlatform);
             formData.append("points", earningpoints);
             formData.append("status", status);
             formData.append("condition_json", JSON.stringify(formattedJson));
@@ -255,15 +260,16 @@ const LoyaltySocialView = () => {
                     master_rule_id: rule.master_rule_id,
                     title: rule.title,
                     type: rule.type,
-                    display_use_type: rule.display_use_type || rule.type,
-                    platform: rule.platform,
+                    display_use_type: displayType,
+                    platform: derivedPlatform,
                     points: earningpoints,
                     status: status === true || status === 'true',
                     icon: rule.icon,
                     condition_json: formattedJson,
                     ...(response.data || {}),
                 };
-                addEarningRule(newRule, true);
+                const isSocial = displayType?.startsWith('social_');
+                addEarningRule(newRule, isSocial);
 
                 localStorage.removeItem('loyaltyEditData');
                 navigate('/loyaltyProgram');

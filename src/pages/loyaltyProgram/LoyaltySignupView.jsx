@@ -177,8 +177,9 @@ const LoyaltySignupView = () => {
             setIsDeleteModalOpen(false);
             console.log('Delete Earning Rule Response', response);
             if (response.status) {
-                // Update context locally
-                deleteEarningRule(ruleId);
+                // Pass the full rule so context can restore it to master_rules
+                const deletedRule = locationRule || getdatabyID || rule;
+                deleteEarningRule(ruleId, deletedRule);
 
                 // Clear localStorage on successful delete - CRITICAL to prevent fetching deleted rule on reload
                 localStorage.removeItem('loyaltyEditData');
