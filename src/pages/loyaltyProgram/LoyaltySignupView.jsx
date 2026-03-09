@@ -41,10 +41,10 @@ const LoyaltySignupView = () => {
             localStorage.setItem('loyaltyEditData', JSON.stringify({
                 rule_id: locationRule.rule_id,
                 rule_type: locationRule.type,
-                edit: false
+                edit: locationEdit || false
             }));
         }
-    }, [locationRule]);
+    }, [locationRule, locationEdit]);
 
     console.log('rulesignup', rule);
 

@@ -44,10 +44,10 @@ const OrderPoints = () => {
             localStorage.setItem('loyaltyEditData', JSON.stringify({
                 rule_id: locationRule.rule_id,
                 rule_type: locationRule.type,
-                edit: false
+                edit: locationEdit || false
             }));
         }
-    }, [locationRule]);
+    }, [locationRule, locationEdit]);
 
     const [getdatabyID, setGetdatabyID] = useState();
     const [orderPointsMethod, setOrderPointsMethod] = useState('multiplier');
