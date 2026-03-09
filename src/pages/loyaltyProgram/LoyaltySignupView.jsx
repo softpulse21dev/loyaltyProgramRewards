@@ -11,7 +11,7 @@ const LoyaltySignupView = () => {
     const navigate = useNavigate();
     const location = useLocation();
     const { rule: locationRule, edit: locationEdit } = location.state || {};
-    const { addEarningRule, updateEarningRule, deleteEarningRule } = useLoyaltyData();
+    const { fetchLoyaltyData, addEarningRule, updateEarningRule, deleteEarningRule } = useLoyaltyData();
     // Safely parse localStorage data
     const storedEditData = localStorage.getItem('loyaltyEditData');
     const parsedStoredData = storedEditData ? JSON.parse(storedEditData) : null;
@@ -181,6 +181,9 @@ const LoyaltySignupView = () => {
                 // Pass the full rule so context can restore it to master_rules
                 const deletedRule = locationRule || getdatabyID || rule;
                 deleteEarningRule(ruleId, deletedRule);
+
+                // Fetch loyalty data to properly restore API state with original title
+                fetchLoyaltyData();
 
                 // Clear localStorage on successful delete - CRITICAL to prevent fetching deleted rule on reload
                 localStorage.removeItem('loyaltyEditData');

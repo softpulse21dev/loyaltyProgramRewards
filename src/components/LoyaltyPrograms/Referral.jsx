@@ -254,7 +254,7 @@ const Referral = () => {
                     <Card padding="0">
                         <Box style={{ backgroundColor: "#F5F5F5", padding: "16px", display: "flex", justifyContent: "space-between", alignItems: "center" }}>
                             <Text variant="headingMd">Advocate Rewards</Text>
-                            {referralData?.advocate_reward?.available.some(item => item.type === "earn_points") && (
+                            {referralData?.advocate_reward?.available.some(item => item.type === "earn_points") && (!referralData?.advocate_reward?.added || referralData.advocate_reward.added.length === 0) && (
                                 <Button variant="plain" onClick={() => { setIsAdvocate(true), setIsReferalRule(true), setReferralModalActive(true); setNavigateTo(1); }}>Add Reward</Button>
                             )}
                         </Box>

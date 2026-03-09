@@ -14,7 +14,7 @@ import { useLoyaltyData } from '../../context/LoyaltyDataContext';
 const CouponPage = () => {
     const navigate = useNavigate();
     const location = useLocation();
-    const { addRedeemingRule, updateRedeemingRule, deleteRedeemingRule, addReferralRule, updateReferralRule, deleteReferralRule } = useLoyaltyData();
+    const { addRedeemingRule, updateRedeemingRule, deleteRedeemingRule, addReferralRule, updateReferralRule, deleteReferralRule, fetchReferralData } = useLoyaltyData();
 
     // --- FIX START: Persist State Logic ---
     // Initialize state from location.state (if navigating) or localStorage (if reloading)
@@ -494,10 +494,11 @@ const CouponPage = () => {
             if (response?.status === true) {
                 // Update context locally
                 const newRule = {
-                    referral_rule_id: response.data?.referral_rule_id || response.referral_rule_id,
+                    referral_rule_id: response.data?.referral_rule_id || response.referral_rule_id || response.added_fields.referral_rule_id,
                     referral_setting_id: rule.referral_setting_id,
                     master_rule_id: rule.master_rule_id,
                     title: rewardTitle,
+                    type: rule.type || rule.rule_type,
                     points: parseInt(pointsAmount) || 0,
                     status: status === true,
                     rule_type: rule.rule_type,
@@ -545,6 +546,7 @@ const CouponPage = () => {
                 // Update context locally
                 updateReferralRule(rule.referral_rule_id, {
                     title: rewardTitle,
+                    type: rule.type || rule.rule_type,
                     points: parseInt(pointsAmount) || 0,
                     status: status === true,
                     settings_json: getCleanSettings(),
@@ -599,7 +601,16 @@ const CouponPage = () => {
             const response = await fetchData("/delete-referral-reward", formData);
             if (response?.status === true) {
                 // Pass rule so context can restore it to advocate available
-                deleteReferralRule(rule.referral_rule_id, rule);
+                // Using response rule data if available to get the original API title, alternatively the context relies on fetchReferralData.
+                let deletedRuleWithTitle = { ...rule };
+                if (response.data && response.data.title) {
+                    deletedRuleWithTitle.title = response.data.title;
+                }
+
+                deleteReferralRule(rule.referral_rule_id, deletedRuleWithTitle);
+
+                // Fetch referral data to properly restore API state
+                fetchReferralData();
 
                 localStorage.removeItem('couponPageData');
                 navigate('/loyaltyProgram', { state: { navigateTo: navigateTo } });
@@ -688,7 +699,7 @@ const CouponPage = () => {
                 isError = true;
             }
             // Validate reward_value for all types that use it (including referral)
-            if (!["free_shipping", "free_product"].includes(rule?.type) && isZeroOrLess(settings_json.reward_value)) {
+            if (!["free_shipping", "free_product"].includes(rule?.type) && !["free_shipping", "free_product"].includes(ruleType) && isZeroOrLess(settings_json.reward_value)) {
                 newErrors.rewardValue = "Discount value must be greater than 0";
                 isError = true;
             }
@@ -748,7 +759,7 @@ const CouponPage = () => {
         }
 
         // FIX: Added optional chaining
-        if (rule?.type === "free_shipping") {
+        if (rule?.type === "free_shipping" || ruleType === "free_shipping") {
             if (settings_json.max_points_to_spend) {
                 if (isZeroOrLess(settings_json.max_points_to_spend_value)) {
                     newErrors.maxPointsToSpendValue = "Maximum shipping amount value must be a number greater than 0";
@@ -873,7 +884,7 @@ const CouponPage = () => {
                                                 </BlockStack>
                                             </Card>
 
-                                            {rule?.type === "earn_points" ? (
+                                            {(rule?.type === "earn_points" || ruleType === "earn_points") ? (
                                                 <Card>
                                                     <Box style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
                                                         <Text variant='headingMd' as="span">Points Calculation Method</Text>
@@ -892,7 +903,7 @@ const CouponPage = () => {
                                                     </Box>
                                                 </Card>
                                             ) : (
-                                                rule?.type === "amount_discount" && showPointsSystem && (
+                                                (rule?.type === "amount_discount" || ruleType === "amount_discount") && showPointsSystem && (
                                                     <Card>
                                                         <Box style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
                                                             <Text variant='headingMd' as="span">Points Calculation Method</Text>
@@ -963,7 +974,7 @@ const CouponPage = () => {
                                                                                     />
                                                                                 )}
 
-                                                                                {rule?.type !== "free_shipping" && (
+                                                                                {(rule?.type !== "free_shipping" && ruleType !== "free_shipping") && (
                                                                                     <TextField
                                                                                         label="Discount"
                                                                                         type="text"
@@ -988,10 +999,10 @@ const CouponPage = () => {
                                                                                 )}
                                                                             </FormLayout.Group>
                                                                         </FormLayout>
-                                                                        {rule?.type !== "free_shipping" && rule?.type === "percentage_discount" && showPointsSystem && (
+                                                                        {(rule?.type !== "free_shipping" && ruleType !== "free_shipping") && (rule?.type === "percentage_discount" || ruleType === "percentage_discount") && showPointsSystem && (
                                                                             <Text variant='bodyMd' tone='subdued'>Based on your cost per point, {pointsAmount} points is equal to {sanitizeNumberWithDecimal(settings_json?.reward_value)} % off</Text>
                                                                         )}
-                                                                        {rule?.type !== "free_shipping" && rule?.type !== "percentage_discount" && showPointsSystem && (
+                                                                        {(rule?.type !== "free_shipping" && ruleType !== "free_shipping") && (rule?.type !== "percentage_discount" && ruleType !== "percentage_discount") && showPointsSystem && (
                                                                             <Text variant='bodyMd' tone='subdued'>Based on your cost per point, {pointsAmount} points is equal to {sanitizeNumberWithDecimal(settings_json?.reward_value)} {currencySymbol?.code}.</Text>
                                                                         )}
                                                                     </>
@@ -1111,7 +1122,7 @@ const CouponPage = () => {
                                                             </>
                                                         )}
 
-                                                        {rule?.type === "free_shipping" && (
+                                                        {(rule?.type === "free_shipping" || ruleType === "free_shipping") && (
                                                             <span style={{ display: 'flex', gap: '7px', flexDirection: 'column' }}>
                                                                 <Checkbox
                                                                     label="Set a maximum shipping amount this reward can be applied to"
@@ -1332,7 +1343,7 @@ const CouponPage = () => {
                                                             <Text>Optional minimum cart requirement can be added.</Text>
                                                         </div>
                                                     )}
-                                                    {rule?.type === "free_shipping" && (
+                                                    {(rule?.type === "free_shipping" || ruleType === "free_shipping") && (
                                                         <div>
                                                             <Text>Customer spends a set number of points.</Text>
                                                             <Text>They get free shipping on their order.</Text>

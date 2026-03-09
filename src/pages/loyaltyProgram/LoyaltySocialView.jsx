@@ -20,7 +20,7 @@ const LoyaltySocialView = () => {
     const navigate = useNavigate();
     const location = useLocation();
     const { rule: locationRule, edit: locationEdit } = location.state || {};
-    const { addEarningRule, updateEarningRule, deleteEarningRule } = useLoyaltyData();
+    const { fetchLoyaltyData, addEarningRule, updateEarningRule, deleteEarningRule } = useLoyaltyData();
 
 
     // Safely parse localStorage data
@@ -200,6 +200,9 @@ const LoyaltySocialView = () => {
                 // Pass the full rule so context can restore it to master_rules
                 const deletedRule = locationRule || rule;
                 deleteEarningRule(ruleId, deletedRule);
+
+                // Fetch loyalty data to properly restore API state with original title
+                fetchLoyaltyData();
 
                 localStorage.removeItem('loyaltyEditData');
                 navigate('/loyaltyProgram');
