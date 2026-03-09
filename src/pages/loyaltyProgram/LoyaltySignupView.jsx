@@ -112,6 +112,7 @@ const LoyaltySignupView = () => {
                     points: earningpoints,
                     status: status === true || status === 'true',
                     icon: rule.icon,
+                    default_rules: '0',
                     ...(response.data || {}),
                 };
                 const isSocial = ['social_share_twitter', 'social_share_facebook', 'social_follow_tiktok', 'social_follow_twitter', 'social_follow_instagram'].includes(rule.type);
