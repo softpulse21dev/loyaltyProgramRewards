@@ -8,6 +8,7 @@ import PointsModal from '../../components/PointsModal';
 import { fetchData } from '../../action';
 import { capitalizeFirst, FormatAddress, formatShortDate, iconsMap } from '../../utils';
 import { useSelector } from 'react-redux';
+import { updateCachedCustomer } from '../Customers';
 
 const CustomerView = () => {
     const navigate = useNavigate();
@@ -158,9 +159,11 @@ const CustomerView = () => {
                     ? customerPoints + Number(points)
                     : customerPoints - Number(points);
 
-                // Ensure it does not go below zero and format
-                setCustomerPoints(Math.max(updatedPoints, 0));
+                const finalPoints = Math.max(updatedPoints, 0);
 
+                // Ensure it does not go below zero and format
+                setCustomerPoints(finalPoints);
+                updateCachedCustomer(id, { points_balance: finalPoints.toString() });
                 // Add the new points record to the history
                 setCustomerPointsData(prev => {
                     const newPointRecord = {
@@ -202,6 +205,12 @@ const CustomerView = () => {
                     ...prev,
                     is_excluded: prev.is_excluded === '1' ? '0' : '1'
                 }));
+
+                // --- NEW: Update the global cache for Customers.jsx ---
+                // If it was '1' (Excluded), toggling means they become a 'member' again. Otherwise 'excluded'.
+                updateCachedCustomer(id, {
+                    source: customerData?.is_excluded === '1' ? 'member' : 'excluded'
+                });
 
                 shopify.toast.show(response.message, { duration: 2000 });
             } else {
