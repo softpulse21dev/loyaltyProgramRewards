@@ -6,6 +6,7 @@ import { Provider } from "react-redux";
 import { store, persistor } from "./redux/store";
 import { PersistGate } from "redux-persist/integration/react";
 import { Box } from "@shopify/polaris";
+import { LoyaltyDataProvider } from "./context/LoyaltyDataContext";
 
 function App() {
   const pages = import.meta.glob("./pages/**/!(*.test.[jt]sx)*.([jt]sx)", {
@@ -16,7 +17,9 @@ function App() {
       <BrowserRouter basename="/loyalty">
         <Provider store={store}>
           <PersistGate loading={null} persistor={persistor}>
-            <AppLayout pages={pages} />
+            <LoyaltyDataProvider>
+              <AppLayout pages={pages} />
+            </LoyaltyDataProvider>
           </PersistGate>
         </Provider>
       </BrowserRouter>

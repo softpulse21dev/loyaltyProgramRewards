@@ -10,7 +10,7 @@ export default defineConfig({
   server: {
     historyApiFallback: true,
     hmr: {
-      host: "lenders-under-functionality-simon.trycloudflare.com",
+      host: "hundred-tigers-montreal-stages.trycloudflare.com",
       protocol: "wss",
     },
   },

@@ -206,13 +206,57 @@ const TierView = () => {
             } else {
                 formData.append("edit", '');
             }
+
             const response = await fetchData("/tier-add", formData);
             console.log('response', response);
+
             if (response.status) {
+                // Construct local icon object so it renders immediately
+                let localIcon = null;
+                if (selectedIcon === 'custom' && files && files.length > 0) {
+                    localIcon = {
+                        url: files[0] instanceof File ? URL.createObjectURL(files[0]) : (files[0].preview || files[0].url),
+                        file_name: files[0].name
+                    };
+                }
+
+                if (tierId && vipTierData) {
+                    // EDIT MODE: Update existing tier in Redux
+                    const updatedTiers = vipTierData.map((t) =>
+                        t.uid === tierId
+                            ? {
+                                ...t,
+                                title: tierName,
+                                points_needed: goalValue,
+                                points_multiply: pointsMultiplier,
+                                icon_type: selectedIcon,
+                                benefits: Data,
+                                ...(selectedIcon === 'custom' && localIcon ? { icon: localIcon } : {}),
+                            }
+                            : t
+                    );
+                    dispatch(GetVipTierData(updatedTiers));
+                } else {
+                    // ADD MODE: Construct new tier and push to Redux
+                    const currentTiers = vipTierData || [];
+                    const newTier = {
+                        id: response.uid,       // FIX: Polaris needs this 'id' to render the row!
+                        uid: response.uid,      // Your actual database ID for edit/delete logic
+                        title: tierName,
+                        points_needed: goalValue,
+                        points_multiply: pointsMultiplier,
+                        icon_type: selectedIcon,
+                        benefits: Data || [],
+                        icon: localIcon || { url: '', file_name: '' },
+                    };
+
+                    // Push the fully mapped object to Redux
+                    dispatch(GetVipTierData([...currentTiers, newTier]));
+                }
+
                 handleBackAction();
-                shopify.toast.show(response?.message, { duration: 2000 });
-            }
-            else {
+                shopify.toast.show(response?.message || "Saved successfully", { duration: 2000 });
+            } else {
                 shopify.toast.show(response?.message, { duration: 2000, isError: true });
             }
         } catch (error) {
@@ -230,6 +274,12 @@ const TierView = () => {
             const response = await fetchData("/delete-tier", formData);
             console.log('response', response);
             if (response.status) {
+                // Update Redux locally: remove the deleted tier
+                if (vipTierData) {
+                    const updatedTiers = vipTierData.filter((t) => t.uid !== tierId);
+                    dispatch(GetVipTierData(updatedTiers));
+                }
+
                 handleBackAction();
                 shopify.toast.show(response?.message, { duration: 2000 });
             } else {
@@ -329,7 +379,7 @@ const TierView = () => {
     };
     // --- FILE UPLOAD LOGIC ENDS HERE ---
 
-    const validImageTypes = ['image/svg', 'image/jpeg', 'image/png'];
+    const validImageTypes = ['image/svg', 'image/jpg', 'image/png'];
 
     const uploadedFiles = files && files.length > 0 && (
         <div style={{ padding: '1rem' }}>
@@ -582,7 +632,7 @@ const TierView = () => {
                                                     checked={selectedIcon === "custom"}
                                                     onChange={() => dispatch(UpdateTierFormData({ ...tierFormData, selectedIcon: 'custom' }))}
                                                 />
-                                                <DropZone onDrop={handleDropZoneDrop} variableHeight allowMultiple={false} accept="image/png, image/jpeg, image/svg+xml">
+                                                <DropZone onDrop={handleDropZoneDrop} variableHeight allowMultiple={false} accept=".png,.jpg,.svg">
                                                     {uploadedFiles}
                                                     {fileUpload}
                                                 </DropZone>
@@ -596,7 +646,7 @@ const TierView = () => {
                     </Layout>
 
                     <RedeemModal localSave={true} navigateTo={2} active={active} setActive={setActive} data={masterRewardsList} loading={!masterRewardsList} />
-                </Page>
+                </Page >
             }
         </>
     )

@@ -7,25 +7,49 @@ import { capitalizeFirst, formatShortDate } from "../utils";
 import NeedSupport from "../components/NeedSupport";
 import { useSelector } from "react-redux";
 
+// --- Global Cache for State Persistence ---
+// This lives outside the component so it survives unmounting/remounting
+let cachedCustomerState = null;
+
+// --- Utility to update a specific customer in the cache from other components ---
+export const updateCachedCustomer = (customerId, updatedFields) => {
+    if (cachedCustomerState && cachedCustomerState.customers) {
+        cachedCustomerState.customers = cachedCustomerState.customers.map(customer => {
+            // Check both shopify_cust_id and internal id to be safe
+            if (String(customer.shopify_cust_id) === String(customerId) || String(customer.id) === String(customerId)) {
+                return { ...customer, ...updatedFields };
+            }
+            return customer;
+        });
+    }
+};
+
 const Customers = () => {
     const navigate = useNavigate();
 
-    // --- Core Data State ---
-    const [queryValue, setQueryValue] = useState('');
-    const [customers, setCustomers] = useState([]);
-    const [paginationData, setPaginationData] = useState({});
-    const [customerType, setCustomerType] = useState('');
-    const [limit, setLimit] = useState('15');
-    const [loading, setLoading] = useState(true);
-    const [vipTierList, setVipTierList] = useState([]); // State to hold the list R1, R2, etc.
-    const [selectedVipTier, setSelectedVipTier] = useState(null);
-    const dateFormat = useSelector((state) => state?.merchantSettings?.defaultData?.date_format);
-    // --- Sorting State ---
-    const [sortColumn, setSortColumn] = useState(null);
-    const [sortDirection, setSortDirection] = useState('ascending');
+    // --- Core Data State (Initialized from Cache if available) ---
+    const [queryValue, setQueryValue] = useState(cachedCustomerState?.queryValue ?? '');
+    const [customers, setCustomers] = useState(cachedCustomerState?.customers ?? []);
+    const [paginationData, setPaginationData] = useState(cachedCustomerState?.paginationData ?? {});
+    const [customerType, setCustomerType] = useState(cachedCustomerState?.customerType ?? '');
+    const [limit, setLimit] = useState(cachedCustomerState?.limit ?? '15');
 
-    // Ref to track sort state for toggle logic (updated when state changes)
-    const sortStateRef = useRef({ column: null, direction: 'ascending' });
+    // Prevent loading skeleton from flashing if we already have cached data
+    const [loading, setLoading] = useState(cachedCustomerState?.customers?.length > 0 ? false : true);
+
+    const [vipTierList, setVipTierList] = useState(cachedCustomerState?.vipTierList ?? []);
+    const [selectedVipTier, setSelectedVipTier] = useState(cachedCustomerState?.selectedVipTier ?? null);
+    const dateFormat = useSelector((state) => state?.merchantSettings?.defaultData?.date_format);
+
+    // --- Sorting State ---
+    const [sortColumn, setSortColumn] = useState(cachedCustomerState?.sortColumn ?? null);
+    const [sortDirection, setSortDirection] = useState(cachedCustomerState?.sortDirection ?? 'ascending');
+
+    // Ref to track sort state for toggle logic (initialized from cache)
+    const sortStateRef = useRef({
+        column: cachedCustomerState?.sortColumn ?? null,
+        direction: cachedCustomerState?.sortDirection ?? 'ascending'
+    });
 
     // Keep ref in sync with state
     useEffect(() => {
@@ -36,29 +60,43 @@ const Customers = () => {
     const { mode, setMode } = useSetIndexFiltersMode();
 
     // --- Standard Filter State ---
-    const [nameFilter, setNameFilter] = useState('');
+    const [nameFilter, setNameFilter] = useState(cachedCustomerState?.nameFilter ?? '');
 
     // --- DATE FILTER STATE ---
-    const [orderDateRange, setOrderDateRange] = useState('');
-    const [orderStartDate, setOrderStartDate] = useState(null);
-    const [orderEndDate, setOrderEndDate] = useState(null);
+    const [orderDateRange, setOrderDateRange] = useState(cachedCustomerState?.orderDateRange ?? '');
+    const [orderStartDate, setOrderStartDate] = useState(cachedCustomerState?.orderStartDate ?? null);
+    const [orderEndDate, setOrderEndDate] = useState(cachedCustomerState?.orderEndDate ?? null);
     const [activePopover, setActivePopover] = useState(null);
 
-    // DatePicker Navigation State
+    // DatePicker Navigation State (Open to cached dates if they exist)
     const [{ month: orderStartMonth, year: orderStartYear }, setOrderStartDateObj] = useState({
-        month: new Date().getMonth(),
-        year: new Date().getFullYear(),
+        month: cachedCustomerState?.orderStartDate ? cachedCustomerState.orderStartDate.getMonth() : new Date().getMonth(),
+        year: cachedCustomerState?.orderStartDate ? cachedCustomerState.orderStartDate.getFullYear() : new Date().getFullYear(),
     });
     const [{ month: orderEndMonth, year: orderEndYear }, setOrderEndDateObj] = useState({
-        month: new Date().getMonth(),
-        year: new Date().getFullYear(),
+        month: cachedCustomerState?.orderEndDate ? cachedCustomerState.orderEndDate.getMonth() : new Date().getMonth(),
+        year: cachedCustomerState?.orderEndDate ? cachedCustomerState.orderEndDate.getFullYear() : new Date().getFullYear(),
     });
 
     // --- Numerical Range Filter States ---
-    const [referralsRange, setReferralsRange] = useState({ min: '', max: '' });
-    const [pointsRange, setPointsRange] = useState({ min: '', max: '' });
-    const [ordersRange, setOrdersRange] = useState({ min: '', max: '' });
-    const [pointsSpentRange, setPointsSpentRange] = useState({ min: '', max: '' });
+    const [referralsRange, setReferralsRange] = useState(cachedCustomerState?.referralsRange ?? { min: '', max: '' });
+    const [pointsRange, setPointsRange] = useState(cachedCustomerState?.pointsRange ?? { min: '', max: '' });
+    const [ordersRange, setOrdersRange] = useState(cachedCustomerState?.ordersRange ?? { min: '', max: '' });
+    const [pointsSpentRange, setPointsSpentRange] = useState(cachedCustomerState?.pointsSpentRange ?? { min: '', max: '' });
+
+    // --- Cache Sync Effect ---
+    // Updates the global cache silently whenever any of our list states change
+    useEffect(() => {
+        cachedCustomerState = {
+            queryValue, customers, paginationData, customerType, limit, vipTierList, selectedVipTier,
+            sortColumn, sortDirection, nameFilter, orderDateRange, orderStartDate, orderEndDate,
+            referralsRange, pointsRange, ordersRange, pointsSpentRange
+        };
+    }, [
+        queryValue, customers, paginationData, customerType, limit, vipTierList, selectedVipTier,
+        sortColumn, sortDirection, nameFilter, orderDateRange, orderStartDate, orderEndDate,
+        referralsRange, pointsRange, ordersRange, pointsSpentRange
+    ]);
 
     // --- Date Helper Logic ---
     const today = new Date();
@@ -244,8 +282,7 @@ const Customers = () => {
                     bValue = String(bValue || '').toLowerCase().trim();
                     const comparison = aValue.localeCompare(bValue, undefined, { numeric: true, sensitivity: 'base' });
                     return sortDirection === 'ascending' ? comparison : -comparison;
-                } // --- FIX: Updated Reward Tier Sorting Logic ---
-                else if (sortColumn === 'vip_tier_name') {
+                } else if (sortColumn === 'vip_tier_name') {
                     const tierList = Array.isArray(vipTierList) ? vipTierList : [];
                     const aStr = String(aValue || '').trim();
                     const bStr = String(bValue || '').trim();
@@ -255,8 +292,6 @@ const Customers = () => {
                         let indexB = -1;
 
                         for (let i = 0; i < tierList.length; i++) {
-                            // OLD: const tierValue = String(tierList[i] || '').trim();
-                            // NEW: Extract title from the object
                             const item = tierList[i];
                             const tierValue = (item?.title ? String(item.title) : String(item || '')).trim();
 
@@ -264,14 +299,12 @@ const Customers = () => {
                             if (tierValue.toLowerCase() === bStr.toLowerCase()) indexB = i;
                         }
 
-                        // If tier not found in list, push to end
                         if (indexA === -1) indexA = Number.MAX_SAFE_INTEGER;
                         if (indexB === -1) indexB = Number.MAX_SAFE_INTEGER;
 
                         const comparison = indexA - indexB;
                         return sortDirection === 'ascending' ? comparison : -comparison;
                     } else {
-                        // Fallback to alphabetical if list is empty
                         const comparison = aStr.localeCompare(bStr, undefined, { numeric: true, sensitivity: 'base' });
                         return sortDirection === 'ascending' ? comparison : -comparison;
                     }
@@ -364,7 +397,6 @@ const Customers = () => {
             formData.append("next", endCursor);
             formData.append("previous", startCursor);
             formData.append("type", type);
-            // formData.append("vip_tier_name", selectedVipTier || "");
 
             const filterObject = {
                 date_range: Array.isArray(orderDateRange) ? orderDateRange[0] : (orderDateRange || ""),
@@ -391,9 +423,6 @@ const Customers = () => {
             if (response?.status === true) {
                 setCustomers(response.data);
 
-                // --- FIX: Check where the list actually resides ---
-                // If response.data is an Array, it cannot contain vip_tier_list.
-                // It is likely response.vip_tier_list
                 const fetchedTierList = response.vip_tier_list || response.data?.vip_tier_list || [];
                 setVipTierList(fetchedTierList);
 
@@ -431,12 +460,26 @@ const Customers = () => {
         }
     }
 
-    // Debounce API Trigger
+    // --- Debounce & Fetch Control logic ---
     const debounceTimerRef = useRef(null);
+    const isInitialMount = useRef(true);
+
     useEffect(() => {
         if (debounceTimerRef.current) clearTimeout(debounceTimerRef.current);
 
         debounceTimerRef.current = setTimeout(() => {
+
+            // Check if this is the component's first mount
+            if (isInitialMount.current) {
+                isInitialMount.current = false;
+
+                // If we successfully retrieved customers from our module-level cache, 
+                // skip this initial API execution to avoid flashing/wasting network bandwidth.
+                if (cachedCustomerState && cachedCustomerState.customers?.length > 0) {
+                    return;
+                }
+            }
+
             if (orderDateRange !== 'custom' || (orderDateRange === 'custom' && orderStartDate && orderEndDate)) {
                 GetCustomersAPI();
             } else if (!orderDateRange) {
@@ -455,13 +498,6 @@ const Customers = () => {
         selectedVipTier
     ]);
 
-    const customerTypeOptions = [
-        { label: 'All', value: '' },
-        { label: 'Guest', value: 'guest' },
-        { label: 'Member', value: 'member' },
-    ];
-
-    // --- Constant for Pagination ---
     const paginationOptions = [
         { label: '15', value: '15' },
         { label: '30', value: '30' },
@@ -528,15 +564,11 @@ const Customers = () => {
         </Popover>
     );
 
-    // --- FIX: Create a NEW array for VIP options, do not mutate global options ---
-    // --- FIX: Add a default option so the first real tier isn't auto-selected ---
     const vipTierOptions = useMemo(() => {
-        // Initialize with a default "All" option with an empty value
         const generatedOptions = [{ label: 'All', value: '' }];
 
         if (Array.isArray(vipTierList) && vipTierList.length > 0) {
             vipTierList.forEach(tier => {
-                // Extract 'title' for label and 'uid' for value
                 const tierName = tier?.title ? String(tier.title).trim() : '';
                 const tierId = tier?.uid ? String(tier.uid).trim() : '';
 
@@ -805,7 +837,6 @@ const Customers = () => {
                     <Box className='marginVertical'>
                         <InlineStack gap="300" blockAlign="center">
                             <Text>Show</Text>
-                            {/* FIX: Use the specific pagination options constant */}
                             <Select options={paginationOptions} onChange={setLimit} value={limit} disabled={isFilterDisabled} />
                             <Text>Entries</Text>
                         </InlineStack>
