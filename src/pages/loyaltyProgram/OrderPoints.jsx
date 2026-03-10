@@ -4,6 +4,7 @@ import { useLocation, useNavigate } from 'react-router-dom';
 import { fetchData } from '../../action';
 import { NoLeadingZero } from '../../utils';
 import { useSelector } from 'react-redux';
+import { useLoyaltyData } from '../../context/LoyaltyDataContext';
 
 const OrderPoints = () => {
     const navigate = useNavigate();
@@ -11,6 +12,7 @@ const OrderPoints = () => {
     const [loading, setLoading] = useState(false);
     const [saveLoading, setSaveLoading] = useState(false);
     const { rule: locationRule, edit: locationEdit } = location.state || {};
+    const { updateEarningRule } = useLoyaltyData();
 
     // Safely parse localStorage data
     const storedEditData = localStorage.getItem('loyaltyEditData');
@@ -42,10 +44,10 @@ const OrderPoints = () => {
             localStorage.setItem('loyaltyEditData', JSON.stringify({
                 rule_id: locationRule.rule_id,
                 rule_type: locationRule.type,
-                edit: false
+                edit: locationEdit || false
             }));
         }
-    }, [locationRule]);
+    }, [locationRule, locationEdit]);
 
     const [getdatabyID, setGetdatabyID] = useState();
     const [orderPointsMethod, setOrderPointsMethod] = useState('multiplier');
@@ -96,8 +98,18 @@ const OrderPoints = () => {
 
     useEffect(() => {
         if (edit) {
-            if (ruleId && !getdatabyID && !hasCalledAPI) {
-                // Only call API once if we don't already have the data
+            // If we have full rule data from navigation (locationRule), skip API call
+            if (locationRule) {
+                setGetdatabyID(locationRule);
+                setEarningPoints(locationRule.points ?? locationRule.default_points ?? 0);
+                setStatus(locationRule.status ?? false);
+                setMoneySpent(locationRule.condition_json?.order_spent);
+                if (locationRule.condition_json?.order_earning_method) {
+                    setOrderPointsMethod(locationRule.condition_json.order_earning_method);
+                }
+                setLoading(false);
+            } else if (ruleId && !getdatabyID && !hasCalledAPI) {
+                // Only call API on hard reload when we don't have locationRule
                 setHasCalledAPI(true);
                 getRuleByIdAPI(ruleId);
             }
@@ -108,7 +120,7 @@ const OrderPoints = () => {
                 setStatus(rule.status ?? false);
             }
         }
-    }, [edit, ruleId, getdatabyID, hasCalledAPI, rule, getRuleByIdAPI]);
+    }, [edit, ruleId, getdatabyID, hasCalledAPI, rule, getRuleByIdAPI, locationRule]);
 
     const handleStatusChange = () => {
         setStatus(prev => prev === true ? false : true);
@@ -140,6 +152,13 @@ const OrderPoints = () => {
 
             const response = await fetchData("/update-merchant-earning-rules", formData);
             if (response?.status) {
+                // Update context locally
+                updateEarningRule(idToUse, {
+                    points: earningPoints || 0,
+                    status: status === true || status === 'true',
+                    condition_json: conditionalData,
+                });
+
                 // Clear localStorage on successful update
                 localStorage.removeItem('loyaltyEditData');
                 navigate('/loyaltyProgram');

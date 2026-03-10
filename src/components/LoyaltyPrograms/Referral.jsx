@@ -5,37 +5,35 @@ import { useEffect, useState } from "react";
 import RedeemModal from "../RedeemModal";
 import { iconsMap } from "../../utils";
 import { useNavigate } from "react-router-dom";
+import { useLoyaltyData } from "../../context/LoyaltyDataContext";
 
 const Referral = () => {
-    const [referralData, setReferralData] = useState({});
+    const {
+        referralData,
+        setReferralData,
+        loadingReferralRules,
+        hasFetchedReferral,
+        fetchReferralData,
+    } = useLoyaltyData();
+
     const [referralModalActive, setReferralModalActive] = useState(false);
     const [isAdvocate, setIsAdvocate] = useState(false);
     const [isReferalStatus, setIsReferalStatus] = useState(false);
     const [isCustomerAccountStatus, setIsCustomerAccountStatus] = useState(false);
     const [isReferalRule, setIsReferalRule] = useState(false);
     const [activateLoading, setActivateLoading] = useState(false);
-    const [loadingReferralRules, setLoadingReferralRules] = useState(false);
     const [apiCallsInProgress, setApiCallsInProgress] = useState({});
     const [requireAccountLoading, setRequireAccountLoading] = useState(false);
     const [navigateTo, setNavigateTo] = useState(0);
     const navigate = useNavigate();
 
-    const GetReferralRulesAPI = async () => {
-        setLoadingReferralRules(true);
-        const formData = new FormData();
-        const response = await fetchData("/get-referral-setting", formData);
-        console.log('Get Redeem Rule By ID Response', response.data);
-        if (response?.status === true) {
-            setReferralData(response);
-            setIsReferalStatus(response?.data?.status);
-            setIsCustomerAccountStatus(response?.data?.require_account);
-            console.log('referralData', referralData?.data?.referral_setting_id)
-            setLoadingReferralRules(false);
-        } else {
-            shopify.toast.show(response?.message, { duration: 2000, isError: true });
-            setLoadingReferralRules(false);
+    // Sync local status state when referralData changes
+    useEffect(() => {
+        if (referralData?.data) {
+            setIsReferalStatus(referralData.data.status);
+            setIsCustomerAccountStatus(referralData.data.require_account);
         }
-    }
+    }, [referralData]);
 
     const UpdateReferalStatusAPI = async (refralstatus, customerAccountStatus, status) => {
         if (status) {
@@ -54,7 +52,8 @@ const Referral = () => {
                 if (status) {
                     setIsReferalStatus(!isReferalStatus);
                 } else {
-                    GetReferralRulesAPI();
+                    // Refresh referral data from API since it's a status/settings change
+                    fetchReferralData();
                 }
                 shopify.toast.show(response?.message, { duration: 2000 });
             }
@@ -148,9 +147,13 @@ const Referral = () => {
     const showEarnPointsonly = referralData?.advocate_reward?.available?.filter(item => item.type === "earn_points" ? item : null);
     console.log('showEarnPointsonly', showEarnPointsonly)
     console.log('referralData', referralData)
+
+    // Only fetch if not already cached in context
     useEffect(() => {
-        GetReferralRulesAPI();
-    }, []);
+        if (!hasFetchedReferral) {
+            fetchReferralData();
+        }
+    }, [hasFetchedReferral, fetchReferralData]);
 
     return (
         <div className="annotatedSection-border">
@@ -251,7 +254,7 @@ const Referral = () => {
                     <Card padding="0">
                         <Box style={{ backgroundColor: "#F5F5F5", padding: "16px", display: "flex", justifyContent: "space-between", alignItems: "center" }}>
                             <Text variant="headingMd">Advocate Rewards</Text>
-                            {referralData?.advocate_reward?.available.some(item => item.type === "earn_points") && (
+                            {referralData?.advocate_reward?.available.some(item => item.type === "earn_points") && (!referralData?.advocate_reward?.added || referralData.advocate_reward.added.length === 0) && (
                                 <Button variant="plain" onClick={() => { setIsAdvocate(true), setIsReferalRule(true), setReferralModalActive(true); setNavigateTo(1); }}>Add Reward</Button>
                             )}
                         </Box>

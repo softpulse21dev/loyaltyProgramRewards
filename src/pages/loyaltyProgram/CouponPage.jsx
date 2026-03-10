@@ -9,10 +9,12 @@ import { useDispatch, useSelector } from 'react-redux';
 import { addData, DeleteData, UpdateData } from '../../redux/action';
 import { LimitText, NoLeadingZero, sanitizeNumberWithDecimal, SingleLeadingZero } from '../../utils';
 import ConfirmationModal from '../../components/ConfirmationModal';
+import { useLoyaltyData } from '../../context/LoyaltyDataContext';
 
 const CouponPage = () => {
     const navigate = useNavigate();
     const location = useLocation();
+    const { addRedeemingRule, updateRedeemingRule, deleteRedeemingRule, addReferralRule, updateReferralRule, deleteReferralRule, fetchReferralData } = useLoyaltyData();
 
     // --- FIX START: Persist State Logic ---
     // Initialize state from location.state (if navigating) or localStorage (if reloading)
@@ -35,7 +37,7 @@ const CouponPage = () => {
     // Logic to determine if we should show Points inputs
     // If it is LocalSave (Reward Tier) or ReferralRule, we hide points logic.
     const showPointsSystem = !localSave && !referralRule;
-
+    console.log('location.state', location.state);
     console.log('localSave', localSave)
     console.log('navigateTo coupons', navigateTo)
     console.log('rule local', rule)
@@ -52,7 +54,20 @@ const CouponPage = () => {
     const [ruleId, setRuleId] = useState('');
     const [ruleType, setRuleType] = useState('');
     const [clientId, setClientId] = useState(null);
-    const [validationError, setValidationError] = useState();
+    const [validationError, setValidationError] = useState({
+        rewardTitle: '',
+        pointsAmount: '',
+        rewardValue: '',
+        points: '',
+        reward_value: '',
+        minPointsToRedeemValue: '',
+        maxPointsToSpendValue: '',
+        collections: '',
+        products: '',
+        minOrderValueInCents: '',
+        numberOfTimesOnRecurringPurchases: '',
+        rewardExpiration: '',
+    });
     const [totalProductPrice, setTotalProductPrice] = useState(0);
     const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
     const [rewardExpirationStatus, setRewardExpirationStatus] = useState(false);
@@ -198,7 +213,7 @@ const CouponPage = () => {
         // Safe check: if no rule exists (e.g. storage cleared), stop execution
         if (!rule) return;
 
-        // --- LOCAL EDIT MODE ---
+        // --- LOCAL EDIT MODE (Tier Rewards) ---
         if (edit && isTierRewardEdit && rule) {
             setRewardExpirationStatus(rule.expiration_status === 1 || rule.expiration_status === true);
             setRewardTitle(rule.title || '');
@@ -212,12 +227,39 @@ const CouponPage = () => {
             return;
         }
 
-        // --- API-BASED EDIT MODE ---
+        // --- EDIT MODE ---
         if (edit) {
-            setLoading(true);
             if (referralRule) {
-                GetReferralRuleByIdAPI();
+                // Referral rules: use location.state data if available, otherwise fetch from API
+                if (location.state?.rule) {
+                    const ruleData = location.state.rule;
+                    setRewardExpirationStatus(ruleData.expiration_status === 1);
+                    setPointsAmount(ruleData.points || 100);
+                    setRewardTitle(ruleData.title || '');
+                    setSettingsJson(ruleData.rule_data || ruleData.settings_json || { points_type: 'fixed' });
+                    setRewardExpiration(ruleData.expiration_days || 1);
+                    setStatus(ruleData.status);
+                    setRuleId(ruleData.id);
+                    setRuleType(ruleData.rule_type);
+                    setLoading(false);
+                } else {
+                    setLoading(true);
+                    GetReferralRuleByIdAPI();
+                }
+            } else if (location.state?.rule) {
+                // Redeem rule: use data from navigation state (skip API)
+                const ruleData = location.state.rule;
+                setRewardExpirationStatus(ruleData.expiration_status === 1);
+                setSettingsJson(ruleData.settings_json || { points_type: 'fixed' });
+                setRewardTitle(ruleData.title || '');
+                setPointsAmount(ruleData.points || 100);
+                setRewardExpiration(ruleData.expiration_days || 1);
+                setStatus(ruleData.status === true);
+                setRuleId(ruleData.id);
+                setLoading(false);
             } else {
+                // Hard reload: no location state, must fetch from API
+                setLoading(true);
                 GetRedeemRuleByIdAPI();
             }
         } else {
@@ -312,24 +354,46 @@ const CouponPage = () => {
             return;
         }
         setSubmitLoading(true);
-        const formData = new FormData();
-        formData.append("expiration_status", rewardExpirationStatus ? 1 : 0);
-        formData.append("master_rule_id", rule.master_rule_id);
-        formData.append("status", status);
-        formData.append("points", pointsAmount);
-        formData.append("title", rewardTitle);
-        formData.append("settings_json", JSON.stringify(settings_json));
-        formData.append("expiration_days", rewardExpiration);
-        const response = await fetchData("/add-merchant-redeeming-rules", formData);
+        try {
+            const formData = new FormData();
+            formData.append("expiration_status", rewardExpirationStatus ? 1 : 0);
+            formData.append("master_rule_id", rule.master_rule_id);
+            formData.append("status", status);
+            formData.append("points", pointsAmount);
+            formData.append("title", rewardTitle);
+            formData.append("settings_json", JSON.stringify(settings_json));
+            formData.append("expiration_days", rewardExpiration);
+            const response = await fetchData("/add-merchant-redeeming-rules", formData);
 
-        if (response?.status === true) {
-            localStorage.removeItem('couponPageData');
-            navigate('/loyaltyProgram');
-            shopify.toast.show(response?.message, { duration: 2000 });
-        } else {
-            shopify.toast.show(response?.message, { duration: 2000, isError: true });
+            if (response?.status === true) {
+                // Update context locally with new redeem rule
+                const newRule = {
+                    master_rule_id: rule.master_rule_id,
+                    title: rewardTitle,
+                    type: rule.type,
+                    points: pointsAmount,
+                    status: status === true,
+                    icon: rule.icon,
+                    settings_json: settings_json,
+                    expiration_days: rewardExpiration,
+                    expiration_status: rewardExpirationStatus ? 1 : 0,
+                    ...(response.data || {}),
+                    // Ensure id is always set (placed AFTER spread so it won't be overwritten)
+                    id: response.data?.id || response.data?.rule_id || response.id || response.rule_id,
+                };
+                addRedeemingRule(newRule);
+
+                localStorage.removeItem('couponPageData');
+                navigate('/loyaltyProgram');
+                shopify.toast.show(response?.message, { duration: 2000 });
+            } else {
+                shopify.toast.show(response?.message, { duration: 2000, isError: true });
+            }
+        } catch (error) {
+            console.error('Add Redeem Rule Error', error);
+        } finally {
+            setSubmitLoading(false);
         }
-        setSubmitLoading(false);
     }
 
     const UpdateRedeemRuleAPI = async () => {
@@ -337,24 +401,39 @@ const CouponPage = () => {
             return;
         }
         setSubmitLoading(true);
-        const formData = new FormData();
-        formData.append("expiration_status", rewardExpirationStatus ? 1 : 0);
-        formData.append("rule_id", ruleId);
-        formData.append("status", status);
-        formData.append("points", pointsAmount);
-        formData.append("title", rewardTitle);
-        formData.append("settings_json", JSON.stringify(settings_json));
-        formData.append("expiration_days", rewardExpiration);
-        const response = await fetchData("/update-merchant-redeeming-rules", formData);
+        try {
+            const formData = new FormData();
+            formData.append("expiration_status", rewardExpirationStatus ? 1 : 0);
+            formData.append("rule_id", ruleId);
+            formData.append("status", status);
+            formData.append("points", pointsAmount);
+            formData.append("title", rewardTitle);
+            formData.append("settings_json", JSON.stringify(settings_json));
+            formData.append("expiration_days", rewardExpiration);
+            const response = await fetchData("/update-merchant-redeeming-rules", formData);
 
-        if (response?.status === true) {
-            localStorage.removeItem('couponPageData');
-            navigate('/loyaltyProgram');
-            shopify.toast.show(response?.message, { duration: 2000 });
-        } else {
-            shopify.toast.show(response?.message, { duration: 2000, isError: true });
+            if (response?.status === true) {
+                // Update context locally
+                updateRedeemingRule(ruleId, {
+                    title: rewardTitle,
+                    points: pointsAmount,
+                    status: status === true,
+                    settings_json: settings_json,
+                    expiration_days: rewardExpiration,
+                    expiration_status: rewardExpirationStatus ? 1 : 0,
+                });
+
+                localStorage.removeItem('couponPageData');
+                navigate('/loyaltyProgram');
+                shopify.toast.show(response?.message, { duration: 2000 });
+            } else {
+                shopify.toast.show(response?.message, { duration: 2000, isError: true });
+            }
+        } catch (error) {
+            console.error('Update Redeem Rule Error', error);
+        } finally {
+            setSubmitLoading(false);
         }
-        setSubmitLoading(false);
     }
 
     const DeleteRedeemRuleAPI = async (id) => {
@@ -363,6 +442,9 @@ const CouponPage = () => {
         formData.append("rule_id", id);
         const response = await fetchData("/delete-merchant-redeeming-rules", formData);
         if (response?.status === true) {
+            // Update context locally
+            deleteRedeemingRule(id);
+
             localStorage.removeItem('couponPageData');
             navigate('/loyaltyProgram');
             shopify.toast.show(response?.message, { duration: 2000 });
@@ -410,6 +492,26 @@ const CouponPage = () => {
             formData.append("rule_type", rule.rule_type);
             const response = await fetchData("/add-referral-rule", formData);
             if (response?.status === true) {
+                // Update context locally
+                const newRule = {
+                    referral_rule_id: response.data?.referral_rule_id || response.referral_rule_id || response.added_fields.referral_rule_id,
+                    referral_setting_id: rule.referral_setting_id,
+                    master_rule_id: rule.master_rule_id,
+                    title: rewardTitle,
+                    type: rule.type || rule.rule_type,
+                    points: parseInt(pointsAmount) || 0,
+                    status: status === true,
+                    rule_type: rule.rule_type,
+                    icon: rule.icon,
+                    settings_json: getCleanSettings(),
+                    expiration_days: rewardExpiration,
+                    expiration_status: rewardExpirationStatus ? 1 : 0,
+                    ...(response.data || {}),
+                };
+                // Advocate rules have rule_type that indicates which group
+                const isAdvocate = rule.rule_type === 'advocate' || rule.isAdvocate;
+                addReferralRule(newRule, isAdvocate);
+
                 localStorage.removeItem('couponPageData');
                 navigate('/loyaltyProgram', { state: { navigateTo: navigateTo } });
                 shopify.toast.show(response?.message, { duration: 2000 });
@@ -441,6 +543,18 @@ const CouponPage = () => {
             formData.append("rule_type", ruleType);
             const response = await fetchData("/update-referral-rule", formData);
             if (response?.status === true) {
+                // Update context locally
+                updateReferralRule(rule.referral_rule_id, {
+                    title: rewardTitle,
+                    type: rule.type || rule.rule_type,
+                    points: parseInt(pointsAmount) || 0,
+                    status: status === true,
+                    settings_json: getCleanSettings(),
+                    rule_data: getCleanSettings(),
+                    expiration_days: rewardExpiration,
+                    expiration_status: rewardExpirationStatus ? 1 : 0,
+                });
+
                 localStorage.removeItem('couponPageData');
                 navigate('/loyaltyProgram', { state: { navigateTo: navigateTo } });
                 shopify.toast.show(response?.message, { duration: 2000 });
@@ -486,6 +600,18 @@ const CouponPage = () => {
             formData.append("referral_setting_id", rule.referral_setting_id);
             const response = await fetchData("/delete-referral-reward", formData);
             if (response?.status === true) {
+                // Pass rule so context can restore it to advocate available
+                // Using response rule data if available to get the original API title, alternatively the context relies on fetchReferralData.
+                let deletedRuleWithTitle = { ...rule };
+                if (response.data && response.data.title) {
+                    deletedRuleWithTitle.title = response.data.title;
+                }
+
+                deleteReferralRule(rule.referral_rule_id, deletedRuleWithTitle);
+
+                // Fetch referral data to properly restore API state
+                fetchReferralData();
+
                 localStorage.removeItem('couponPageData');
                 navigate('/loyaltyProgram', { state: { navigateTo: navigateTo } });
                 shopify.toast.show(response?.message, { duration: 2000 });
@@ -509,36 +635,45 @@ const CouponPage = () => {
             rewardTitle: '',
             pointsAmount: '',
             rewardValue: '',
+            points: '',
+            reward_value: '',
+            minPointsToRedeemValue: '',
+            maxPointsToSpendValue: '',
+            collections: '',
+            products: '',
+            minOrderValueInCents: '',
+            numberOfTimesOnRecurringPurchases: '',
+            rewardExpiration: '',
         };
         let isError = false;
 
+        // Helper: treats '', null, undefined, NaN as blank
+        const isBlank = (v) => v === '' || v === null || v === undefined || (typeof v === 'string' && v.trim() === '') || Number.isNaN(Number(v));
+        const isZeroOrLess = (v) => isBlank(v) || Number(v) <= 0;
+
         if (localSave) {
-            // FIX: Check if the title exists, but exclude the current item if we are editing
             const isDuplicate = Data?.some(item => {
                 const hasSameTitle = item.title.trim().toLowerCase() === rewardTitle.trim().toLowerCase();
-
-                // If editing a Tier Reward, ignore the record that matches our current clientId
                 if (edit && isTierRewardEdit) {
                     return hasSameTitle && item.clientId !== clientId;
                 }
-
-                // If adding a new reward, check against all existing rewards
                 return hasSameTitle;
             });
-
             if (isDuplicate) {
                 newErrors.rewardTitle = "Reward title already exists";
                 isError = true;
             }
         }
 
-        if (rewardTitle.replace(/\s+/g, " ").trim() === "") {
+        // Reward title
+        if (!rewardTitle || rewardTitle.replace(/\s+/g, " ").trim() === "") {
             newErrors.rewardTitle = "Reward title is required";
             isError = true;
         }
 
+        // Points amount (only for non-referral, non-tier modes)
         if (showPointsSystem) {
-            if (pointsAmount === '' || pointsAmount === null || Number(pointsAmount) <= 0) {
+            if (isZeroOrLess(pointsAmount)) {
                 newErrors.pointsAmount = "Points must be a number greater than 0";
                 isError = true;
             }
@@ -546,46 +681,45 @@ const CouponPage = () => {
 
         if (rule?.type === "earn_points") {
             if (settings_json.points_type === 'fixed') {
-                if (settings_json.points === '' || Number(settings_json.points) <= 0) {
+                if (isZeroOrLess(settings_json.points)) {
                     newErrors.points = "Points amount must be greater than 0";
                     isError = true;
                 }
             } else {
                 // Percentage validation
-                if (settings_json.reward_value === '' || Number(settings_json.reward_value) <= 0 || Number(settings_json.reward_value) > 100) {
+                if (isBlank(settings_json.reward_value) || Number(settings_json.reward_value) <= 0 || Number(settings_json.reward_value) > 100) {
                     newErrors.reward_value = "Percentage value must be greater than 0 and less than or equal to 100";
                     isError = true;
                 }
             }
         } else {
-            if (showPointsSystem && (pointsAmount === '' || Number(pointsAmount) <= 0)) {
+            // Non earn_points: validate pointsAmount only for showPointsSystem (re-check here for clarity)
+            if (showPointsSystem && isZeroOrLess(pointsAmount)) {
                 newErrors.pointsAmount = "Points must be greater than 0";
                 isError = true;
             }
-            if (!["free_shipping", "free_product"].includes(rule?.type) && (settings_json.reward_value === '' || Number(settings_json.reward_value) <= 0)) {
+            // Validate reward_value for all types that use it (including referral)
+            if (!["free_shipping", "free_product"].includes(rule?.type) && !["free_shipping", "free_product"].includes(ruleType) && isZeroOrLess(settings_json.reward_value)) {
                 newErrors.rewardValue = "Discount value must be greater than 0";
                 isError = true;
             }
         }
 
 
-        if (settings_json.reward_value === '' || settings_json.reward_value === null || Number(settings_json.reward_value) <= 0) {
-            newErrors.rewardValue = "Discount value must be a number greater than 0";
-            isError = true;
-        } else if (rule?.type === "free_product" && totalProductPrice > 0 && Number(settings_json.reward_value) < totalProductPrice) {
+        if (rule?.type === "free_product" && totalProductPrice > 0 && Number(settings_json.reward_value) < totalProductPrice) {
             newErrors.rewardValue = `Discount value cannot be less than the total product price (${currencySymbol?.symbol} ${totalProductPrice.toFixed(2)})`;
             isError = true;
         }
 
         if (showPointsSystem && settings_json?.points_type === 'multiplier') {
-            if (settings_json.min_points_to_redeem === true) {
-                if (settings_json.min_points_to_redeem_value === '' || settings_json.min_points_to_redeem_value === null || Number(settings_json.min_points_to_redeem_value) <= 0) {
+            if (settings_json.min_points_to_redeem) {
+                if (isZeroOrLess(settings_json.min_points_to_redeem_value)) {
                     newErrors.minPointsToRedeemValue = "Minimum points to redeem value must be a number greater than 0";
                     isError = true;
                 }
             }
-            if (settings_json.max_points_to_spend === true) {
-                if (settings_json.max_points_to_spend_value === '' || settings_json.max_points_to_spend_value === null || Number(settings_json.max_points_to_spend_value) <= 0) {
+            if (settings_json.max_points_to_spend) {
+                if (isZeroOrLess(settings_json.max_points_to_spend_value)) {
                     newErrors.maxPointsToSpendValue = "Maximum points to spend value must be a number greater than 0";
                     isError = true;
                 }
@@ -625,19 +759,19 @@ const CouponPage = () => {
         }
 
         // FIX: Added optional chaining
-        if (rule?.type === "free_shipping") {
-            if (settings_json.max_points_to_spend === true) {
-                if (settings_json.max_points_to_spend_value === '' || settings_json.max_points_to_spend_value === null || Number(settings_json.max_points_to_spend_value) <= 0) {
+        if (rule?.type === "free_shipping" || ruleType === "free_shipping") {
+            if (settings_json.max_points_to_spend) {
+                if (isZeroOrLess(settings_json.max_points_to_spend_value)) {
                     newErrors.maxPointsToSpendValue = "Maximum shipping amount value must be a number greater than 0";
                     isError = true;
                 }
             }
         }
 
-        // FIX: Added optional chaining
-        if (rule?.type !== "earn_points") {
-            if (rewardExpiration === '' || rewardExpiration === null || Number(rewardExpiration) < 0 || Number(rewardExpiration) > 365) {
-                newErrors.rewardExpiration = "Reward expiration must be a number between 0 and 365";
+        // Only validate expiration days when the toggle is ON and the field is visible
+        if (rule?.type !== "earn_points" && rewardExpirationStatus) {
+            if (rewardExpiration === '' || rewardExpiration === null || Number(rewardExpiration) < 1 || Number(rewardExpiration) > 365) {
+                newErrors.rewardExpiration = "Expiration days must be between 1 and 365";
                 isError = true;
             }
         }
@@ -750,7 +884,7 @@ const CouponPage = () => {
                                                 </BlockStack>
                                             </Card>
 
-                                            {rule?.type === "earn_points" ? (
+                                            {(rule?.type === "earn_points" || ruleType === "earn_points") ? (
                                                 <Card>
                                                     <Box style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
                                                         <Text variant='headingMd' as="span">Points Calculation Method</Text>
@@ -769,7 +903,7 @@ const CouponPage = () => {
                                                     </Box>
                                                 </Card>
                                             ) : (
-                                                rule?.type === "amount_discount" && showPointsSystem && (
+                                                (rule?.type === "amount_discount" || ruleType === "amount_discount") && showPointsSystem && (
                                                     <Card>
                                                         <Box style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
                                                             <Text variant='headingMd' as="span">Points Calculation Method</Text>
@@ -840,13 +974,13 @@ const CouponPage = () => {
                                                                                     />
                                                                                 )}
 
-                                                                                {rule?.type !== "free_shipping" && (
+                                                                                {(rule?.type !== "free_shipping" && ruleType !== "free_shipping") && (
                                                                                     <TextField
                                                                                         label="Discount"
                                                                                         type="text"
                                                                                         prefix={rule?.type !== "percentage_discount" ? `${currencySymbol?.symbol}` : ""}
                                                                                         suffix={rule?.type === "percentage_discount" ? "%" : ""}
-                                                                                        value={settings_json.reward_value}
+                                                                                        value={sanitizeNumberWithDecimal(settings_json.reward_value)}
                                                                                         onChange={(value) => {
                                                                                             const floatValue = parseFloat(value);
                                                                                             const isPercentage = rule?.type === "percentage_discount";
@@ -865,10 +999,10 @@ const CouponPage = () => {
                                                                                 )}
                                                                             </FormLayout.Group>
                                                                         </FormLayout>
-                                                                        {rule?.type !== "free_shipping" && rule?.type === "percentage_discount" && showPointsSystem && (
+                                                                        {(rule?.type !== "free_shipping" && ruleType !== "free_shipping") && (rule?.type === "percentage_discount" || ruleType === "percentage_discount") && showPointsSystem && (
                                                                             <Text variant='bodyMd' tone='subdued'>Based on your cost per point, {pointsAmount} points is equal to {sanitizeNumberWithDecimal(settings_json?.reward_value)} % off</Text>
                                                                         )}
-                                                                        {rule?.type !== "free_shipping" && rule?.type !== "percentage_discount" && showPointsSystem && (
+                                                                        {(rule?.type !== "free_shipping" && ruleType !== "free_shipping") && (rule?.type !== "percentage_discount" && ruleType !== "percentage_discount") && showPointsSystem && (
                                                                             <Text variant='bodyMd' tone='subdued'>Based on your cost per point, {pointsAmount} points is equal to {sanitizeNumberWithDecimal(settings_json?.reward_value)} {currencySymbol?.code}.</Text>
                                                                         )}
                                                                     </>
@@ -988,7 +1122,7 @@ const CouponPage = () => {
                                                             </>
                                                         )}
 
-                                                        {rule?.type === "free_shipping" && (
+                                                        {(rule?.type === "free_shipping" || ruleType === "free_shipping") && (
                                                             <span style={{ display: 'flex', gap: '7px', flexDirection: 'column' }}>
                                                                 <Checkbox
                                                                     label="Set a maximum shipping amount this reward can be applied to"
@@ -1209,7 +1343,7 @@ const CouponPage = () => {
                                                             <Text>Optional minimum cart requirement can be added.</Text>
                                                         </div>
                                                     )}
-                                                    {rule?.type === "free_shipping" && (
+                                                    {(rule?.type === "free_shipping" || ruleType === "free_shipping") && (
                                                         <div>
                                                             <Text>Customer spends a set number of points.</Text>
                                                             <Text>They get free shipping on their order.</Text>

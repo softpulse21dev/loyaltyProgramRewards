@@ -10,6 +10,7 @@ import { fetchData } from "../action";
 import { useDispatch } from "react-redux";
 import { GetVipTierData, MasterRewardsList } from "../redux/action";
 import NeedSupport from "../components/NeedSupport";
+import { useLoyaltyData } from "../context/LoyaltyDataContext";
 
 
 const LoyaltyProgram = () => {
@@ -34,6 +35,7 @@ const LoyaltyProgram = () => {
     const [vipStatus, setVipStatus] = useState(false);
 
     const dispatch = useDispatch();
+    const { hasFetchedVipTier, setHasFetchedVipTier } = useLoyaltyData();
 
     const GetVipTierAPI = useCallback(async () => {
         setLoadingTiers(true);
@@ -47,6 +49,7 @@ const LoyaltyProgram = () => {
                 setVipStatus(response?.data?.status === '1' ? true : false);
                 dispatch(GetVipTierData(response?.data?.tier_settings));
                 dispatch(MasterRewardsList(response?.master_rewards));
+                setHasFetchedVipTier(true);
             } else {
                 shopify.toast.show(response?.message, { duration: 2000, isError: true });
             }
@@ -55,14 +58,14 @@ const LoyaltyProgram = () => {
         } finally {
             setLoadingTiers(false);
         }
-    }, [dispatch]);
+    }, [dispatch, setHasFetchedVipTier]);
 
-    // Only fetch reward tier data when the reward Tier tab is selected
+    // Only fetch reward tier data when the reward Tier tab is selected and not already fetched
     useEffect(() => {
-        if (selectedTab === 2) {
+        if (selectedTab === 2 && !hasFetchedVipTier) {
             GetVipTierAPI();
         }
-    }, [selectedTab, GetVipTierAPI]);
+    }, [selectedTab, GetVipTierAPI, hasFetchedVipTier]);
 
     const UpdateVipTierAPI = async () => {
         try {

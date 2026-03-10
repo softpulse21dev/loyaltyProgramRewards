@@ -5,31 +5,34 @@ import { useNavigate } from "react-router-dom";
 import { iconsMap, NavigateMap } from "../../utils";
 import { fetchData } from "../../action";
 import RedeemModal from "../RedeemModal";
+import { useLoyaltyData } from "../../context/LoyaltyDataContext";
 
 const Loyalty = () => {
-    const [status, setStatus] = useState(null);
     const [loading, setLoading] = useState(false);
-    const [loadingMasterRules, setLoadingMasterRules] = useState(false);
-    const [loyaltyData, setLoyaltyData] = useState([]);
     const [modalActive, setModalActive] = useState(false);
     const [redeemModalActive, setRedeemModalActive] = useState(false);
     const [apiCallsInProgress, setApiCallsInProgress] = useState({});
     const navigate = useNavigate();
     const toggleModal = useCallback(() => setModalActive((active) => !active), []);
 
-    const fetchSettingsAPI = async () => {
-        setLoadingMasterRules(true);
-        const response = await fetchData("/get-merchant-settings", new FormData());
-        console.log('response', response);
-        if (response.status && response.data) {
-            setStatus(response.data.status);
-            setLoyaltyData(response.data);
-            setLoadingMasterRules(false);
-        } else {
-            shopify.toast.show(response?.message, { duration: 2000, isError: true });
-            setLoadingMasterRules(false);
+    // Use shared context instead of local state
+    const {
+        loyaltyData,
+        loadingMasterRules,
+        status,
+        hasFetched,
+        fetchLoyaltyData,
+        setLoyaltyStatus,
+        updateEarningRule,
+        updateRedeemingRule,
+    } = useLoyaltyData();
+
+    // Fetch data only if not already fetched (i.e., on initial load / hard reload)
+    useEffect(() => {
+        if (!hasFetched) {
+            fetchLoyaltyData();
         }
-    };
+    }, [hasFetched, fetchLoyaltyData]);
 
     const handleToggleStatus = async () => {
         setLoading(true);
@@ -39,7 +42,7 @@ const Loyalty = () => {
 
             const response = await fetchData("/update-merchant-settings", formData);
             if (response.status === true) {
-                setStatus((prev) => !prev);
+                setLoyaltyStatus(!status);
                 shopify.toast.show(response?.message, { duration: 2000 });
             } else {
                 shopify.toast.show(response?.message, { duration: 2000, isError: true });
@@ -50,10 +53,6 @@ const Loyalty = () => {
             setLoading(false);
         }
     };
-
-    useEffect(() => {
-        fetchSettingsAPI();
-    }, []);
 
     const handleRuleStatusChangeAPI = async (ruleId, isActive, isEarningRule = true) => {
         // Check if an API call is already in progress for this rule
@@ -78,56 +77,12 @@ const Loyalty = () => {
             const response = await fetchData(url, formData);
 
             if (response.status) {
-                // ✅ Update local state only (no refetch / no page reload)
-                setLoyaltyData((prev) => {
-                    if (!prev) return prev;
-
-                    // ---- EARNING RULES ----
-                    if (isEarningRule) {
-                        const otherRules = prev?.earning_rules?.active_rules?.other_rules || [];
-                        const socialRules = prev?.earning_rules?.active_rules?.social_rules || [];
-
-                        const updatedOtherRules = Array.isArray(otherRules)
-                            ? otherRules.map((r) =>
-                                r.rule_id === ruleId ? { ...r, status: isActive } : r
-                            )
-                            : otherRules;
-
-                        const updatedSocialRules = Array.isArray(socialRules)
-                            ? socialRules.map((r) =>
-                                r.rule_id === ruleId ? { ...r, status: isActive } : r
-                            )
-                            : socialRules;
-
-                        return {
-                            ...prev,
-                            earning_rules: {
-                                ...prev.earning_rules,
-                                active_rules: {
-                                    ...prev.earning_rules?.active_rules,
-                                    other_rules: updatedOtherRules,
-                                    social_rules: updatedSocialRules,
-                                },
-                            },
-                        };
-                    }
-
-                    // ---- REDEEMING RULES ----
-                    const redeemingRules = prev?.redeeming_rules?.active_rules || [];
-                    const updatedRedeemingRules = Array.isArray(redeemingRules)
-                        ? redeemingRules.map((r) =>
-                            r.id === ruleId ? { ...r, status: isActive } : r
-                        )
-                        : redeemingRules;
-
-                    return {
-                        ...prev,
-                        redeeming_rules: {
-                            ...prev.redeeming_rules,
-                            active_rules: updatedRedeemingRules,
-                        },
-                    };
-                });
+                // ✅ Update context locally (no refetch / no page reload)
+                if (isEarningRule) {
+                    updateEarningRule(ruleId, { status: isActive });
+                } else {
+                    updateRedeemingRule(ruleId, { status: isActive });
+                }
 
                 shopify.toast.show(response?.message, { duration: 2000 });
             } else {

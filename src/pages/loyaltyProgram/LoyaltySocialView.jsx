@@ -5,6 +5,7 @@ import { useNavigate, useLocation } from 'react-router-dom';
 import { fetchData } from '../../action';
 import ConfirmationModal from '../../components/ConfirmationModal';
 import { NoLeadingZero } from '../../utils';
+import { useLoyaltyData } from '../../context/LoyaltyDataContext';
 
 const PREFIXES = {
     social_share_facebook: "https://www.facebook.com/sharer/sharer.php?u=",
@@ -19,6 +20,7 @@ const LoyaltySocialView = () => {
     const navigate = useNavigate();
     const location = useLocation();
     const { rule: locationRule, edit: locationEdit } = location.state || {};
+    const { fetchLoyaltyData, addEarningRule, updateEarningRule, deleteEarningRule } = useLoyaltyData();
 
 
     // Safely parse localStorage data
@@ -195,6 +197,13 @@ const LoyaltySocialView = () => {
             const response = await fetchData("/delete-merchant-earning-rules", formData);
             setIsDeleteModalOpen(false);
             if (response.status) {
+                // Pass the full rule so context can restore it to master_rules
+                const deletedRule = locationRule || rule;
+                deleteEarningRule(ruleId, deletedRule);
+
+                // Fetch loyalty data to properly restore API state with original title
+                fetchLoyaltyData();
+
                 localStorage.removeItem('loyaltyEditData');
                 navigate('/loyaltyProgram');
                 shopify.toast.show(response?.message, { duration: 2000 });
@@ -217,8 +226,8 @@ const LoyaltySocialView = () => {
 
         const formattedValue = formatUrlForSaving(cleanValue, activeDisplayUseType);
 
+        // Only return the relevant field for this rule type
         return {
-            ...conditionalJson,
             [platformField]: formattedValue
         };
     };
@@ -235,15 +244,36 @@ const LoyaltySocialView = () => {
             // Pass fixedUrl to preparation function
             const formattedJson = prepareDataForSave(fixedUrl);
 
+            // Derive platform from display_use_type (e.g. 'social_follow_twitter' → 'twitter')
+            const displayType = activeDisplayUseType || rule.display_use_type || rule.type;
+            const derivedPlatform = displayType?.split('_').pop() || '';
+
             const formData = new FormData();
             formData.append("master_rule_id", rule.master_rule_id);
             formData.append("type", rule.type);
-            formData.append("platform", rule.platform);
+            formData.append("platform", derivedPlatform);
             formData.append("points", earningpoints);
             formData.append("status", status);
             formData.append("condition_json", JSON.stringify(formattedJson));
             const response = await fetchData("/add-merchant-earning-rules", formData);
             if (response.status) {
+                // Update context locally with new rule data
+                const newRule = {
+                    rule_id: response.data?.rule_id || response.rule_id,
+                    master_rule_id: rule.master_rule_id,
+                    title: rule.title,
+                    type: rule.type,
+                    display_use_type: displayType,
+                    platform: derivedPlatform,
+                    points: earningpoints,
+                    status: status === true || status === 'true',
+                    icon: rule.icon,
+                    condition_json: formattedJson,
+                    ...(response.data || {}),
+                };
+                const isSocial = displayType?.startsWith('social_');
+                addEarningRule(newRule, isSocial);
+
                 localStorage.removeItem('loyaltyEditData');
                 navigate('/loyaltyProgram');
             } else {
@@ -294,6 +324,13 @@ const LoyaltySocialView = () => {
             formData.append("condition_json", JSON.stringify(formattedJson));
             const response = await fetchData("/update-merchant-earning-rules", formData);
             if (response.status) {
+                // Update context locally
+                updateEarningRule(ruleId, {
+                    points: earningpoints,
+                    status: status === true || status === 'true',
+                    condition_json: formattedJson,
+                });
+
                 localStorage.removeItem('loyaltyEditData');
                 navigate('/loyaltyProgram');
                 shopify.toast.show(response?.message, { duration: 2000 });
@@ -309,7 +346,11 @@ const LoyaltySocialView = () => {
 
     useEffect(() => {
         if (edit) {
-            if (ruleId && !getdatabyID && !hasCalledAPI) {
+            // If we have full rule data from navigation (locationRule), skip API call
+            if (locationRule) {
+                setGetdatabyID(locationRule);
+                setLoading(false);
+            } else if (ruleId && !getdatabyID && !hasCalledAPI) {
                 setHasCalledAPI(true);
                 getRuleByIdAPI(ruleId);
             } else if (!ruleId) {
@@ -325,7 +366,7 @@ const LoyaltySocialView = () => {
                 setStatus(rule.status ?? false);
             }
         }
-    }, [edit, ruleId, getdatabyID, hasCalledAPI, getRuleByIdAPI, rule]);
+    }, [edit, ruleId, getdatabyID, hasCalledAPI, getRuleByIdAPI, rule, locationRule]);
 
     // FIX: Added parameter to validate a specific value instead of just state
     const validateFields = (valueToCheck) => {
