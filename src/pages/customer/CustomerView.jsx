@@ -153,7 +153,28 @@ const CustomerView = () => {
             console.log('response', response);
 
             if (response?.status === true) {
-                await GetCustomerByIdAPI();
+                // UPDATE LOCAL STATE: Update points balance correctly
+                const updatedPoints = point_type === 'credit'
+                    ? customerPoints + Number(points)
+                    : customerPoints - Number(points);
+
+                // Ensure it does not go below zero and format
+                setCustomerPoints(Math.max(updatedPoints, 0));
+
+                // Add the new points record to the history
+                setCustomerPointsData(prev => {
+                    const newPointRecord = {
+                        id: `local-${Date.now()}`,
+                        description: reason ? (point_type === 'credit' ? `Credit of ${points} points - Reason: ${reason}` : `Debit of ${points} points - Reason: ${reason}`) : (point_type === 'credit' ? `Credit of ${points} points - Reason: Manual Adjustment` : `Debit of ${points} points - Reason: Manual Adjustment`),
+                        points: point_type === 'credit' ? `${points}` : `-${points}`,
+                        created_at: new Date().toISOString()
+                    };
+                    return {
+                        ...prev,
+                        data: [newPointRecord, ...(prev?.data || [])]
+                    };
+                });
+
                 setPointsModalOpen(false);
                 shopify.toast.show(response.message || "Points updated successfully!", { duration: 2000 });
             } else {
@@ -250,7 +271,7 @@ const CustomerView = () => {
                 <Badge tone={OrderStatusMap[order.payment_status]}>{capitalizeFirst(order.payment_status)}</Badge>
             </IndexTable.Cell>
             <IndexTable.Cell flush>
-                <Text variant='bodyMd' as="span"  alignment='center'>{formatShortDate(order.created_at, dateFormat)}</Text>
+                <Text variant='bodyMd' as="span" alignment='center'>{formatShortDate(order.created_at, dateFormat)}</Text>
             </IndexTable.Cell>
         </IndexTable.Row>
     )), [customerOrdersData]);
@@ -264,7 +285,7 @@ const CustomerView = () => {
                 <Text variant='bodyMd' as="span">{point.points}</Text>
             </IndexTable.Cell>
             <IndexTable.Cell>
-                <Text variant='bodyMd' as="span"  alignment='center'>{formatShortDate(point.created_at, dateFormat)}</Text>
+                <Text variant='bodyMd' as="span" alignment='center'>{formatShortDate(point.created_at, dateFormat)}</Text>
             </IndexTable.Cell>
         </IndexTable.Row>
     )), [customerPointsData]);
@@ -278,7 +299,7 @@ const CustomerView = () => {
                 <Text variant='bodyMd' as="span">{tier.description}</Text>
             </IndexTable.Cell>
             <IndexTable.Cell>
-                <Text variant='bodyMd' as="span"  alignment='center'>{formatShortDate(tier.created_at, dateFormat)}</Text>
+                <Text variant='bodyMd' as="span" alignment='center'>{formatShortDate(tier.created_at, dateFormat)}</Text>
             </IndexTable.Cell>
         </IndexTable.Row>
     )), [customerTiersData]);
@@ -292,7 +313,7 @@ const CustomerView = () => {
                 <Text variant='bodyMd' as="span">{referral.total_orders}</Text>
             </IndexTable.Cell>
             <IndexTable.Cell>
-                <Text variant='bodyMd' as="span"  alignment='center'>{formatShortDate(referral.created_at, dateFormat)}</Text>
+                <Text variant='bodyMd' as="span" alignment='center'>{formatShortDate(referral.created_at, dateFormat)}</Text>
             </IndexTable.Cell>
         </IndexTable.Row>
     )), [customerReferralsData]);
@@ -324,7 +345,7 @@ const CustomerView = () => {
                 <Text variant='bodyMd' as="span">{redeem?.code}</Text>
             </IndexTable.Cell>
             <IndexTable.Cell>
-                <Text variant='bodyMd' as="span"  alignment='center'>{formatShortDate(redeem?.created_at, dateFormat)}</Text>
+                <Text variant='bodyMd' as="span" alignment='center'>{formatShortDate(redeem?.created_at, dateFormat)}</Text>
             </IndexTable.Cell>
         </IndexTable.Row>
     )))
@@ -346,7 +367,7 @@ const CustomerView = () => {
                 </Badge>
             </IndexTable.Cell>
             <IndexTable.Cell>
-                <Text variant='bodyMd' as="span"  alignment='center'>{formatShortDate(reward?.created_at, dateFormat)}</Text>
+                <Text variant='bodyMd' as="span" alignment='center'>{formatShortDate(reward?.created_at, dateFormat)}</Text>
             </IndexTable.Cell>
         </IndexTable.Row>
     )));
@@ -572,7 +593,7 @@ const CustomerView = () => {
                                                         headings={[
                                                             { title: 'Tier Achieved' },
                                                             { title: 'Description' },
-                                                            { title: 'Date' , alignment:'center'},
+                                                            { title: 'Date', alignment: 'center' },
                                                         ]}
                                                         pagination={(!loadingMore.vip_tier && (customerTiersData?.pagination?.has_next || customerTiersData?.pagination?.has_previous)) ? (
                                                             {
@@ -622,7 +643,7 @@ const CustomerView = () => {
                                                         headings={[
                                                             { title: 'Referred Friend' },
                                                             { title: 'Order Total' },
-                                                            { title: 'Date' , alignment:'center'},
+                                                            { title: 'Date', alignment: 'center' },
                                                         ]}
                                                         pagination={(!loadingMore.referrals && (customerReferralsData?.pagination?.has_next || customerReferralsData?.pagination?.has_previous)) ? (
                                                             {
@@ -674,7 +695,7 @@ const CustomerView = () => {
                                                             { title: 'Points' },
                                                             { title: 'Source' },
                                                             { title: 'Code' },
-                                                            { title: 'Date' , alignment:'center'},
+                                                            { title: 'Date', alignment: 'center' },
                                                         ]}
                                                         pagination={(!loadingMore.redeem && (customerRedeemData?.pagination?.has_next || customerRedeemData?.pagination?.has_previous)) ? (
                                                             {
@@ -726,7 +747,7 @@ const CustomerView = () => {
                                                             { title: 'Source' },
                                                             { title: 'Code' },
                                                             { title: 'Status' },
-                                                            { title: 'Date' , alignment:'center'},
+                                                            { title: 'Date', alignment: 'center' },
                                                         ]}
                                                         pagination={(!loadingMore.rewards && (customerRewardsData?.pagination?.has_next || customerRewardsData?.pagination?.has_previous)) ? (
                                                             {
