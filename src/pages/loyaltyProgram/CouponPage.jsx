@@ -240,7 +240,7 @@ const CouponPage = () => {
                     setRewardExpiration(ruleData.expiration_days || 1);
                     setStatus(ruleData.status);
                     setRuleId(ruleData.id);
-                    setRuleType(ruleData.rule_type);
+                    setRuleType(ruleData.rule_type || ruleData.type);
                     setLoading(false);
                 } else {
                     setLoading(true);
@@ -540,7 +540,7 @@ const CouponPage = () => {
             formData.append("expiration_days", rewardExpiration);
             formData.append("referral_setting_id", rule.referral_setting_id);
             formData.append("referral_rule_id", rule.referral_rule_id);
-            formData.append("rule_type", ruleType);
+            formData.append("rule_type", rule.rule_type);
             const response = await fetchData("/update-referral-rule", formData);
             if (response?.status === true) {
                 // Update context locally
@@ -551,6 +551,7 @@ const CouponPage = () => {
                     status: status === true,
                     settings_json: getCleanSettings(),
                     rule_data: getCleanSettings(),
+                    rule_type: rule.rule_type,
                     expiration_days: rewardExpiration,
                     expiration_status: rewardExpirationStatus ? 1 : 0,
                 });
@@ -610,7 +611,7 @@ const CouponPage = () => {
                 deleteReferralRule(rule.referral_rule_id, deletedRuleWithTitle);
 
                 // Fetch referral data to properly restore API state
-                fetchReferralData();
+                // fetchReferralData();
 
                 localStorage.removeItem('couponPageData');
                 navigate('/loyaltyProgram', { state: { navigateTo: navigateTo } });

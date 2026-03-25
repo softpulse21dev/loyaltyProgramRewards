@@ -10,7 +10,7 @@ export default defineConfig({
   server: {
     historyApiFallback: true,
     hmr: {
-      host: "hundred-tigers-montreal-stages.trycloudflare.com",
+      host: "willing-salvation-positioning-functions.trycloudflare.com",
       protocol: "wss",
     },
   },

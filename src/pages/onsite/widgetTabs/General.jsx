@@ -1132,14 +1132,14 @@ const General = ({ widgetData, setWidgetData, errors = {}, clearError, openColla
                                                                 </div>
 
                                                                 {/* Your friend gets */}
-                                                                <div style={{ display: 'flex', flexDirection: 'row', gap: '10px', alignItems: 'center', backgroundColor: boxBackgroundColor, border: `1px solid ${boxBorderColor}`, padding: '10px', borderRadius: '10px' }}
+                                                                {/* <div style={{ display: 'flex', flexDirection: 'row', gap: '10px', alignItems: 'center', backgroundColor: boxBackgroundColor, border: `1px solid ${boxBorderColor}`, padding: '10px', borderRadius: '10px' }}
                                                                 >
                                                                     <BoldDiscountIcon color={iconColor} width='22' height='22' />
                                                                     <div style={{ display: 'flex', flexDirection: 'column' }}>
                                                                         <span style={{ fontSize: '14px', fontWeight: 500, color: headingColor }}>{refereeTitle}</span>
                                                                         <text style={{ fontSize: '13px', color: textColor }}>test 2</text>
                                                                     </div>
-                                                                </div>
+                                                                </div> */}
                                                             </Box>
                                                         </div>
 
@@ -1344,13 +1344,13 @@ const General = ({ widgetData, setWidgetData, errors = {}, clearError, openColla
                                                                 </div>
 
                                                                 {/* Your friend gets */}
-                                                                <div style={{ display: 'flex', flexDirection: 'row', gap: '10px', alignItems: 'center', backgroundColor: boxBackgroundColor, border: `1px solid ${boxBorderColor}`, padding: '10px', borderRadius: '10px' }} >
+                                                                {/* <div style={{ display: 'flex', flexDirection: 'row', gap: '10px', alignItems: 'center', backgroundColor: boxBackgroundColor, border: `1px solid ${boxBorderColor}`, padding: '10px', borderRadius: '10px' }} >
                                                                     <BoldDiscountIcon color={iconColor} width='22' height='22' />
                                                                     <div style={{ display: 'flex', flexDirection: 'column' }}>
                                                                         <span style={{ fontSize: '14px', fontWeight: 500, color: headingColor }}>{refereeTitle}</span>
                                                                         <text style={{ fontSize: '13px', color: textColor }}>test 2</text>
                                                                     </div>
-                                                                </div>
+                                                                </div> */}
                                                             </Box>
 
                                                             {/* Your link */}
