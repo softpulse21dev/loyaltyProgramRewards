@@ -98,7 +98,7 @@ const General = ({ widgetData, setWidgetData, errors = {}, clearError, openColla
     const referralCardTitle = storefrontData?.referrals_card?.title;
     const referralCardMessage = storefrontData?.referrals_card?.message;
     const referrerTitle = storefrontData?.referrals_card?.referrer_title;
-    const refereeTitle = storefrontData?.referrals_card?.referee_title;
+    // const refereeTitle = storefrontData?.referrals_card?.referee_title;
     const referralCardLinkTitle = storefrontData?.referrals_card?.link_title;
     const referralCardMyDiscountText = storefrontData?.referrals_card?.my_discount_text;
     const vipTierCardTitle = storefrontData?.reward_tiers_card?.title;

@@ -97,7 +97,7 @@ const StoreFront = ({ widgetData, setWidgetData, errors = {}, clearError, openCo
     const referralCardTitle = storefrontData?.referrals_card?.title;
     const referralCardMessage = storefrontData?.referrals_card?.message;
     const referrerTitle = storefrontData?.referrals_card?.referrer_title;
-    const refereeTitle = storefrontData?.referrals_card?.referee_title;
+    // const refereeTitle = storefrontData?.referrals_card?.referee_title;
     const referralCardLinkTitle = storefrontData?.referrals_card?.link_title;
     const referralCardMyDiscountText = storefrontData?.referrals_card?.my_discount_text;
     const vipTierCardTitle = storefrontData?.reward_tiers_card?.title;
@@ -561,13 +561,13 @@ const StoreFront = ({ widgetData, setWidgetData, errors = {}, clearError, openCo
                                         error={getErrorMessage('storefront.referrals_card.referrer_title') ? true : null}
                                         onFocus={() => setIsEnabled(false)}
                                     />
-                                    <TextField
+                                    {/* <TextField
                                         label="Referee Title"
                                         value={refereeTitle}
                                         onChange={(value) => handleFieldChange('storefront.referrals_card.referee_title', value, (v) => setWidgetData({ ...widgetData, storefront_app: { ...widgetData.storefront_app, referrals_card: { ...widgetData.storefront_app.referrals_card, referee_title: LimitText(v, 40) } } }))}
                                         error={getErrorMessage('storefront.referrals_card.referee_title') ? true : null}
                                         onFocus={() => setIsEnabled(false)}
-                                    />
+                                    /> */}
                                     <TextField
                                         label="Link Title"
                                         value={referralCardLinkTitle}
